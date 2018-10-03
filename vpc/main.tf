@@ -142,7 +142,7 @@ resource "aws_eip" "nats" {
 resource "aws_nat_gateway" "nats" {
   count         = 3
   allocation_id = "${element(aws_eip.nats.*.id, count.index)}"
-  subnet_id     = "${element(aws_subnet.application.*.id, count.index)}"
+  subnet_id     = "${element(aws_subnet.public.*.id, count.index)}"
 
   tags {
     env       = "${var.name}"

@@ -1,0 +1,26 @@
+[
+  {
+    "cpu":1024,
+    "essential": true,
+    "image": "${image}",
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${awslogs-group}",
+        "awslogs-region": "${awslogs-region}",
+        "awslogs-stream-prefix": "${awslogs-stream-prefix}"
+      }
+    },
+    "memory": 2048,
+    "mountPoints": [],
+    "name": "${name}",
+    "portMappings": [
+      {
+        "containerPort": ${port},
+        "hostPort": ${port},
+        "protocol": "tcp"
+      }
+    ],
+    "volumesFrom": []
+  }
+]
