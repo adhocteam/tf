@@ -10,3 +10,11 @@ module "encryptkey" {
 
   name = "${var.name}"
 }
+
+module "utilities" {
+  source = "./utilities"
+
+  region      = "${var.region}"
+  name        = "${var.name}"
+  domain_name = "${var.domain_name}"
+}
