@@ -5,7 +5,7 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    docker run -v "$(pwd)":/terraform hashicorp/terraform:light fmt -check=true
+                    docker run -v "$(pwd)":/terraform hashicorp/terraform:light fmt -check=true /terraform
                 '''
             }
         }
