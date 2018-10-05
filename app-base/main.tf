@@ -2,7 +2,7 @@
 ### Domain names
 #######
 
-resource "aws_route53_record" "external-cname" {
+resource "aws_route53_record" "external_cname" {
   zone_id = "${data.aws_route53_zone.external.id}"
   name    = "${var.application_name}"
   type    = "CNAME"
@@ -11,7 +11,7 @@ resource "aws_route53_record" "external-cname" {
   records = ["${aws_alb.application_alb.dns_name}"]
 }
 
-resource "aws_route53_record" "internal-cname" {
+resource "aws_route53_record" "internal_cname" {
   zone_id = "${data.aws_route53_zone.internal.id}"
   name    = "${var.application_name}"
   type    = "CNAME"

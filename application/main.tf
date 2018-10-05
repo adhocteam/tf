@@ -12,7 +12,7 @@ data "aws_vpc" "vpc" {
 ### Security group for application
 #######
 
-resource "aws_security_group" "app-sg" {
+resource "aws_security_group" "app_sg" {
   name_prefix = "${var.application_name}-app-"
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
@@ -31,7 +31,7 @@ resource "aws_security_group_rule" "ingress" {
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.app-sg.id}"
+  security_group_id = "${aws_security_group.app_sg.id}"
 }
 
 // Allow all outbound, e.g. third-pary API endpoints, by default
@@ -42,5 +42,5 @@ resource "aws_security_group_rule" "egress" {
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.app-sg.id}"
+  security_group_id = "${aws_security_group.app_sg.id}"
 }

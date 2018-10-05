@@ -25,7 +25,7 @@ resource "aws_route53_record" "subdomain" {
 }
 
 # # If we're setting, www (e.g., www.example.com) then also direct the apex domain (example.com)
-resource "aws_route53_record" "apex-domain" {
+resource "aws_route53_record" "apex_domain" {
   count   = "${var.subdomain == "www" ? 1 : 0}"
   zone_id = "${data.aws_route53_zone.domain.zone_id}"
   name    = ""

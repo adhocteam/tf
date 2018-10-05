@@ -115,7 +115,7 @@ data "template_file" "user_data" {
 
 resource "aws_instance" "proxies" {
   count         = "${var.proxy_count}"
-  ami           = "${data.aws_ami.amazon-linux-2.id}"
+  ami           = "${data.aws_ami.amazon_linux_2.id}"
   instance_type = "t3.micro"
   key_name      = "infrastructure"
 

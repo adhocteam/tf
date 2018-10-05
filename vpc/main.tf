@@ -99,7 +99,7 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-resource "aws_route_table" "public-igw" {
+resource "aws_route_table" "public_igw" {
   vpc_id = "${aws_vpc.primary.id}"
 
   route {
@@ -114,10 +114,10 @@ resource "aws_route_table" "public-igw" {
   }
 }
 
-resource "aws_route_table_association" "public-with-igw" {
+resource "aws_route_table_association" "public_with_igw" {
   count          = 3
   subnet_id      = "${element(aws_subnet.public.*.id, count.index)}"
-  route_table_id = "${aws_route_table.public-igw.id}"
+  route_table_id = "${aws_route_table.public_igw.id}"
 }
 
 ####
@@ -167,7 +167,7 @@ resource "aws_route_table" "nats" {
   }
 }
 
-resource "aws_route_table_association" "app-with-nat" {
+resource "aws_route_table_association" "app_with_nat" {
   count          = 3
   subnet_id      = "${element(aws_subnet.application.*.id, count.index)}"
   route_table_id = "${element(aws_route_table.nats.*.id, count.index)}"

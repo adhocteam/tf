@@ -1,10 +1,10 @@
 variable "name" {}
 
-variable "app-name" {
+variable "app_name" {
   default = "demo"
 }
 
-variable "app-sg" {}
+variable "app_sg" {}
 
 variable "user" {
   default = "dbuser"

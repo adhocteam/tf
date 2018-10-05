@@ -55,7 +55,7 @@ data "aws_secretsmanager_secret_version" "github_secret" {
   secret_id = "${var.name}/teleport/github_secret"
 }
 
-data "aws_ami" "amazon-linux-2" {
+data "aws_ami" "amazon_linux_2" {
   most_recent = true
 
   filter {

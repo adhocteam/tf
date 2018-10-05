@@ -1,3 +1,3 @@
-output "app-sg" {
-  value = "${aws_security_group.app-sg.id}"
+output "app_sg" {
+  value = "${aws_security_group.app_sg.id}"
 }

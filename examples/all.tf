@@ -1,8 +1,13 @@
-module "vpc-test" {
-  source = "./vpc"
+locals {
 
-  name = "${var.name}"
-  cidr = "${var.cidr}"
+    domain_name = "example.com"
+}
+
+module "base" {
+  source = "../"
+
+  env = "test"
+  domain_name = "${local.domain_name}"
 }
 
 module "encryptkey" {

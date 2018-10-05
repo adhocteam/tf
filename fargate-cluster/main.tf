@@ -1,4 +1,4 @@
-module "fargate-base" {
+module "fargate_base" {
   source = "../app-base"
 
   name              = "${var.name}"

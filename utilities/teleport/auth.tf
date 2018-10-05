@@ -77,7 +77,7 @@ data "template_file" "auth_user_data" {
 
 resource "aws_instance" "auths" {
   count         = "${var.auth_count}"
-  ami           = "${data.aws_ami.amazon-linux-2.id}"
+  ami           = "${data.aws_ami.amazon_linux_2.id}"
   instance_type = "t3.nano"
   key_name      = "infrastructure"
 
