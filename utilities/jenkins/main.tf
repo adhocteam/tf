@@ -7,7 +7,7 @@ resource "aws_alb" "jenkins" {
   name            = "jenkins-load-balancer"
   internal        = false
   security_groups = ["${aws_security_group.alb.id}"]
-  subnets = ["${data.aws_subnet.public_subnet.*.id}"]
+  subnets         = ["${data.aws_subnet.public_subnet.*.id}"]
 
   tags {
     env       = "${var.name}"
