@@ -7,22 +7,19 @@ resource "aws_alb" "jenkins" {
   name            = "jenkins-load-balancer"
   internal        = false
   security_groups = ["${aws_security_group.alb.id}"]
-
-  subnets = [
-    "subnet-3c00c665",
-    "subnet-471c9d22",
-  ]
+  subnets = ["${data.aws_subnet.public_subnet.*.id}"]
 
   tags {
-    Name = "jenkins-load-balancer"
-    app  = "jenkins"
-    role = "load-balancer"
+    env       = "${var.name}"
+    terraform = "true"
+    Name      = "jenkins-load-balancer"
+    app       = "jenkins"
   }
 }
 
 resource "aws_alb_target_group" "primary" {
   name     = "alb-jenkins-target"
-  vpc_id   = "vpc-08b7136d"
+  vpc_id   = "${data.aws_vpc.vpc.id}"
   port     = "8080"
   protocol = "HTTP"
 
@@ -36,6 +33,13 @@ resource "aws_alb_target_group" "primary" {
     timeout             = 4
     matcher             = "200-308"
   }
+
+  tags {
+    env       = "${var.name}"
+    terraform = "true"
+    Name      = "jenkins-load-balancer"
+    app       = "jenkins"
+  }
 }
 
 resource "aws_alb_listener" "https" {
@@ -43,7 +47,7 @@ resource "aws_alb_listener" "https" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = "${data.aws_acm_certificate.pizza_cert_wildcard.arn}"
+  certificate_arn   = "${data.aws_acm_certificate.wildcard.arn}"
 
   default_action {
     target_group_arn = "${aws_alb_target_group.primary.arn}"
@@ -76,14 +80,25 @@ resource "aws_route53_record" "alb" {
   records = ["${aws_alb.jenkins.dns_name}"]
 }
 
+resource "aws_route53_record" "alb" {
+  zone_id = "${data.aws_route53_zone.external.id}"
+  name    = "jenkins"
+  type    = "CNAME"
+  ttl     = 30
+
+  records = ["${aws_alb.application_alb.dns_name}"]
+}
+
 # Security group
 resource "aws_security_group" "alb" {
   name_prefix = "$jenkins-alb-"
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    app  = "jenkins"
-    role = "alb"
+    env       = "${var.name}"
+    terraform = "true"
+    app       = "jenkins"
+    role      = "alb"
   }
 }
 
@@ -124,12 +139,6 @@ resource "aws_instance" "jenkins_primary" {
   instance_type = "t2.micro"
   key_name      = "infrastructure"
 
-  tags {
-    Name = "jenkins-primary"
-    app  = "jenkins"
-    role = "primary"
-  }
-
   security_groups = ["${aws_security_group.jenkins_primary.id}"]
 
   user_data = <<-EOF
@@ -143,6 +152,24 @@ resource "aws_instance" "jenkins_primary" {
   lifecycle {
     ignore_changes = ["ami"]
   }
+
+  tags {
+    env       = "${var.name}"
+    terraform = "true"
+    Name      = "jenkins-primary"
+    app       = "jenkins"
+    role      = "primary"
+  }
+}
+
+# Convenient internal DNS name for other items in VPC to use if needed
+resource "aws_route53_record" "primary" {
+  zone_id = "${data.aws_route53_zone.internal.id}"
+  name    = "primary.jenkins"
+  type    = "CNAME"
+  ttl     = 30
+
+  records = ["${aws_instance.jenkins_primary.private_dns}"]
 }
 
 resource "aws_lb_target_group_attachment" "primary" {
@@ -156,8 +183,10 @@ resource "aws_security_group" "jenkins_primary" {
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    app  = "jenkins"
-    role = "primary"
+    env       = "${var.name}"
+    terraform = "true"
+    app       = "jenkins"
+    role      = "primary"
   }
 }
 
@@ -180,7 +209,6 @@ resource "aws_security_group_rule" "alb_to_primary" {
 
   security_group_id = "${aws_security_group.jenkins_primary.id}"
 }
-
 
 resource "aws_security_group_rule" "worker_to_primary_http" {
   type                     = "ingress"
@@ -222,9 +250,11 @@ resource "aws_instance" "jenkins_worker" {
   key_name      = "infrastructure"
 
   tags {
-    Name = "jenkins-worker-${count.index}"
-    app  = "jenkins"
-    role = "worker"
+    env       = "${var.name}"
+    terraform = "true"
+    Name      = "jenkins-worker-${count.index}"
+    app       = "jenkins"
+    role      = "worker"
   }
 
   security_groups = ["${aws_security_group.jenkins_worker.id}"]
@@ -244,13 +274,26 @@ resource "aws_instance" "jenkins_worker" {
   }
 }
 
+# Internal DNS references to each worker node
+resource "aws_route53_record" "primary" {
+  count   = "${var.num_workers}"
+  zone_id = "${data.aws_route53_zone.internal.id}"
+  name    = "worker-${count.index}.jenkins"
+  type    = "CNAME"
+  ttl     = 30
+
+  records = ["${element(aws_instance.jenkins_worker.*.private_dns, count.index)}"]
+}
+
 resource "aws_security_group" "jenkins_worker" {
   name_prefix = "$jenkins-worker-"
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    app  = "jenkins"
-    role = "worker"
+    env       = "${var.name}"
+    terraform = "true"
+    app       = "jenkins"
+    role      = "worker"
   }
 }
 
