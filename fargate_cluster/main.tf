@@ -1,7 +1,7 @@
 module "fargate_base" {
   source = "../app_base"
 
-  name              = "${var.env}"
+  env               = "${var.env}"
   domain_name       = "${var.domain_name}"
   application_name  = "${var.application_name}"
   application_port  = "${var.application_port}"
@@ -25,11 +25,11 @@ resource "aws_ecs_service" "app" {
 
   network_configuration {
     subnets         = ["${data.aws_subnet.application_subnet.*.id}"]
-    security_groups = ["${module.fargate-base.app_sg_id}"]
+    security_groups = ["${module.fargate_base.app_sg_id}"]
   }
 
   load_balancer {
-    target_group_arn = "${module.fargate-base.lb_tg_arn}"
+    target_group_arn = "${module.fargate_base.lb_tg_arn}"
     container_name   = "${var.application_name}"
     container_port   = "${var.application_port}"
   }
@@ -44,7 +44,7 @@ resource "aws_ecs_service" "app" {
 
     # This prevents errors with the load balancer targeting group
     # not being linked yet causing invalid parameter errors
-    "module.fargate-base",
+    "module.fargate_base",
   ]
 
   lifecycle {

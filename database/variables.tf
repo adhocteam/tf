@@ -4,11 +4,11 @@ variable "env" {
 
 variable "application_name" {
   description = "the name of the application that will access this database"
-  default = "demo"
+  default     = "demo"
 }
 
 variable "app_sg" {
-    description = "the security group of the application that needs access to the database, probably from the module outputs"
+  description = "the security group of the application that needs access to the database, probably from the module outputs"
 }
 
 variable "user" {

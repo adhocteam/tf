@@ -17,7 +17,7 @@ locals {
 
 resource "aws_instance" "jumpbox" {
   count         = "${local.provision}"
-  ami           = "${data.aws_ami.amazon-linux-2.id}"
+  ami           = "${data.aws_ami.amazon_linux_2.id}"
   instance_type = "t3.nano"
 
   # TODO(bob) use https://github.com/widdix/aws-ec2-ssh to control access here?

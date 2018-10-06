@@ -1,7 +1,7 @@
 module "vpc-test" {
   source = "./vpc"
 
-  env = "${var.env}"
+  env  = "${var.env}"
   cidr = "${var.cidr}"
 }
 
@@ -15,6 +15,6 @@ module "utilities" {
   source = "./utilities"
 
   region      = "${var.region}"
-  env        = "${var.env}"
+  env         = "${var.env}"
   domain_name = "${var.domain_name}"
 }

@@ -1,7 +1,7 @@
 module "base" {
   source = "../app_base"
 
-  name              = "${var.env}"
+  env               = "${var.env}"
   domain_name       = "${var.domain_name}"
   application_name  = "${var.application_name}"
   application_port  = "${var.application_port}"
