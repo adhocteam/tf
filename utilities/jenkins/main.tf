@@ -270,7 +270,7 @@ resource "aws_instance" "jenkins_worker" {
               yum install -y docker
               systemctl enable --now docker
               docker run --restart always \
-                -v /var/run/docker.sock:/var/run/docker.sock \123
+                -v /var/run/docker.sock:/var/run/docker.sock \
                 csanchez/jenkins-swarm-slave -master "http://${aws_instance.jenkins_primary.private_ip}":8080 -username adhoc -password adhoc -executors "${var.num_executors}"
               EOF
 
