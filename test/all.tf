@@ -23,6 +23,14 @@ module "base" {
   domain_name = "${local.domain_name}"
 }
 
+module "utilities" {
+  source = "../utilities"
+
+  env         = "${local.env}"
+  domain_name = "${local.domain_name}"
+  region      = "${var.region}"
+}
+
 module "static" {
   source = "../static_site"
 

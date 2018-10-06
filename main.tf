@@ -10,11 +10,3 @@ module "encryptkey" {
 
   env = "${var.env}"
 }
-
-module "utilities" {
-  source = "./utilities"
-
-  region      = "${var.region}"
-  env         = "${var.env}"
-  domain_name = "${var.domain_name}"
-}
