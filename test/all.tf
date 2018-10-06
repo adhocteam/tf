@@ -48,7 +48,7 @@ module "fargate" {
   docker_image     = "nginx:latest"
 }
 
-variable "db-password" {
+variable "db_password" {
   description = "Normally this would be left blank"
   default     = "neverdothis"
 }
@@ -59,5 +59,5 @@ module "postgres" {
   env              = "${local.env}"
   application_name = "demo"
   app_sg           = "${module.demo.app_sg_id}"
-  password         = "{$var.db-password}"
+  password         = "{$var.db_password}"
 }
