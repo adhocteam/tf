@@ -1,4 +1,4 @@
-module "vpc-test" {
+module "vpc" {
   source = "./vpc"
 
   env  = "${var.env}"
