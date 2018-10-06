@@ -24,5 +24,21 @@ pipeline {
                 '''
             }
         }
+        stage('Terraform validation') {
+            agent {
+                docker {
+                    image 'hashicorp/terraform:light'
+                    args '-v "$(pwd)":/terraform'
+                }
+            }
+            steps {
+                sh '''
+                    cd /terraform/test
+                    terraform init
+                    terraform validate
+                '''
+            }
+        }
+
     }
 }
