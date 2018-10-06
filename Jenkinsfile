@@ -5,7 +5,7 @@ pipeline {
             agent {
                 docker {
                     image 'hashicorp/terraform:light'
-                    args '-v "$(pwd)":/terraform'
+                    args '-v $PWD:/terraform --entrypoint=""'
                 }
             }
             steps {
@@ -26,7 +26,7 @@ pipeline {
             agent {
                 docker {
                     image 'hashicorp/terraform:light'
-                    args '-v "$(pwd)":/terraform'
+                    args '-v $PWD:/terraform --entrypoint=""'
                 }
             }
             steps {
