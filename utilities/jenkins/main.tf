@@ -133,7 +133,7 @@ resource "aws_instance" "jenkins_primary" {
   instance_type = "t2.micro"
   key_name      = "infrastructure"
 
-  security_groups = ["${aws_security_group.jenkins_primary.id}"]
+  vpc_security_group_ids = ["${aws_security_group.jenkins_primary.id}"]
 
   user_data = <<-EOF
               #!/bin/bash
@@ -251,7 +251,7 @@ resource "aws_instance" "jenkins_worker" {
     role      = "worker"
   }
 
-  security_groups = ["${aws_security_group.jenkins_worker.id}"]
+  vpc_security_group_ids = ["${aws_security_group.jenkins_worker.id}"]
 
   depends_on = ["aws_instance.jenkins_primary"]
 
