@@ -1,7 +1,6 @@
 #######
 # The authenticators handle queries for identification and authorization
 # from the proxies and hand-out ssh certificates
-# TODO(bob) make these HA and state-less by using a DynamoDB back-end
 #######
 
 #######
@@ -17,7 +16,7 @@ resource "aws_lb" "auth" {
   ip_address_type = "ipv4"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "teleport"
     name      = "lb-teleport-auth-internal"
@@ -33,7 +32,7 @@ resource "aws_lb_target_group" "auth" {
   depends_on = ["aws_lb.auth"]
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "teleport"
     Name      = "lb-tg-telport-auth"
@@ -63,7 +62,7 @@ data "template_file" "auth_user_data" {
     teleport_version         = "v2.7.4"
     nodename                 = "teleport-auth-${count.index}"
     cluster_token            = "${random_string.cluster_token.result}"
-    cluster_name             = "${var.name}"
+    cluster_name             = "${var.env}"
     auth_domain              = "${aws_route53_record.auth_internal.fqdn}"
     proxy_domain             = "${aws_route53_record.proxies_external.fqdn}"
     region                   = "${var.region}"
@@ -77,7 +76,7 @@ data "template_file" "auth_user_data" {
 
 resource "aws_instance" "auths" {
   count         = "${var.auth_count}"
-  ami           = "${data.aws_ami.amazon-linux-2.id}"
+  ami           = "${data.aws_ami.amazon_linux_2.id}"
   instance_type = "t3.nano"
   key_name      = "infrastructure"
 
@@ -99,7 +98,7 @@ resource "aws_instance" "auths" {
   tags {
     Name      = "teleport-auth-${count.index}"
     app       = "teleport"
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
   }
 }
@@ -121,7 +120,7 @@ resource "aws_security_group" "auths" {
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "teleport"
     Name      = "teleport-auth"
@@ -170,7 +169,7 @@ resource "aws_security_group_rule" "jumpbox_auth" {
 // and only auth servers need access to the tables
 // all other components are stateless.
 resource "aws_dynamodb_table" "teleport_state" {
-  name           = "${var.name}-teleport-state"
+  name           = "${var.env}-teleport-state"
   read_capacity  = 5
   write_capacity = 5
   hash_key       = "HashKey"
@@ -200,7 +199,7 @@ resource "aws_dynamodb_table" "teleport_state" {
   }
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "teleport"
     Name      = "teleport-auth-state"
@@ -209,7 +208,7 @@ resource "aws_dynamodb_table" "teleport_state" {
 
 // Dynamodb events table stores events
 resource "aws_dynamodb_table" "teleport_events" {
-  name           = "${var.name}-teleport-events"
+  name           = "${var.env}-teleport-events"
   read_capacity  = 5
   write_capacity = 5
   hash_key       = "SessionID"
@@ -258,7 +257,7 @@ resource "aws_dynamodb_table" "teleport_events" {
   }
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "teleport"
     Name      = "teleport-auth-audit"
@@ -274,7 +273,7 @@ resource "random_id" "unique_bucket" {
 }
 
 resource "aws_s3_bucket" "recordings" {
-  bucket        = "${var.name}-teleport-${lower(random_id.unique_bucket.hex)}"
+  bucket        = "${var.env}-teleport-${lower(random_id.unique_bucket.hex)}"
   acl           = "private"
   force_destroy = true
 
@@ -288,7 +287,7 @@ resource "aws_s3_bucket" "recordings" {
   }
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "teleport"
   }
@@ -299,13 +298,13 @@ resource "aws_s3_bucket" "recordings" {
 #######
 
 resource "aws_iam_instance_profile" "auth" {
-  name = "${var.name}-teleport-auth"
+  name = "${var.env}-teleport-auth"
   role = "${aws_iam_role.auth.name}"
 }
 
 // Auth instance profile and roles
 resource "aws_iam_role" "auth" {
-  name = "${var.name}-teleport-auth"
+  name = "${var.env}-teleport-auth"
 
   assume_role_policy = <<EOF
 {
@@ -323,7 +322,7 @@ EOF
 
 // Auth server uses DynamoDB as a backend, and this is to allow read/write from the dynamo tables
 resource "aws_iam_role_policy" "auth_dynamo" {
-  name = "${var.name}-teleport-auth-dynamo"
+  name = "${var.env}-teleport-auth-dynamo"
   role = "${aws_iam_role.auth.id}"
 
   policy = <<EOF
@@ -355,7 +354,7 @@ EOF
 
 // S3 for publishing session recordings to S3 encrypted bucket
 resource "aws_iam_role_policy" "auth_s3" {
-  name = "${var.name}-teleport-auth-s3"
+  name = "${var.env}-teleport-auth-s3"
   role = "${aws_iam_role.auth.id}"
 
   policy = <<EOF

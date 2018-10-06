@@ -1,5 +1,5 @@
-variable "name" {
-  description = "name of the environment to be created"
+variable "env" {
+  description = "the name of the environment, e.g. \"testing\". it must be unique in the account."
 }
 
 variable "cidr" {

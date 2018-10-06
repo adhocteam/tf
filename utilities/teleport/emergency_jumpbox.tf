@@ -17,7 +17,7 @@ locals {
 
 resource "aws_instance" "jumpbox" {
   count         = "${local.provision}"
-  ami           = "${data.aws_ami.amazon-linux-2.id}"
+  ami           = "${data.aws_ami.amazon_linux_2.id}"
   instance_type = "t3.nano"
 
   # TODO(bob) use https://github.com/widdix/aws-ec2-ssh to control access here?
@@ -37,7 +37,7 @@ resource "aws_instance" "jumpbox" {
   tags {
     Name      = "teleport-emergency-jumpbox"
     app       = "teleport"
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
   }
 }
@@ -51,7 +51,7 @@ resource "aws_security_group" "jumpbox" {
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "teleport"
     Name      = "teleport-jumpbox"

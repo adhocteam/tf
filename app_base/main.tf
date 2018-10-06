@@ -2,7 +2,7 @@
 ### Domain names
 #######
 
-resource "aws_route53_record" "external-cname" {
+resource "aws_route53_record" "external_cname" {
   zone_id = "${data.aws_route53_zone.external.id}"
   name    = "${var.application_name}"
   type    = "CNAME"
@@ -11,7 +11,7 @@ resource "aws_route53_record" "external-cname" {
   records = ["${aws_alb.application_alb.dns_name}"]
 }
 
-resource "aws_route53_record" "internal-cname" {
+resource "aws_route53_record" "internal_cname" {
   zone_id = "${data.aws_route53_zone.internal.id}"
   name    = "${var.application_name}"
   type    = "CNAME"
@@ -34,7 +34,7 @@ resource "aws_alb" "application_alb" {
   ip_address_type = "ipv4"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "${var.application_name}"
     name      = "alb-${var.application_name}"
@@ -61,7 +61,7 @@ resource "aws_alb_target_group" "application_target_group" {
   depends_on = ["aws_alb.application_alb"]
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "${var.application_name}"
     name      = "alb-tg-${var.application_name}:${var.application_port}"
@@ -87,7 +87,7 @@ resource "aws_security_group" "application_alb_sg" {
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "${var.application_name}"
     name      = "world->alb-sg-${var.application_name}"
@@ -126,7 +126,7 @@ resource "aws_security_group" "app_sg" {
 
   tags {
     app = "${var.application_name}"
-    env = "${var.name}"
+    env = "${var.env}"
   }
 }
 

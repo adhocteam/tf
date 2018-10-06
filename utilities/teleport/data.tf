@@ -4,7 +4,7 @@
 
 data "aws_vpc" "vpc" {
   tags {
-    env = "${var.name}"
+    env = "${var.env}"
   }
 }
 
@@ -14,7 +14,7 @@ data "aws_subnet" "application_subnet" {
 
   tags {
     name = "app-sub-${count.index}"
-    env  = "${var.name}"
+    env  = "${var.env}"
   }
 }
 
@@ -24,7 +24,7 @@ data "aws_subnet" "public_subnet" {
 
   tags {
     name = "public-sub-${count.index}"
-    env  = "${var.name}"
+    env  = "${var.env}"
   }
 }
 
@@ -34,7 +34,7 @@ data "aws_route53_zone" "external" {
 }
 
 data "aws_route53_zone" "internal" {
-  name         = "${var.name}.local"
+  name         = "${var.env}.local"
   private_zone = true
 }
 
@@ -44,18 +44,18 @@ data "aws_acm_certificate" "wildcard" {
 }
 
 data "aws_kms_key" "main" {
-  key_id = "alias/${var.name}-main"
+  key_id = "alias/${var.env}-main"
 }
 
 data "aws_secretsmanager_secret_version" "github_client_id" {
-  secret_id = "${var.name}/teleport/github_client_id"
+  secret_id = "${var.env}/teleport/github_client_id"
 }
 
 data "aws_secretsmanager_secret_version" "github_secret" {
-  secret_id = "${var.name}/teleport/github_secret"
+  secret_id = "${var.env}/teleport/github_secret"
 }
 
-data "aws_ami" "amazon-linux-2" {
+data "aws_ami" "amazon_linux_2" {
   most_recent = true
 
   filter {

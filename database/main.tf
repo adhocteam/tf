@@ -1,43 +1,4 @@
 ####
-# Pull in external data for use here
-####
-
-data "aws_route53_zone" "internal" {
-  name         = "${var.name}.local"
-  private_zone = true
-}
-
-data "aws_vpc" "vpc" {
-  tags {
-    env = "${var.name}"
-  }
-}
-
-data "aws_subnet" "data_subnet" {
-  count  = 3
-  vpc_id = "${data.aws_vpc.vpc.id}"
-
-  tags {
-    name = "data-sub-${count.index}"
-    env  = "${var.name}"
-  }
-}
-
-data "aws_subnet" "application_subnet" {
-  count  = 3
-  vpc_id = "${data.aws_vpc.vpc.id}"
-
-  tags {
-    name = "app-sub-${count.index}"
-    env  = "${var.name}"
-  }
-}
-
-data "aws_kms_key" "main" {
-  key_id = "alias/${var.name}-main"
-}
-
-####
 # Setup database specific networking
 ####
 
@@ -46,7 +7,7 @@ resource "aws_db_subnet_group" "db_subnet_group" {
   subnet_ids = ["${data.aws_subnet.data_subnet.*.id}"]
 }
 
-resource "aws_security_group" "db-sg" {
+resource "aws_security_group" "db_sg" {
   name        = "db-sg"
   description = "SG for database servers"
   vpc_id      = "${data.aws_vpc.vpc.id}"
@@ -55,7 +16,7 @@ resource "aws_security_group" "db-sg" {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = ["${var.app-sg}"]
+    security_groups = ["${var.app_sg}"]
   }
 
   # TODO(bob) Can probably lock this down to just 5432 to apps
@@ -72,13 +33,13 @@ resource "aws_security_group" "db-sg" {
 ####
 
 resource "aws_db_instance" "primary" {
-  identifier_prefix = "${var.name}-"
+  identifier_prefix = "${var.env}-"
 
   username = "${var.user}"
   password = "${var.password}"
 
   db_subnet_group_name   = "${aws_db_subnet_group.db_subnet_group.id}"
-  vpc_security_group_ids = ["${aws_security_group.db-sg.id}"]
+  vpc_security_group_ids = ["${aws_security_group.db_sg.id}"]
   publicly_accessible    = false
   multi_az               = true
 
@@ -102,10 +63,10 @@ resource "aws_db_instance" "primary" {
   }
 
   tags {
-    env       = "${var.name}"
-    app       = "${var.app-name}"
+    env       = "${var.env}"
+    app       = "${var.application_name}"
     terraform = "true"
-    name      = "${var.name}-db"
+    name      = "${var.env}-db"
   }
 }
 
@@ -113,9 +74,9 @@ resource "aws_db_instance" "primary" {
 # Create internal DNS entry for easy reference by the application
 ####
 
-resource "aws_route53_record" "rds-cname" {
+resource "aws_route53_record" "rds_cname" {
   zone_id = "${data.aws_route53_zone.internal.id}"
-  name    = "${var.app-name}-db-primary.${var.name}.local"
+  name    = "${var.application_name}-db-primary"
   type    = "CNAME"
   ttl     = 30
 

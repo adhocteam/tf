@@ -1,13 +1,13 @@
 ## Before applying this module
 Before using this module you must setup a GitHub OAuth following [their instructions](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/).
 Use the following values substituting your variables manually:
-- Homepage URL: `https://teleport-${var.name}.adhocdemo.com/`
-- Callback URL: `https://teleport-${var.name}.adhocdemo.com/v1/webapi/github/callback`
+- Homepage URL: `https://teleport-${var.env}.adhocdemo.com/`
+- Callback URL: `https://teleport-${var.env}.adhocdemo.com/v1/webapi/github/callback`
 
 and store the resulting Client ID and Secret in AWS Secrets Manager with names as follows:
 
-- Client ID stored in `${var.name}/teleport/github_client_id`
-- Secret store in `${var.name}/teleport/github_secret`
+- Client ID stored in `${var.env}/teleport/github_client_id`
+- Secret store in `${var.env}/teleport/github_secret`
 
 Example, if your `name` is main, then the values would be:
 
@@ -20,7 +20,7 @@ Example, if your `name` is main, then the values would be:
 
 ### Via the webui
 
-Visit https://teleport-${var.name}.adhocdemo.com/ and using the login with Github button. Approve the oauth request for the app on github. Then select the node to ssh into from the webui.
+Visit https://teleport-${var.env}.adhocdemo.com/ and using the login with Github button. Approve the oauth request for the app on github. Then select the node to ssh into from the webui.
 
 ### Via the command line
 
@@ -29,7 +29,7 @@ You can download the client from [Gravitational](https://gravitational.com/telep
 Decompress and put the `tsh` someplace on your `$PATH`. There's an included `install` script that'll handle that but will also copy over the unneeded teleport and tctl binaries.
 
 **Always do**
-Login using `tsh login --proxy=teleport-${var.name}.adhocdemo.com:443` which should open a browser window and complete the login via GitHub automatically
+Login using `tsh login --proxy=teleport-${var.env}.adhocdemo.com:443` which should open a browser window and complete the login via GitHub automatically
 
 #### Then either:
 
@@ -44,7 +44,7 @@ Setup SSH proxying in your `$HOME/.ssh/config` with the snippet after replacing 
 ```
 #
 Host teleport
-    HostName teleport-${var.name}.adhocdemo.com
+    HostName teleport-${var.env}.adhocdemo.com
     Port 3023
 
 Host 10.1.*

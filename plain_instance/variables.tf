@@ -1,5 +1,5 @@
-variable "name" {
-  description = "name of the environment to be created"
+variable "env" {
+  description = "the name of the environment, e.g. \"testing\". it must be unique in the account."
 }
 
 variable "domain_name" {
@@ -10,9 +10,14 @@ variable "application_name" {
   description = "name of the application to be hosted. must be unique in the environment."
 }
 
-variable "health_check_path" {
-  description = "path used by load balancer to health check application. should return 200."
-  default     = "/"
+variable "instance_size" {
+  description = "ec2 instance type to be used for hosting the app"
+  default     = "t3.micro"
+}
+
+variable "instance_count" {
+  description = "number of instances to create"
+  default     = "1"
 }
 
 variable "application_port" {

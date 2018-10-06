@@ -1,7 +1,7 @@
-module "fargate-base" {
-  source = "../app-base"
+module "fargate_base" {
+  source = "../app_base"
 
-  name              = "${var.name}"
+  env               = "${var.env}"
   domain_name       = "${var.domain_name}"
   application_name  = "${var.application_name}"
   application_port  = "${var.application_port}"
@@ -25,11 +25,11 @@ resource "aws_ecs_service" "app" {
 
   network_configuration {
     subnets         = ["${data.aws_subnet.application_subnet.*.id}"]
-    security_groups = ["${module.fargate-base.app_sg_id}"]
+    security_groups = ["${module.fargate_base.app_sg_id}"]
   }
 
   load_balancer {
-    target_group_arn = "${module.fargate-base.lb_tg_arn}"
+    target_group_arn = "${module.fargate_base.lb_tg_arn}"
     container_name   = "${var.application_name}"
     container_port   = "${var.application_port}"
   }
@@ -44,7 +44,7 @@ resource "aws_ecs_service" "app" {
 
     # This prevents errors with the load balancer targeting group
     # not being linked yet causing invalid parameter errors
-    "module.fargate-base",
+    "module.fargate_base",
   ]
 
   lifecycle {
@@ -63,14 +63,14 @@ data "template_file" "task" {
     image                 = "${var.docker_image}"
     awslogs-group         = "${aws_cloudwatch_log_group.app.name}"
     awslogs-region        = "${data.aws_region.current.name}"
-    awslogs-stream-prefix = "${var.name}-${var.application_name}"
+    awslogs-stream-prefix = "${var.env}-${var.application_name}"
     name                  = "${var.application_name}"
     port                  = "${var.application_port}"
   }
 }
 
 resource "aws_ecs_task_definition" "app" {
-  family = "${var.name}-${var.application_name}"
+  family = "${var.env}-${var.application_name}"
 
   # This is extra verbose because otherwise Terraform always thinks that the
   # container_definitions has changed for some reason, and then tries to
@@ -80,7 +80,7 @@ resource "aws_ecs_task_definition" "app" {
   # "environment": [
   #   {
   #     "name": "AWS_PARAMETER_STORE",
-  #     "value": "/${var.name}-${var.environment}"
+  #     "value": "/${var.env}-${var.environment}"
   #   }
   # ],
   container_definitions = "${data.template_file.task.rendered}"
@@ -94,17 +94,17 @@ resource "aws_ecs_task_definition" "app" {
 }
 
 resource "aws_cloudwatch_log_group" "app" {
-  name = "${var.name}-${var.application_name}"
+  name = "${var.env}-${var.application_name}"
 
   tags {
-    Name        = "${var.name}-${var.application_name}"
-    environment = "${var.name}"
+    Name        = "${var.env}-${var.application_name}"
+    environment = "${var.env}"
     app         = "${var.application_name}"
   }
 }
 
 resource "aws_iam_role" "ecs_execution" {
-  name = "${var.name}-${var.application_name}-ecs_task_execution"
+  name = "${var.env}-${var.application_name}-ecs_task_execution"
 
   assume_role_policy = <<EOF
 {
@@ -123,7 +123,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "ecs_execution" {
-  name = "${var.name}-${var.application_name}-ecs_execution"
+  name = "${var.env}-${var.application_name}-ecs_execution"
   role = "${aws_iam_role.ecs_execution.id}"
 
   policy = <<EOF

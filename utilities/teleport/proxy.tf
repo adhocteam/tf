@@ -41,7 +41,7 @@ resource "aws_elb" "proxy" {
   }
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "teleport"
     name      = "elb-teleport-proxy"
@@ -58,7 +58,7 @@ resource "aws_security_group" "proxy_lb" {
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "teleport"
     Name      = "world->teleport-proxy"
@@ -115,7 +115,7 @@ data "template_file" "user_data" {
 
 resource "aws_instance" "proxies" {
   count         = "${var.proxy_count}"
-  ami           = "${data.aws_ami.amazon-linux-2.id}"
+  ami           = "${data.aws_ami.amazon_linux_2.id}"
   instance_type = "t3.micro"
   key_name      = "infrastructure"
 
@@ -136,7 +136,7 @@ resource "aws_instance" "proxies" {
   tags {
     Name      = "teleport-proxy-${count.index}"
     app       = "teleport"
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
   }
 }
@@ -158,7 +158,7 @@ resource "aws_security_group" "proxies" {
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "teleport"
     Name      = "teleport-proxies"

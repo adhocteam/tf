@@ -2,7 +2,7 @@ data "aws_region" "current" {}
 
 data "aws_vpc" "vpc" {
   tags {
-    env = "${var.name}"
+    env = "${var.env}"
   }
 }
 
@@ -12,6 +12,6 @@ data "aws_subnet" "application_subnet" {
 
   tags {
     name = "app-sub-${count.index}"
-    env  = "${var.name}"
+    env  = "${var.env}"
   }
 }

@@ -1,9 +1,9 @@
-variable "region" {
-  description = "the preferred AWS region for resources."
+variable "env" {
+  description = "the name of the environment, e.g. \"testing\". it must be unique in the account."
 }
 
-variable "name" {
-  description = "name of the environment to be created"
+variable "region" {
+  description = "the preferred AWS region for resources."
 }
 
 variable "domain_name" {

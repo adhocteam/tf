@@ -1,20 +1,20 @@
-module "vpc" {
+module "vpc-test" {
   source = "./vpc"
 
-  name = "${var.name}"
+  env  = "${var.env}"
   cidr = "${var.cidr}"
 }
 
 module "encryptkey" {
   source = "./encryptkey"
 
-  name = "${var.name}"
+  env = "${var.env}"
 }
 
 module "utilities" {
   source = "./utilities"
 
   region      = "${var.region}"
-  name        = "${var.name}"
+  env         = "${var.env}"
   domain_name = "${var.domain_name}"
 }

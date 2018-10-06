@@ -1,7 +1,7 @@
 module "base" {
-  source = "../app-base"
+  source = "../app_base"
 
-  name              = "${var.name}"
+  env               = "${var.env}"
   domain_name       = "${var.domain_name}"
   application_name  = "${var.application_name}"
   application_port  = "${var.application_port}"
@@ -17,13 +17,13 @@ data "template_file" "user_data" {
     app              = "${var.application_name}"
     nodename         = "${var.application_name}-${count.index}"
     cluster_token    = "${data.aws_secretsmanager_secret_version.cluster_token.secret_string}"
-    auth_domain      = "teleport-auth.${var.name}.local"
+    auth_domain      = "teleport-auth.${var.env}.local"
   }
 }
 
 resource "aws_instance" "application" {
   count         = "${var.instance_count}"
-  ami           = "${data.aws_ami.amazon-linux-2.id}"
+  ami           = "${data.aws_ami.amazon_linux_2.id}"
   instance_type = "${var.instance_size}"
 
   # iam_instance_profile = "${var.pubweb_instance_role}"
@@ -45,7 +45,7 @@ resource "aws_instance" "application" {
   tags {
     Name = "${var.application_name}-${count.index}"
     app  = "${var.application_name}"
-    env  = "${var.name}"
+    env  = "${var.env}"
   }
 }
 
