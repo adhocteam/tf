@@ -133,14 +133,20 @@ resource "aws_instance" "jenkins_primary" {
   instance_type = "t2.micro"
   key_name      = "infrastructure"
 
-  vpc_security_group_ids = ["${aws_security_group.jenkins_primary.id}"]
+  associate_public_ip_address = false
+  subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,1)}"
+  vpc_security_group_ids      = ["${aws_security_group.jenkins_primary.id}"]
 
   user_data = <<-EOF
               #!/bin/bash
               yum update -y
               yum install -y docker
               systemctl enable --now docker
-              docker run -d --restart always --name jenkins -p 8080:8080 -p 50000:50000 jskeets/jenkins-primary
+              docker run -d --restart always \
+                --name jenkins \
+                -p 8080:8080 \
+                -p 50000:50000 \
+                jskeets/jenkins-primary
               EOF
 
   lifecycle {
@@ -238,10 +244,15 @@ resource "aws_security_group_rule" "primary_egress" {
 ### Jenkins workers who actually execute the work
 #######
 resource "aws_instance" "jenkins_worker" {
-  count         = "${var.num_workers}"
-  ami           = "${data.aws_ami.amazon_linux_2.id}"
-  instance_type = "t2.micro"
-  key_name      = "infrastructure"
+  count                = "${var.num_workers}"
+  ami                  = "${data.aws_ami.amazon_linux_2.id}"
+  instance_type        = "t2.micro"
+  key_name             = "infrastructure"
+  iam_instance_profile = "${var.worker_iam_profile}"
+
+  associate_public_ip_address = false
+  subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,count.index)}" #distribute instances across AZs
+  vpc_security_group_ids      = ["${aws_security_group.jenkins_worker.id}"]
 
   tags {
     env       = "${var.env}"
@@ -251,8 +262,6 @@ resource "aws_instance" "jenkins_worker" {
     role      = "worker"
   }
 
-  vpc_security_group_ids = ["${aws_security_group.jenkins_worker.id}"]
-
   depends_on = ["aws_instance.jenkins_primary"]
 
   user_data = <<-EOF
@@ -260,7 +269,9 @@ resource "aws_instance" "jenkins_worker" {
               yum update -y
               yum install -y docker
               systemctl enable --now docker
-              docker run --restart always csanchez/jenkins-swarm-slave -master "http://${aws_instance.jenkins_primary.private_ip}":8080 -username adhoc -password adhoc -executors "${var.num_executors}"
+              docker run --restart always \
+                -v /var/run/docker.sock:/var/run/docker.sock \123
+                csanchez/jenkins-swarm-slave -master "http://${aws_instance.jenkins_primary.private_ip}":8080 -username adhoc -password adhoc -executors "${var.num_executors}"
               EOF
 
   lifecycle {

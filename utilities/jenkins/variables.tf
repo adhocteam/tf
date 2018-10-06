@@ -6,6 +6,11 @@ variable "domain_name" {
   description = "the external domain name for reaching the public resources. must have a certificate in ACM associated with it."
 }
 
+variable "worker_iam_profile" {
+  description = "the IAM instance profile to be used on the worker nodes"
+  default     = ""
+}
+
 variable "num_workers" {
   description = "How many worker nodes to create"
   default     = 2
