@@ -1,18 +1,18 @@
 pipeline {
-    agent any
+    agent {
+        label 'website'
+    }
+
     stages {
         stage('Terraform fmt') {
             agent {
                 docker {
                     image 'hashicorp/terraform:light'
-                    args '-v $PWD:/terraform --entrypoint=""'
+                    args '-v ${PWD}:/terraform -w /terraform --entrypoint=""'
                 }
             }
             steps {
-                sh '''
-                    set -e
-                    terraform fmt -check=true -diff=true /terraform
-                '''
+                sh 'terraform fmt -check=true -diff=true'
             }
         }
 
@@ -26,17 +26,23 @@ pipeline {
             agent {
                 docker {
                     image 'hashicorp/terraform:light'
-                    args '-v $PWD:/terraform --entrypoint=""'
+                    args '-v ${PWD}:/terraform -w /terraform --entrypoint=""'
                 }
             }
             steps {
                 sh '''
-                    cd /terraform/test
+                    cd test
                     terraform init
                     terraform validate
                 '''
             }
         }
+    }
 
+    post {
+        always {
+            deleteDir()
+            cleanWs()
+        }
     }
 }
