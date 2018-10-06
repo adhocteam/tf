@@ -140,7 +140,11 @@ resource "aws_instance" "jenkins_primary" {
               yum update -y
               yum install -y docker
               systemctl enable --now docker
-              docker run -d --restart always --name jenkins -p 8080:8080 -p 50000:50000 jskeets/jenkins-primary
+              docker run -d --restart always \
+                --name jenkins \
+                -p 8080:8080 \
+                -p 50000:50000 \
+                jskeets/jenkins-primary
               EOF
 
   lifecycle {
@@ -242,6 +246,8 @@ resource "aws_instance" "jenkins_worker" {
   ami           = "${data.aws_ami.amazon_linux_2.id}"
   instance_type = "t2.micro"
   key_name      = "infrastructure"
+  iam_instance_profile   = "${var.worker_iam_profile}"
+
 
   tags {
     env       = "${var.env}"
@@ -260,7 +266,9 @@ resource "aws_instance" "jenkins_worker" {
               yum update -y
               yum install -y docker
               systemctl enable --now docker
-              docker run --restart always csanchez/jenkins-swarm-slave -master "http://${aws_instance.jenkins_primary.private_ip}":8080 -username adhoc -password adhoc -executors "${var.num_executors}"
+              docker run --restart always \
+                -v /var/run/docker.sock:/var/run/docker.sock \123
+                csanchez/jenkins-swarm-slave -master "http://${aws_instance.jenkins_primary.private_ip}":8080 -username adhoc -password adhoc -executors "${var.num_executors}"
               EOF
 
   lifecycle {
