@@ -26,8 +26,8 @@ module "base" {
 module "utilities" {
   source = "../utilities"
 
-  env         = "${var.env}"
-  domain_name = "${var.domain_name}"
+  env         = "${local.env}"
+  domain_name = "${local.domain_name}"
   region      = "${var.region}"
 }
 
