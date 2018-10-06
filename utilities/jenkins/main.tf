@@ -133,7 +133,9 @@ resource "aws_instance" "jenkins_primary" {
   instance_type = "t2.micro"
   key_name      = "infrastructure"
 
-  vpc_security_group_ids = ["${aws_security_group.jenkins_primary.id}"]
+  associate_public_ip_address = false
+  subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,1)}"
+  vpc_security_group_ids      = ["${aws_security_group.jenkins_primary.id}"]
 
   user_data = <<-EOF
               #!/bin/bash
@@ -242,12 +244,15 @@ resource "aws_security_group_rule" "primary_egress" {
 ### Jenkins workers who actually execute the work
 #######
 resource "aws_instance" "jenkins_worker" {
-  count         = "${var.num_workers}"
-  ami           = "${data.aws_ami.amazon_linux_2.id}"
-  instance_type = "t2.micro"
-  key_name      = "infrastructure"
-  iam_instance_profile   = "${var.worker_iam_profile}"
+  count                = "${var.num_workers}"
+  ami                  = "${data.aws_ami.amazon_linux_2.id}"
+  instance_type        = "t2.micro"
+  key_name             = "infrastructure"
+  iam_instance_profile = "${var.worker_iam_profile}"
 
+  associate_public_ip_address = false
+  subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,count.index)}" #distribute instances across AZs
+  vpc_security_group_ids      = ["${aws_security_group.jenkins_worker.id}"]
 
   tags {
     env       = "${var.env}"
@@ -256,8 +261,6 @@ resource "aws_instance" "jenkins_worker" {
     app       = "jenkins"
     role      = "worker"
   }
-
-  vpc_security_group_ids = ["${aws_security_group.jenkins_worker.id}"]
 
   depends_on = ["aws_instance.jenkins_primary"]
 

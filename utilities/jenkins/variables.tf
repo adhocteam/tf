@@ -8,9 +8,8 @@ variable "domain_name" {
 
 variable "worker_iam_profile" {
   description = "the IAM instance profile to be used on the worker nodes"
-  default = ""
+  default     = ""
 }
-
 
 variable "num_workers" {
   description = "How many worker nodes to create"
