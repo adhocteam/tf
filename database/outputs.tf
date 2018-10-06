@@ -1,4 +1,4 @@
 # The connection endpoint in address:port format
 output "database_url" {
-  value = "${var.app-name}-db-primary.${var.name}.local"
+  value = "${aws_route53_record.rds_cname.fqdn}"
 }

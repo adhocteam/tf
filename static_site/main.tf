@@ -2,17 +2,6 @@
 # Internal DNS names to allow for predictable names in code and as light-weight service discovery
 ####
 
-# Pull in data from outside terraform (the public zone and certificate must already exist in the account)
-data "aws_route53_zone" "domain" {
-  name         = "${var.domain_name}"
-  private_zone = false
-}
-
-data "aws_acm_certificate" "wildcard" {
-  domain      = "${var.domain_name}"
-  most_recent = true
-}
-
 # Setup DNS records for the static site
 
 resource "aws_route53_record" "subdomain" {
@@ -69,7 +58,7 @@ POLICY
   }
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     name      = "${var.subdomain}.${var.domain_name}"
   }
@@ -119,7 +108,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     name      = "cdn-${var.subdomain}.${var.domain_name}"
   }

@@ -10,7 +10,7 @@ resource "aws_alb" "jenkins" {
   subnets         = ["${data.aws_subnet.public_subnet.*.id}"]
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     Name      = "jenkins-load-balancer"
     app       = "jenkins"
@@ -35,7 +35,7 @@ resource "aws_alb_target_group" "primary" {
   }
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     Name      = "jenkins-load-balancer"
     app       = "jenkins"
@@ -95,7 +95,7 @@ resource "aws_security_group" "alb" {
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "jenkins"
     role      = "alb"
@@ -154,7 +154,7 @@ resource "aws_instance" "jenkins_primary" {
   }
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     Name      = "jenkins-primary"
     app       = "jenkins"
@@ -183,7 +183,7 @@ resource "aws_security_group" "jenkins_primary" {
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "jenkins"
     role      = "primary"
@@ -250,7 +250,7 @@ resource "aws_instance" "jenkins_worker" {
   key_name      = "infrastructure"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     Name      = "jenkins-worker-${count.index}"
     app       = "jenkins"
@@ -290,7 +290,7 @@ resource "aws_security_group" "jenkins_worker" {
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "jenkins"
     role      = "worker"

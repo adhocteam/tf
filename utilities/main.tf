@@ -1,7 +1,13 @@
 module "teleport" {
   source            = "./teleport"
   region            = "${var.region}"
-  name              = "${var.name}"
+  env              = "${var.env}"
   domain_name       = "${var.domain_name}"
   emergency_jumpbox = 1
+}
+
+module "jenkins" {
+  source            = "./jenkins"
+  env              = "${var.env}"
+  domain_name       = "${var.domain_name}"
 }

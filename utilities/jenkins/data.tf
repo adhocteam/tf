@@ -1,6 +1,6 @@
 data "aws_vpc" "vpc" {
   tags {
-    env = "${var.name}"
+    env = "${var.env}"
   }
 }
 
@@ -10,7 +10,7 @@ data "aws_subnet" "application_subnet" {
 
   tags {
     name = "app-sub-${count.index}"
-    env  = "${var.name}"
+    env  = "${var.env}"
   }
 }
 
@@ -20,7 +20,7 @@ data "aws_subnet" "public_subnet" {
 
   tags {
     name = "public-sub-${count.index}"
-    env  = "${var.name}"
+    env  = "${var.env}"
   }
 }
 
@@ -30,7 +30,7 @@ data "aws_route53_zone" "external" {
 }
 
 data "aws_route53_zone" "internal" {
-  name         = "${var.name}.local"
+  name         = "${var.env}.local"
   private_zone = true
 }
 

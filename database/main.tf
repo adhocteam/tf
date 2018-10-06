@@ -1,43 +1,4 @@
 ####
-# Pull in external data for use here
-####
-
-data "aws_route53_zone" "internal" {
-  name         = "${var.name}.local"
-  private_zone = true
-}
-
-data "aws_vpc" "vpc" {
-  tags {
-    env = "${var.name}"
-  }
-}
-
-data "aws_subnet" "data_subnet" {
-  count  = 3
-  vpc_id = "${data.aws_vpc.vpc.id}"
-
-  tags {
-    name = "data-sub-${count.index}"
-    env  = "${var.name}"
-  }
-}
-
-data "aws_subnet" "application_subnet" {
-  count  = 3
-  vpc_id = "${data.aws_vpc.vpc.id}"
-
-  tags {
-    name = "app-sub-${count.index}"
-    env  = "${var.name}"
-  }
-}
-
-data "aws_kms_key" "main" {
-  key_id = "alias/${var.name}-main"
-}
-
-####
 # Setup database specific networking
 ####
 
@@ -72,7 +33,7 @@ resource "aws_security_group" "db_sg" {
 ####
 
 resource "aws_db_instance" "primary" {
-  identifier_prefix = "${var.name}-"
+  identifier_prefix = "${var.env}-"
 
   username = "${var.user}"
   password = "${var.password}"
@@ -102,10 +63,10 @@ resource "aws_db_instance" "primary" {
   }
 
   tags {
-    env       = "${var.name}"
-    app       = "${var.app_name}"
+    env       = "${var.env}"
+    app       = "${var.application_name}"
     terraform = "true"
-    name      = "${var.name}-db"
+    name      = "${var.env}-db"
   }
 }
 
@@ -115,7 +76,7 @@ resource "aws_db_instance" "primary" {
 
 resource "aws_route53_record" "rds_cname" {
   zone_id = "${data.aws_route53_zone.internal.id}"
-  name    = "${var.app_name}-db-primary.${var.name}.local"
+  name    = "${var.application_name}-db-primary"
   type    = "CNAME"
   ttl     = 30
 

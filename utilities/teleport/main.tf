@@ -5,7 +5,7 @@
 
 resource "aws_route53_record" "proxies_external" {
   zone_id = "${data.aws_route53_zone.external.id}"
-  name    = "teleport-${var.name}"
+  name    = "teleport-${var.env}"
   type    = "CNAME"
   ttl     = 30
 
@@ -27,6 +27,6 @@ resource "random_string" "cluster_token" {
 }
 
 resource "aws_secretsmanager_secret_version" "cluster_token" {
-  secret_id     = "${var.name}/teleport/cluster_token"
+  secret_id     = "${var.env}/teleport/cluster_token"
   secret_string = "${random_string.cluster_token.result}"
 }

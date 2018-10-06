@@ -37,7 +37,7 @@ resource "aws_instance" "jumpbox" {
   tags {
     Name      = "teleport-emergency-jumpbox"
     app       = "teleport"
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
   }
 }
@@ -51,7 +51,7 @@ resource "aws_security_group" "jumpbox" {
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     app       = "teleport"
     Name      = "teleport-jumpbox"

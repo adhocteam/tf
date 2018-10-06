@@ -6,8 +6,6 @@
 ###  - Elastic IPs
 ###  - NAT Instances
 
-data "aws_availability_zones" "available" {}
-
 ####
 # VPC with internal DNS support
 ####
@@ -18,18 +16,18 @@ resource "aws_vpc" "primary" {
   enable_dns_support   = true
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
   }
 }
 
 resource "aws_route53_zone" "internal" {
-  name    = "${var.name}.local"
+  name    = "${var.env}.local"
   vpc_id  = "${aws_vpc.primary.id}"
-  comment = "${var.name} internal DNS"
+  comment = "${var.env} internal DNS"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     name      = "internal-dns"
   }
@@ -48,7 +46,7 @@ resource "aws_subnet" "application" {
   availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     name      = "app-sub-${count.index}"
   }
@@ -65,7 +63,7 @@ resource "aws_subnet" "public" {
   availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     name      = "public-sub-${count.index}"
   }
@@ -79,7 +77,7 @@ resource "aws_subnet" "data" {
   availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     name      = "data-sub-${count.index}"
   }
@@ -93,7 +91,7 @@ resource "aws_internet_gateway" "igw" {
   vpc_id = "${aws_vpc.primary.id}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     name      = "main-internet-gateway"
   }
@@ -108,7 +106,7 @@ resource "aws_route_table" "public_igw" {
   }
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     name      = "route-to-internet-gateway"
   }
@@ -133,7 +131,7 @@ resource "aws_eip" "nats" {
   depends_on = ["aws_internet_gateway.igw"]
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     name      = "nat-ip-${count.index}"
   }
@@ -145,7 +143,7 @@ resource "aws_nat_gateway" "nats" {
   subnet_id     = "${element(aws_subnet.public.*.id, count.index)}"
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     name      = "nat-${count.index}"
   }
@@ -161,7 +159,7 @@ resource "aws_route_table" "nats" {
   }
 
   tags {
-    env       = "${var.name}"
+    env       = "${var.env}"
     terraform = "true"
     name      = "route-to-nat-${count.index}"
   }
