@@ -1,44 +1,48 @@
 pipeline {
-    agent any
+    agent {
+        label 'website'
+    }
+
     stages {
         stage('Terraform fmt') {
+            agent {
+                docker {
+                    image 'hashicorp/terraform:light'
+                    args '-v ${PWD}:/terraform -w /terraform --entrypoint=""'
+                }
+            }
             steps {
-                sh '''
-                    set -e
-                    docker run -v "$(pwd)":/terraform hashicorp/terraform:light fmt -check=true /terraform
-                '''
+                sh 'terraform fmt -check=true -diff=true'
             }
         }
 
         stage('Terraform linting') {
             steps {
-                sh '''
-                    non_camel=$(find . -name "*.tf" -exec grep -l "^[a-z].*-" {} \;)
-                    if [[ ! -z "$non_camel" ]]; then
-                        echo "Resources should be camel_case and not use hyphens:"
-                        for f in "$non_camel"; do
-                            grep -n "^[a-z].*-" $f
-                        done
-                        exit 1
-                    fi
-                '''
+                sh 'scripts/lint.sh'
             }
         }
+
         stage('Terraform validation') {
             agent {
                 docker {
                     image 'hashicorp/terraform:light'
-                    args '-v "$(pwd)":/terraform'
+                    args '-v ${PWD}:/terraform -w /terraform --entrypoint=""'
                 }
             }
             steps {
                 sh '''
-                    cd /terraform/test
+                    cd test
                     terraform init
                     terraform validate
                 '''
             }
         }
+    }
 
+    post {
+        always {
+            deleteDir()
+            cleanWs()
+        }
     }
 }
