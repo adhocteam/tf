@@ -2,10 +2,10 @@
 ### To customize, just import the ones you want directly
 
 module "teleport" {
- source            = "./teleport"
- region            = "${var.region}"
- env               = "${var.env}"
- domain_name       = "${var.domain_name}"
+  source      = "./teleport"
+  region      = "${var.region}"
+  env         = "${var.env}"
+  domain_name = "${var.domain_name}"
 }
 
 module "jenkins" {
