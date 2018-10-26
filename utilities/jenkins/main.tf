@@ -129,7 +129,7 @@ resource "aws_security_group_rule" "alb_egress" {
 #######
 
 resource "aws_instance" "jenkins_primary" {
-  ami           = "${data.aws_ami.amazon_linux_2.id}"
+  ami           = "${data.aws_ami.base.id}"
   instance_type = "t2.micro"
   key_name      = "infrastructure"
 
@@ -139,9 +139,6 @@ resource "aws_instance" "jenkins_primary" {
 
   user_data = <<-EOF
               #!/bin/bash
-              yum update -y
-              yum install -y docker
-              systemctl enable --now docker
               docker run -d --restart always \
                 --name jenkins \
                 -p 8080:8080 \
@@ -245,7 +242,7 @@ resource "aws_security_group_rule" "primary_egress" {
 #######
 resource "aws_instance" "jenkins_worker" {
   count                = "${var.num_workers}"
-  ami                  = "${data.aws_ami.amazon_linux_2.id}"
+  ami                  = "${data.aws_ami.base.id}"
   instance_type        = "t2.micro"
   key_name             = "infrastructure"
   iam_instance_profile = "${var.worker_iam_profile}"
@@ -266,9 +263,6 @@ resource "aws_instance" "jenkins_worker" {
 
   user_data = <<-EOF
               #!/bin/bash
-              yum update -y
-              yum install -y docker
-              systemctl enable --now docker
               docker run --restart always \
                 -v /var/run/docker.sock:/var/run/docker.sock \
                 csanchez/jenkins-swarm-slave -master "http://${aws_instance.jenkins_primary.private_ip}":8080 -username adhoc -password adhoc -executors "${var.num_executors}"
