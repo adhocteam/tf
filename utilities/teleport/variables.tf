@@ -17,6 +17,6 @@ variable "auth_count" {
 }
 
 variable "key_pair" {
-  decription = "the name of the key pair that provides access to the nodes if jumpbox is used"
-  default    = "infrastructure"
+  description = "the name of the key pair that provides access to the nodes if jumpbox is used"
+  default     = "infrastructure"
 }

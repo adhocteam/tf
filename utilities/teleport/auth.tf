@@ -61,14 +61,14 @@ data "template_file" "auth_user_data" {
   vars {
     nodename                 = "teleport-auth-${count.index}"
     cluster_token            = "${random_string.cluster_token.result}"
-    region                   = "${data.aws_region.current}"
+    region                   = "${data.aws_region.current.name}"
     dynamo_table_name        = "${aws_dynamodb_table.teleport_state.name}"
     dynamo_events_table_name = "${aws_dynamodb_table.teleport_events.name}"
     s3_bucket                = "${aws_s3_bucket.recordings.id}"
     cluster_name             = "${var.env}"
     client_id                = "${data.aws_secretsmanager_secret_version.github_client_id.secret_string}"
     client_secret            = "${data.aws_secretsmanager_secret_version.github_secret.secret_string}"
-    proxy_domain             = "${module.teleport_dns.fqdn}"
+    proxy_domain             = "${aws_route53_record.public.fqdn}"
   }
 }
 
@@ -152,7 +152,7 @@ resource "aws_security_group_rule" "jumpbox_auth" {
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${aws_security_group.jumpbox.id}"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${aws_security_group.auths.id}"
 }

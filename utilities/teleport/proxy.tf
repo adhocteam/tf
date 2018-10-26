@@ -29,7 +29,7 @@ resource "aws_elb" "proxy" {
     instance_protocol  = "tcp"
     lb_port            = 443
     lb_protocol        = "ssl"
-    ssl_certificate_id = "${module.teleport_dns.cert_arn}"
+    ssl_certificate_id = "${module.cert.arn}"
   }
 
   health_check {
@@ -105,7 +105,7 @@ data "template_file" "user_data" {
   vars {
     nodename      = "teleport-proxy-${count.index}"
     cluster_token = "${random_string.cluster_token.result}"
-    proxy_domain  = "${module.teleport_dns.fqdn}"
+    proxy_domain  = "${aws_route53_record.public.fqdn}"
   }
 }
 
@@ -198,7 +198,7 @@ resource "aws_security_group_rule" "jumpbox_proxy" {
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${aws_security_group.jumpbox.id}"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${aws_security_group.proxies.id}"
 }

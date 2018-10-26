@@ -35,13 +35,8 @@ data "aws_route53_zone" "external" {
   private_zone = false
 }
 
-data "aws_route53_zone" "internal" {
-  name         = "${var.env}.local"
-  private_zone = true
-}
-
-data "aws_acm_certificate" "wildcard" {
-  domain      = "${var.domain_name}"
+data "aws_acm_certificate" "env_wildcard" {
+  domain      = "${var.env}.${var.domain_name}"
   most_recent = true
 }
 
@@ -55,6 +50,16 @@ data "aws_secretsmanager_secret_version" "github_client_id" {
 
 data "aws_secretsmanager_secret_version" "github_secret" {
   secret_id = "${var.env}/teleport/github_secret"
+}
+
+data "aws_security_group" "jumpbox" {
+  vpc_id = "${data.aws_vpc.vpc.id}"
+
+  tags {
+    env  = "${var.env}"
+    app  = "utilities"
+    Name = "jumpbox"
+  }
 }
 
 data "aws_ami" "base" {

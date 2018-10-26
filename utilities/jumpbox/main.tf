@@ -17,17 +17,18 @@ resource "aws_instance" "jumpbox" {
   # TODO(bob) use https://github.com/widdix/aws-ec2-ssh to control access here?
   key_name = "${var.key_pair}"
 
-  # user_data = ""
-
   associate_public_ip_address = true
   subnet_id                   = "${element(data.aws_subnet.public_subnet.*.id,count.index)}"
   vpc_security_group_ids      = ["${aws_security_group.jumpbox.id}"]
+
   lifecycle {
     ignore_changes = ["ami"]
   }
+
   credit_specification {
     cpu_credits = "unlimited"
   }
+
   tags {
     Name      = "jumpbox"
     app       = "utilities"

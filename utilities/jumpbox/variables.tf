@@ -7,6 +7,6 @@ variable "domain_name" {
 }
 
 variable "key_pair" {
-  decription = "the name of the key pair that provides access to the jumpbox, defaults to infrastructure"
-  default    = "infrastructure"
+  description = "the name of the key pair that provides access to the jumpbox, defaults to infrastructure"
+  default     = "infrastructure"
 }

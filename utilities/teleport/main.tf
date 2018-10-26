@@ -4,13 +4,22 @@
 #######
 
 # Public DNS name for client use to connect to proxies
-module "teleport_dns" {
-  source = "../../dns_plus_cert"
+resource "aws_route53_record" "public" {
+  zone_id = "${data.aws_route53_zone.external.id}"
+  name    = "teleport.${var.env}"
+  type    = "CNAME"
+  ttl     = 30
 
+  records = ["${aws_elb.proxy.dns_name}"]
+}
+
+module "cert" {
+  source      = "../../wildcard_cert"
   env         = "${var.env}"
-  domain_name = "${var.domain_name}"
-  subdomain   = "teleport.${var.env}"
-  target      = "${aws_elb.proxy.dns_name}"
+  root_domain = "${var.domain_name}"
+
+  # Can't use aws_route53_record.public.fqdn here to prevent cycle with ELB
+  domain = "teleport.${var.env}.${var.domain_name}"
 }
 
 # Private DNS name inside VPC for auth nodes as light-weight service discovery
