@@ -10,6 +10,7 @@ module "jenkins" {
   domain_name = "${var.domain_name}"
 }
 
+# Disabled by default
 module "jumpbox" {
   source      = "./jumpbox"
   env         = "${var.env}"

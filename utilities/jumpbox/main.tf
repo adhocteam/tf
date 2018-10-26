@@ -10,7 +10,13 @@
 # Jumpbox instances
 #######
 
+# Ensure at most 1 jumpbox created
+locals {
+  enabled = "${var.enabled >=1 ? 1 : 0}"
+}
+
 resource "aws_instance" "jumpbox" {
+  count         = "${local.enabled}"
   ami           = "${data.aws_ami.amazon_linux_2.id}"
   instance_type = "t3.nano"
 
@@ -89,7 +95,7 @@ resource "aws_security_group_rule" "jump_into_vpc" {
 # Domain name for the instance
 #######
 
-resource "aws_route53_record" "proxies_external" {
+resource "aws_route53_record" "jumpbox" {
   zone_id = "${data.aws_route53_zone.external.id}"
   name    = "jumpbox.${var.env}"
   type    = "CNAME"

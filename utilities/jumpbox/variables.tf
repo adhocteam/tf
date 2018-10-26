@@ -7,6 +7,11 @@ variable "domain_name" {
 }
 
 variable "key_pair" {
-  description = "the name of the key pair that provides access to the jumpbox, defaults to infrastructure"
+  description = "OPTIONAL: the name of the key pair that provides access to the jumpbox, defaults to infrastructure"
   default     = "infrastructure"
+}
+
+variable "enabled" {
+  description = "OPTIONAL: set to 1 to enable jumpbox, disabled otherwise"
+  default     = 0
 }
