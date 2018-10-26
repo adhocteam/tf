@@ -26,6 +26,7 @@ teleport:
 auth_service:
   enabled: "yes"
   listen_addr: 0.0.0.0:3025
+  public_addr: auth.teleport.local:3025
   tokens:
   - "auth,proxy,node:${cluster_token}"
   cluster_name: ${cluster_name}

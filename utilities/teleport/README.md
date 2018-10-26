@@ -27,7 +27,7 @@ Visit `https://teleport.<env>.<domain_name>/` and use the login with Github butt
 
 ### Via the command line
 
-You can download the client from [Gravitational](https://gravitational.com/teleport/download/) but be sure to use version 3.0.0 or later. You can also use direct links for [Linux](https://get.gravitational.com/teleport-v3.0.0-linux-amd64-bin.tar.gz) or [Mac](https://get.gravitational.com/teleport-v3.0.0-darwin-amd64-bin.tar.gz) to get the 3.0.0 binaries.
+You can download the client from [Gravitational](https://gravitational.com/teleport/download/) but be sure to use version 3.0.1 or later. You can also use direct links for [Linux](https://get.gravitational.com/teleport-v3.0.1-linux-amd64-bin.tar.gz) or [Mac](https://get.gravitational.com/teleport-v3.0.1-darwin-amd64-bin.tar.gz) to get the 3.0.1 binaries.
 
 Decompress and put the `tsh` someplace on your `$PATH`. There's an included `install` script that'll handle that but will also copy over the unneeded `teleport` and `tctl` binaries.
 
