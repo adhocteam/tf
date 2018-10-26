@@ -23,7 +23,13 @@ Our [plain instnace module](https://github.com/adhocteam/tf/tree/master/plain_in
 allows further configuration via Ansible:
 
 ```hcl
+module "app" {
+  source = "github.com/adhocteam/tf//plain_instance?ref=vX.X.X"
 
+  env              = "test"
+  domain_name      = "domain.name"
+  application_name = "demo"
+}
 ```
 
 
@@ -31,13 +37,17 @@ allows further configuration via Ansible:
 To use the AMI, pull in the latest AMI version in Terraform
 
 ```hcl
+data "aws_ami" "base" {
+  most_recent = true
 
+  filter {
+    name   = "owner-alias"
+    values = ["self"]
+  }
+
+  filter {
+    name   = "name"
+    values = ["adhoc_base*"]
+  }
+}
 ```
-
-And then provide the cluster secret for the SSH agent
-
-```hcl
-
-```
-
-If the cluster secret isn't provided, then SSH is still enabled for access directly or via a jumpbox.
