@@ -28,7 +28,6 @@ module "utilities" {
 
   env         = "${local.env}"
   domain_name = "${local.domain_name}"
-  region      = "${var.region}"
 }
 
 module "static" {

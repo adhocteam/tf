@@ -2,10 +2,6 @@ variable "env" {
   description = "the name of the environment, e.g. \"testing\". it must be unique in the account."
 }
 
-variable "region" {
-  description = "the preferred AWS region for resources."
-}
-
 variable "domain_name" {
   description = "the external domain name for reaching the public resources. must have a certificate in ACM associated with it."
 }
@@ -20,7 +16,7 @@ variable "auth_count" {
   default     = "1"
 }
 
-variable "emergency_jumpbox" {
-  description = "1 provisions an emergency jumpbox providing SSH access to Teleport hosts"
-  default     = "0"
+variable "key_pair" {
+  decription = "the name of the key pair that provides access to the nodes if jumpbox is used"
+  default    = "infrastructure"
 }

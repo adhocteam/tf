@@ -18,8 +18,6 @@
         dest: /etc/
       with_items:
         - teleport.yaml
-        - teleport_proxy.yaml
-        - teleport_auth.yaml
 
     - name: install teleport systemd units
       copy:
@@ -52,18 +50,13 @@
         - /var/run/teleport
         - /var/lib/teleport
 
-    - name: Install Teleport Github Auth template
-      copy:
-        src: files/teleport/github.yaml
-        dest: /var/lib/teleport/github.yaml
-        owner: teleport
-        group: adm
-
     - name: install packages
       yum:
         name: "{{ item }}"
         state: present
       with_items:
+        - curl
+        - git
         - jq
         - docker
 

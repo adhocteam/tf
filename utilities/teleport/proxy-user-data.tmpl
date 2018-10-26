@@ -1,6 +1,32 @@
 #!/bin/bash
 set -euo pipefail
 
+cat << EOF > /etc/teleport_proxy.yaml
+teleport:
+  nodename: ${nodename}
+  data_dir: /var/lib/teleport
+  pid_file: /var/run/teleport/teleport.pid
+  auth_token: ${cluster_token}
+  auth_servers:
+  - auth.teleport.local:3025
+  connection_limits:
+    max_connections: 100
+    max_users: 50
+  log:
+    output: stderr
+    severity: INFO
+auth_service:
+  enabled: "no"
+ssh_service:
+  enabled: "no"
+proxy_service:
+  enabled: "yes"
+  listen_addr: 0.0.0.0:3023
+  web_listen_addr: 0.0.0.0:3080
+  tunnel_listen_addr: 0.0.0.0:3024
+  public_addr: ${proxy_domain}
+EOF
+
 # Stop the local node service
 systemctl disable --now teleport
 

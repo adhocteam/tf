@@ -2,6 +2,8 @@
 ### Lookup resources already created by foundation
 #######
 
+data "aws_region" "current" {}
+
 data "aws_vpc" "vpc" {
   tags {
     env = "${var.env}"
@@ -57,7 +59,7 @@ data "aws_secretsmanager_secret_version" "github_secret" {
 
 data "aws_ami" "base" {
   most_recent = true
-  owners = ["self"]
+  owners      = ["self"]
 
   filter {
     name   = "name"
@@ -67,7 +69,7 @@ data "aws_ami" "base" {
 
 data "aws_ami" "amazon_linux_2" {
   most_recent = true
-  owners = ["amazon"]
+  owners      = ["amazon"]
 
   filter {
     name   = "name"

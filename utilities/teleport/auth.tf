@@ -61,14 +61,14 @@ data "template_file" "auth_user_data" {
   vars {
     nodename                 = "teleport-auth-${count.index}"
     cluster_token            = "${random_string.cluster_token.result}"
-    cluster_name             = "${var.env}"
-    proxy_domain             = "${aws_route53_record.proxies_external.fqdn}"
-    region                   = "${var.region}"
+    region                   = "${data.aws_region.current}"
     dynamo_table_name        = "${aws_dynamodb_table.teleport_state.name}"
     dynamo_events_table_name = "${aws_dynamodb_table.teleport_events.name}"
     s3_bucket                = "${aws_s3_bucket.recordings.id}"
+    cluster_name             = "${var.env}"
     client_id                = "${data.aws_secretsmanager_secret_version.github_client_id.secret_string}"
     client_secret            = "${data.aws_secretsmanager_secret_version.github_secret.secret_string}"
+    proxy_domain             = "${module.teleport_dns.fqdn}"
   }
 }
 
@@ -76,7 +76,7 @@ resource "aws_instance" "auths" {
   count         = "${var.auth_count}"
   ami           = "${data.aws_ami.base.id}"
   instance_type = "t3.nano"
-  key_name      = "infrastructure"
+  key_name      = "${var.key_pair}"
 
   iam_instance_profile = "${aws_iam_instance_profile.auth.name}"
   user_data            = "${element(data.template_file.auth_user_data.*.rendered, count.index)}"

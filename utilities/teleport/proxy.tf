@@ -29,7 +29,7 @@ resource "aws_elb" "proxy" {
     instance_protocol  = "tcp"
     lb_port            = 443
     lb_protocol        = "ssl"
-    ssl_certificate_id = "${data.aws_acm_certificate.wildcard.arn}"
+    ssl_certificate_id = "${module.teleport_dns.cert_arn}"
   }
 
   health_check {
@@ -98,18 +98,22 @@ resource "aws_security_group_rule" "lb_egress" {
 #######
 # Proxy instances
 #######
-
-# TODO(bob) Currently doesn't render anything so maybe change this later to just load the file
 data "template_file" "user_data" {
   count    = "${var.proxy_count}"
   template = "${file("${path.module}/proxy-user-data.tmpl")}"
+
+  vars {
+    nodename      = "teleport-proxy-${count.index}"
+    cluster_token = "${random_string.cluster_token.result}"
+    proxy_domain  = "${module.teleport_dns.fqdn}"
+  }
 }
 
 resource "aws_instance" "proxies" {
   count         = "${var.proxy_count}"
   ami           = "${data.aws_ami.base.id}"
   instance_type = "t3.micro"
-  key_name      = "infrastructure"
+  key_name      = "${var.key_pair}"
 
   user_data = "${element(data.template_file.user_data.*.rendered, count.index)}"
 
