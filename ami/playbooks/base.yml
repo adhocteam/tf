@@ -3,6 +3,11 @@
   user: ec2-user
   become: True
   tasks:
+    - name: install all updates
+      yum:
+        name: '*'
+        state: latest
+
     - name: install teleport binaries
       copy:
         src: files/teleport/{{item}}

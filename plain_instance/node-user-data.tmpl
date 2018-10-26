@@ -1,9 +1,0 @@
-#!/bin/bash
-set -euo pipefail
-
-# Download binaries and copy to /usr/local/bin
-pushd $(mktemp -d)
-curl -sfLo teleport.tar.gz https://get.gravitational.com/teleport-${teleport_version}-linux-amd64-bin.tar.gz
-tar xzf teleport.tar.gz
-./teleport/install
-popd
