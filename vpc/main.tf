@@ -10,7 +10,7 @@
 # VPC with internal DNS support
 ####
 
-resource "aws_vpc" "proxy_webui" {
+resource "aws_vpc" "primary" {
   cidr_block           = "${var.cidr}"
   enable_dns_hostnames = true          # necessary for internal DNS support
   enable_dns_support   = true
@@ -32,12 +32,6 @@ resource "aws_route53_zone" "internal" {
     name      = "internal-dns"
   }
 }
-
-resource "aws_route53_record" "auth" {
-  zone_id = "${data.aws_route53_zone.internal.id}"
-  name    = "teleport-auth"
-  type    = "CNAME"
-  ttl     = 30
 
 ####
 # Network Subnets
