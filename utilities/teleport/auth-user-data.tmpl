@@ -1,30 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-# Download binaries and copy to /usr/local/bin
-pushd $(mktemp -d)
-curl -sfLo teleport.tar.gz https://get.gravitational.com/teleport-${teleport_version}-linux-amd64-bin.tar.gz
-tar xzf teleport.tar.gz
-cp -f teleport/teleport teleport/tctl teleport/tsh /usr/local/bin
-popd
+echo "Overwrite teleport auth config file"
 
-# Create a teleport user that owns an empty /var/lib/teleport
-useradd -r teleport -G adm -s /sbin/nologin -d /var/lib/teleport -m -k /dev/null -c "Teleport SSH Bastion"
-
-# To hold the PID file
-mkdir -p /var/run/teleport
-chown -R teleport:adm /var/run/teleport
-
-echo "Create main teleport config file"
-
-cat << EOF > /etc/teleport.yaml
+cat << EOF > /etc/teleport_auth.yaml
 teleport:
   nodename: ${nodename}
   data_dir: /var/lib/teleport
   pid_file: /var/run/teleport/teleport.pid
   auth_token: ${cluster_token}
   auth_servers:
-  - ${auth_domain}:3025
+  - auth.teleport.local:3025
   connection_limits:
     max_connections: 100
     max_users: 50
@@ -40,6 +26,7 @@ teleport:
 auth_service:
   enabled: "yes"
   listen_addr: 0.0.0.0:3025
+  public_addr: auth.teleport.local:3025
   tokens:
   - "auth,proxy,node:${cluster_token}"
   cluster_name: ${cluster_name}
@@ -72,30 +59,11 @@ spec:
 EOF
 chown -R teleport:adm /var/lib/teleport
 
-echo "Create systemd unit file"
-
-cat << EOF > /etc/systemd/system/teleport.service
-[Unit]
-Description=Teleport SSH Service
-After=network.target
-
-[Service]
-User=teleport
-Group=adm
-Type=simple
-Restart=always
-RestartSec=5
-ExecStart=/usr/local/bin/teleport start --config=/etc/teleport.yaml --diag-addr=0.0.0.0:3434 --insecure-no-tls
-ExecReload=/bin/kill -HUP \$MAINPID
-PIDFile=/var/run/teleport/teleport.pid
-LimitNOFILE=65536
-
-[Install]
-WantedBy=multi-user.target
-EOF
+# Stop the local node service
+systemctl disable --now teleport
 
 # Start daemon and endure through restarts
-systemctl enable --now teleport
+systemctl enable --now teleport_auth
 
 echo "Create GitHub authenticator"
 # Sleep to allow time for the authentication service to start up

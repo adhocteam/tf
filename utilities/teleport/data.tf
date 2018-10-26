@@ -2,6 +2,8 @@
 ### Lookup resources already created by foundation
 #######
 
+data "aws_region" "current" {}
+
 data "aws_vpc" "vpc" {
   tags {
     env = "${var.env}"
@@ -33,13 +35,8 @@ data "aws_route53_zone" "external" {
   private_zone = false
 }
 
-data "aws_route53_zone" "internal" {
-  name         = "${var.env}.local"
-  private_zone = true
-}
-
-data "aws_acm_certificate" "wildcard" {
-  domain      = "${var.domain_name}"
+data "aws_acm_certificate" "env_wildcard" {
+  domain      = "${var.env}.${var.domain_name}"
   most_recent = true
 }
 
@@ -55,16 +52,22 @@ data "aws_secretsmanager_secret_version" "github_secret" {
   secret_id = "${var.env}/teleport/github_secret"
 }
 
-data "aws_ami" "amazon_linux_2" {
-  most_recent = true
+data "aws_security_group" "jumpbox" {
+  vpc_id = "${data.aws_vpc.vpc.id}"
 
-  filter {
-    name   = "owner-alias"
-    values = ["amazon"]
+  tags {
+    env  = "${var.env}"
+    app  = "utilities"
+    Name = "jumpbox"
   }
+}
+
+data "aws_ami" "base" {
+  most_recent = true
+  owners      = ["self"]
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm*"]
+    values = ["adhoc_base*"]
   }
 }

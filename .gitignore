@@ -7,3 +7,6 @@
 
 # .tfvars files
 *.tfvars
+
+# Ansible retries from packer
+*.retry
