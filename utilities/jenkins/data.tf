@@ -35,7 +35,7 @@ data "aws_route53_zone" "internal" {
 }
 
 data "aws_acm_certificate" "wildcard" {
-  domain      = "adhocteam.us"
+  domain      = "${var.domain_name}"
   most_recent = true
 }
 
