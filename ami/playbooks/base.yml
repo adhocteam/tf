@@ -1,0 +1,75 @@
+---
+- hosts: all
+  user: ec2-user
+  become: True
+  tasks:
+    - name: install all updates
+      yum:
+        name: '*'
+        state: latest
+
+    - name: install teleport binaries
+      copy:
+        src: files/teleport/{{item}}
+        dest: /usr/local/bin/
+      with_items:
+        - tctl
+        - teleport
+        - teleport-secrets
+
+    - name: install teleport configurations
+      copy:
+        src: files/teleport/{{item}}
+        dest: /etc/
+      with_items:
+        - teleport.yaml
+
+    - name: install teleport systemd units
+      copy:
+        src: files/teleport/{{item}}
+        dest: /etc/systemd/system/
+      with_items:
+        - teleport.service
+        - teleport_proxy.service
+        - teleport_auth.service
+
+    - name: Add the teleport user
+      user:
+        name: teleport
+        comment: Teleport SSH Bastion
+        group: adm
+        shell: /sbin/nologin
+        system: yes
+        home: /var/lib/teleport
+        skeleton: /dev/null
+        password_lock: yes
+
+    - name: Create directories for Teleport files
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: 0755
+        owner: teleport
+        group: adm
+      with_items:
+        - /var/run/teleport
+        - /var/lib/teleport
+
+    - name: install packages
+      yum:
+        name: [curl, git, jq, docker]
+        state: present
+
+    - name: enable services
+      service:
+        name: "{{ item }}"
+        enabled: yes
+      with_items:
+        - docker
+        - teleport
+
+    - name: add ec2-user to docker group
+      user:
+        name: ec2-user
+        append: yes
+        groups: docker

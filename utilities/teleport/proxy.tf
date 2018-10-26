@@ -29,7 +29,7 @@ resource "aws_elb" "proxy" {
     instance_protocol  = "tcp"
     lb_port            = 443
     lb_protocol        = "ssl"
-    ssl_certificate_id = "${data.aws_acm_certificate.wildcard.arn}"
+    ssl_certificate_id = "${module.cert.arn}"
   }
 
   health_check {
@@ -98,26 +98,22 @@ resource "aws_security_group_rule" "lb_egress" {
 #######
 # Proxy instances
 #######
-
-# Must use template here to get ports as ints
 data "template_file" "user_data" {
   count    = "${var.proxy_count}"
   template = "${file("${path.module}/proxy-user-data.tmpl")}"
 
   vars {
-    teleport_version = "v2.7.4"
-    nodename         = "teleport-proxy-${count.index}"
-    cluster_token    = "${random_string.cluster_token.result}"
-    auth_domain      = "${aws_route53_record.auth_internal.fqdn}"
-    proxy_domain     = "${aws_route53_record.proxies_external.fqdn}"
+    nodename      = "teleport-proxy-${count.index}"
+    cluster_token = "${random_string.cluster_token.result}"
+    proxy_domain  = "${aws_route53_record.public.fqdn}"
   }
 }
 
 resource "aws_instance" "proxies" {
   count         = "${var.proxy_count}"
-  ami           = "${data.aws_ami.amazon_linux_2.id}"
+  ami           = "${data.aws_ami.base.id}"
   instance_type = "t3.micro"
-  key_name      = "infrastructure"
+  key_name      = "${var.key_pair}"
 
   user_data = "${element(data.template_file.user_data.*.rendered, count.index)}"
 
@@ -185,7 +181,7 @@ resource "aws_security_group_rule" "proxy_ssh" {
   security_group_id = "${aws_security_group.proxies.id}"
 }
 
-# Must allow talking to the world to pull down teleport binaries (for now)
+# Must allow talking to the world to call out to AWS APIs
 resource "aws_security_group_rule" "proxy_egress" {
   type        = "egress"
   from_port   = 0
@@ -202,7 +198,7 @@ resource "aws_security_group_rule" "jumpbox_proxy" {
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${aws_security_group.jumpbox.id}"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${aws_security_group.proxies.id}"
 }

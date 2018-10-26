@@ -1,17 +1,3 @@
-data "aws_ami" "amazon_linux_2" {
-  most_recent = true
-
-  filter {
-    name   = "owner-alias"
-    values = ["amazon"]
-  }
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm*"]
-  }
-}
-
 data "aws_vpc" "vpc" {
   tags {
     env = "${var.env}"
@@ -49,5 +35,19 @@ data "aws_security_group" "jumpbox" {
     env  = "${var.env}"
     app  = "teleport"
     Name = "teleport-jumpbox"
+  }
+}
+
+data "aws_ami" "base" {
+  most_recent = true
+
+  filter {
+    name   = "owner-alias"
+    values = ["self"]
+  }
+
+  filter {
+    name   = "name"
+    values = ["adhoc_base*"]
   }
 }

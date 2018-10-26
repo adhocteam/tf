@@ -59,26 +59,24 @@ data "template_file" "auth_user_data" {
   template = "${file("${path.module}/auth-user-data.tmpl")}"
 
   vars {
-    teleport_version         = "v2.7.4"
     nodename                 = "teleport-auth-${count.index}"
     cluster_token            = "${random_string.cluster_token.result}"
-    cluster_name             = "${var.env}"
-    auth_domain              = "${aws_route53_record.auth_internal.fqdn}"
-    proxy_domain             = "${aws_route53_record.proxies_external.fqdn}"
-    region                   = "${var.region}"
+    region                   = "${data.aws_region.current.name}"
     dynamo_table_name        = "${aws_dynamodb_table.teleport_state.name}"
     dynamo_events_table_name = "${aws_dynamodb_table.teleport_events.name}"
     s3_bucket                = "${aws_s3_bucket.recordings.id}"
+    cluster_name             = "${var.env}"
     client_id                = "${data.aws_secretsmanager_secret_version.github_client_id.secret_string}"
     client_secret            = "${data.aws_secretsmanager_secret_version.github_secret.secret_string}"
+    proxy_domain             = "${aws_route53_record.public.fqdn}"
   }
 }
 
 resource "aws_instance" "auths" {
   count         = "${var.auth_count}"
-  ami           = "${data.aws_ami.amazon_linux_2.id}"
+  ami           = "${data.aws_ami.base.id}"
   instance_type = "t3.nano"
-  key_name      = "infrastructure"
+  key_name      = "${var.key_pair}"
 
   iam_instance_profile = "${aws_iam_instance_profile.auth.name}"
   user_data            = "${element(data.template_file.auth_user_data.*.rendered, count.index)}"
@@ -154,7 +152,7 @@ resource "aws_security_group_rule" "jumpbox_auth" {
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${aws_security_group.jumpbox.id}"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${aws_security_group.auths.id}"
 }

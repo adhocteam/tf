@@ -8,31 +8,20 @@ module "base" {
   loadbalancer_port = "${var.loadbalancer_port}"
 }
 
-data "template_file" "user_data" {
-  count    = "${var.instance_count}"
-  template = "${file("${path.module}/node-user-data.tmpl")}"
-
-  vars {
-    teleport_version = "v2.7.4"
-    app              = "${var.application_name}"
-    nodename         = "${var.application_name}-${count.index}"
-    cluster_token    = "${data.aws_secretsmanager_secret_version.cluster_token.secret_string}"
-    auth_domain      = "teleport-auth.${var.env}.local"
-  }
-}
-
 resource "aws_instance" "application" {
   count         = "${var.instance_count}"
-  ami           = "${data.aws_ami.amazon_linux_2.id}"
+  ami           = "${data.aws_ami.base.id}"
   instance_type = "${var.instance_size}"
 
-  # iam_instance_profile = "${var.pubweb_instance_role}"
-  user_data = "${element(data.template_file.user_data.*.rendered, count.index)}"
-  key_name  = "infrastructure"
+  iam_instance_profile = "${var.instance_role}"
+  user_data            = "${var.user_data}"
+  key_name             = "${var.key_pair}"
 
   associate_public_ip_address = false
-  subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,count.index)}" #distribute instances across AZs
-  vpc_security_group_ids      = ["${module.base.app_sg_id}"]
+
+  #distribute instances across AZs
+  subnet_id              = "${element(data.aws_subnet.application_subnet.*.id,count.index)}"
+  vpc_security_group_ids = ["${module.base.app_sg_id}"]
 
   lifecycle {
     ignore_changes = ["ami"]
