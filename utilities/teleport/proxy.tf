@@ -99,23 +99,15 @@ resource "aws_security_group_rule" "lb_egress" {
 # Proxy instances
 #######
 
-# Must use template here to get ports as ints
+# TODO(bob) Currently doesn't render anything so maybe change this later to just load the file
 data "template_file" "user_data" {
   count    = "${var.proxy_count}"
   template = "${file("${path.module}/proxy-user-data.tmpl")}"
-
-  vars {
-    teleport_version = "v2.7.4"
-    nodename         = "teleport-proxy-${count.index}"
-    cluster_token    = "${random_string.cluster_token.result}"
-    auth_domain      = "${aws_route53_record.auth_internal.fqdn}"
-    proxy_domain     = "${aws_route53_record.proxies_external.fqdn}"
-  }
 }
 
 resource "aws_instance" "proxies" {
   count         = "${var.proxy_count}"
-  ami           = "${data.aws_ami.amazon_linux_2.id}"
+  ami           = "${data.aws_ami.base.id}"
   instance_type = "t3.micro"
   key_name      = "infrastructure"
 
@@ -185,7 +177,7 @@ resource "aws_security_group_rule" "proxy_ssh" {
   security_group_id = "${aws_security_group.proxies.id}"
 }
 
-# Must allow talking to the world to pull down teleport binaries (for now)
+# Must allow talking to the world to call out to AWS APIs
 resource "aws_security_group_rule" "proxy_egress" {
   type        = "egress"
   from_port   = 0

@@ -55,13 +55,19 @@ data "aws_secretsmanager_secret_version" "github_secret" {
   secret_id = "${var.env}/teleport/github_secret"
 }
 
-data "aws_ami" "amazon_linux_2" {
+data "aws_ami" "base" {
   most_recent = true
+  owners = ["self"]
 
   filter {
-    name   = "owner-alias"
-    values = ["amazon"]
+    name   = "name"
+    values = ["adhoc_base*"]
   }
+}
+
+data "aws_ami" "amazon_linux_2" {
+  most_recent = true
+  owners = ["amazon"]
 
   filter {
     name   = "name"

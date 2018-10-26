@@ -59,11 +59,9 @@ data "template_file" "auth_user_data" {
   template = "${file("${path.module}/auth-user-data.tmpl")}"
 
   vars {
-    teleport_version         = "v2.7.4"
     nodename                 = "teleport-auth-${count.index}"
     cluster_token            = "${random_string.cluster_token.result}"
     cluster_name             = "${var.env}"
-    auth_domain              = "${aws_route53_record.auth_internal.fqdn}"
     proxy_domain             = "${aws_route53_record.proxies_external.fqdn}"
     region                   = "${var.region}"
     dynamo_table_name        = "${aws_dynamodb_table.teleport_state.name}"
@@ -76,7 +74,7 @@ data "template_file" "auth_user_data" {
 
 resource "aws_instance" "auths" {
   count         = "${var.auth_count}"
-  ami           = "${data.aws_ami.amazon_linux_2.id}"
+  ami           = "${data.aws_ami.base.id}"
   instance_type = "t3.nano"
   key_name      = "infrastructure"
 
