@@ -34,11 +34,6 @@ data "aws_route53_zone" "internal" {
   private_zone = true
 }
 
-data "aws_acm_certificate" "wildcard" {
-  domain      = "${var.domain_name}"
-  most_recent = true
-}
-
 # Find the newest Amazon Linux 2 AMI to keep up to date on patches
 data "aws_ami" "amazon_linux_2" {
   most_recent = true

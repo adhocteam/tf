@@ -35,11 +35,6 @@ data "aws_route53_zone" "external" {
   private_zone = false
 }
 
-data "aws_acm_certificate" "env_wildcard" {
-  domain      = "${var.env}.${var.domain_name}"
-  most_recent = true
-}
-
 data "aws_kms_key" "main" {
   key_id = "alias/${var.env}-main"
 }
