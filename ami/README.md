@@ -39,11 +39,7 @@ To use the AMI, pull in the latest AMI version in Terraform
 ```hcl
 data "aws_ami" "base" {
   most_recent = true
-
-  filter {
-    name   = "owner-alias"
-    values = ["self"]
-  }
+  owners      = ["self"]
 
   filter {
     name   = "name"

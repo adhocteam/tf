@@ -12,7 +12,7 @@
 
 # Ensure at most 1 jumpbox created
 locals {
-  enabled = "${var.enabled >=1 ? 1 : 0}"
+  enabled = "${var.enabled ? 1 : 0}"
 }
 
 resource "aws_instance" "jumpbox" {

@@ -12,6 +12,6 @@ variable "key_pair" {
 }
 
 variable "enabled" {
-  description = "OPTIONAL: set to 1 to enable jumpbox, disabled otherwise"
-  default     = 0
+  description = "OPTIONAL: set to true to enable jumpbox"
+  default     = false
 }

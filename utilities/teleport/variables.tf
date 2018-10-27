@@ -20,3 +20,8 @@ variable "key_pair" {
   description = "the name of the key pair that provides access to the nodes if jumpbox is used"
   default     = "infrastructure"
 }
+
+variable "jumpbox_sg" {
+  description = "OPTIONAL: the security group of any jumpbox to provide SSH access"
+  default     = ""
+}

@@ -195,12 +195,22 @@ resource "aws_security_group" "jenkins_primary" {
   }
 }
 
+resource "aws_security_group_rule" "primary_proxy_ssh" {
+  type                     = "ingress"
+  from_port                = 3022
+  to_port                  = 3022
+  protocol                 = "tcp"
+  source_security_group_id = "${var.ssh_proxy_sg}"
+
+  security_group_id = "${aws_security_group.jenkins_primary.id}"
+}
+
 resource "aws_security_group_rule" "primary_ssh_ingress" {
-  type        = "ingress"
-  from_port   = 22
-  to_port     = 22
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  source_security_group_id = "${var.jumpbox_sg}"
 
   security_group_id = "${aws_security_group.jenkins_primary.id}"
 }
@@ -304,12 +314,22 @@ resource "aws_security_group" "jenkins_worker" {
   }
 }
 
+resource "aws_security_group_rule" "worker_proxy_ssh" {
+  type                     = "ingress"
+  from_port                = 3022
+  to_port                  = 3022
+  protocol                 = "tcp"
+  source_security_group_id = "${var.ssh_proxy_sg}"
+
+  security_group_id = "${aws_security_group.jenkins_worker.id}"
+}
+
 resource "aws_security_group_rule" "worker_ssh_ingress" {
-  type        = "ingress"
-  from_port   = 22
-  to_port     = 22
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  source_security_group_id = "${var.jumpbox_sg}"
 
   security_group_id = "${aws_security_group.jenkins_worker.id}"
 }
