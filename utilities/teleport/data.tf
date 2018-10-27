@@ -47,16 +47,6 @@ data "aws_secretsmanager_secret_version" "github_secret" {
   secret_id = "${var.env}/teleport/github_secret"
 }
 
-data "aws_security_group" "jumpbox" {
-  vpc_id = "${data.aws_vpc.vpc.id}"
-
-  tags {
-    env  = "${var.env}"
-    app  = "utilities"
-    Name = "jumpbox"
-  }
-}
-
 data "aws_ami" "base" {
   most_recent = true
   owners      = ["self"]

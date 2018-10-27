@@ -20,3 +20,13 @@ variable "num_executors" {
   description = "How many execution slots per node"
   default     = 4
 }
+
+variable "jumpbox_sg" {
+  description = "OPTIONAL: the security group of any jumpbox to provide SSH access"
+  default     = ""
+}
+
+variable "ssh_proxy_sg" {
+  description = "OPTIONAL: the security group of the Teleport proxies"
+  default     = ""
+}

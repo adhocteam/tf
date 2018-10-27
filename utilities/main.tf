@@ -1,18 +1,23 @@
-module "teleport" {
-  source      = "./teleport"
-  env         = "${var.env}"
-  domain_name = "${var.domain_name}"
-}
-
-module "jenkins" {
-  source      = "./jenkins"
-  env         = "${var.env}"
-  domain_name = "${var.domain_name}"
-}
-
-# Disabled by default
 module "jumpbox" {
   source      = "./jumpbox"
   env         = "${var.env}"
   domain_name = "${var.domain_name}"
+
+  # Turned off by default
+  enabled = false
+}
+
+module "teleport" {
+  source      = "./teleport"
+  env         = "${var.env}"
+  domain_name = "${var.domain_name}"
+  jumpbox_sg  = "${module.jumpbox.security_group}"
+}
+
+module "jenkins" {
+  source       = "./jenkins"
+  env          = "${var.env}"
+  domain_name  = "${var.domain_name}"
+  jumpbox_sg   = "${module.jumpbox.security_group}"
+  ssh_proxy_sg = "${module.teleport.security_group}"
 }
