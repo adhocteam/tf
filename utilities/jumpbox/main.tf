@@ -102,4 +102,6 @@ resource "aws_route53_record" "jumpbox" {
   ttl     = 30
 
   records = ["${aws_instance.jumpbox.public_dns}"]
+
+  depends_on = ["aws_instance.jumpbox"]
 }
