@@ -36,7 +36,7 @@ resource "aws_route53_zone" "teleport" {
 }
 
 resource "aws_route53_record" "auth_internal" {
-  zone_id = "$aws_route53_zone.teleport.id}"
+  zone_id = "${aws_route53_zone.teleport.id}"
   name    = "auth"
   type    = "CNAME"
   ttl     = 30
