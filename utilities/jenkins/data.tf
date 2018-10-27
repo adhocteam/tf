@@ -36,11 +36,7 @@ data "aws_route53_zone" "internal" {
 
 data "aws_ami" "base" {
   most_recent = true
-
-  filter {
-    name   = "owner-alias"
-    values = ["self"]
-  }
+  owners      = ["self"]
 
   filter {
     name   = "name"
