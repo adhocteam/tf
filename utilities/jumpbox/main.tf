@@ -96,10 +96,11 @@ resource "aws_security_group_rule" "jump_into_vpc" {
 #######
 
 resource "aws_route53_record" "jumpbox" {
+  count   = "${local.enabled}"
   zone_id = "${data.aws_route53_zone.external.id}"
   name    = "jumpbox.${var.env}"
-  type    = "A"
+  type    = "CNAME"
   ttl     = 30
 
-  records = ["${aws_instance.jumpbox.public_ip}"]
+  records = ["${aws_instance.jumpbox.public_dns}"]
 }
