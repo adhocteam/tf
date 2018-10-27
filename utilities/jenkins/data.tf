@@ -34,11 +34,6 @@ data "aws_route53_zone" "internal" {
   private_zone = true
 }
 
-data "aws_acm_certificate" "wildcard" {
-  domain      = "${var.domain_name}"
-  most_recent = true
-}
-
 data "aws_ami" "base" {
   most_recent = true
 

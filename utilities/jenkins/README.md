@@ -1,3 +1,5 @@
+Jenkins will be available at: `https://jenkins.<env>.<domain_name>`
+
 ## Jenkins Terraform
  This terraform file will provision an EC2 instance, install docker, and then pull the jenkins image and start jenkins on port 8080
 
@@ -9,6 +11,6 @@ Input client ID & client secret
 Under user groups give the authenticated group permission you desire, at a minimum they need read access
 
  ### Connecting jenkins to Github Repositories
- Open blue ocean 
+ Open blue ocean
  Add personal access token
  Select organization/repo
