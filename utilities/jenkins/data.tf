@@ -34,17 +34,16 @@ data "aws_route53_zone" "internal" {
   private_zone = true
 }
 
-# Find the newest Amazon Linux 2 AMI to keep up to date on patches
-data "aws_ami" "amazon_linux_2" {
+data "aws_ami" "base" {
   most_recent = true
 
   filter {
     name   = "owner-alias"
-    values = ["amazon"]
+    values = ["self"]
   }
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm*"]
+    values = ["adhoc_base*"]
   }
 }

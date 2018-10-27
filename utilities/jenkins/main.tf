@@ -42,19 +42,6 @@ resource "aws_alb_target_group" "primary" {
   }
 }
 
-resource "aws_alb_listener" "https" {
-  load_balancer_arn = "${aws_alb.jenkins.arn}"
-  port              = "443"
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = "${data.aws_acm_certificate.wildcard.arn}"
-
-  default_action {
-    target_group_arn = "${aws_alb_target_group.primary.arn}"
-    type             = "forward"
-  }
-}
-
 resource "aws_lb_listener" "redirect_to_https" {
   load_balancer_arn = "${aws_alb.jenkins.arn}"
   port              = "80"
@@ -74,11 +61,32 @@ resource "aws_lb_listener" "redirect_to_https" {
 # Assign domain name
 resource "aws_route53_record" "alb" {
   zone_id = "${data.aws_route53_zone.external.id}"
-  name    = "jenkins"
+  name    = "jenkins.${var.env}"
   type    = "CNAME"
   ttl     = 30
 
   records = ["${aws_alb.jenkins.dns_name}"]
+}
+
+module "cert" {
+  source = "../../wildcard_cert"
+
+  env         = "${var.env}"
+  root_domain = "${var.domain_name}"
+  domain      = "${aws_route53_record.alb.fqdn}"
+}
+
+resource "aws_alb_listener" "https" {
+  load_balancer_arn = "${aws_alb.jenkins.arn}"
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = "${module.cert.arn}"
+
+  default_action {
+    target_group_arn = "${aws_alb_target_group.primary.arn}"
+    type             = "forward"
+  }
 }
 
 # Security group
@@ -129,7 +137,7 @@ resource "aws_security_group_rule" "alb_egress" {
 #######
 
 resource "aws_instance" "jenkins_primary" {
-  ami           = "${data.aws_ami.amazon_linux_2.id}"
+  ami           = "${data.aws_ami.base.id}"
   instance_type = "t2.micro"
   key_name      = "infrastructure"
 
@@ -139,9 +147,6 @@ resource "aws_instance" "jenkins_primary" {
 
   user_data = <<-EOF
               #!/bin/bash
-              yum update -y
-              yum install -y docker
-              systemctl enable --now docker
               docker run -d --restart always \
                 --name jenkins \
                 -p 8080:8080 \
@@ -245,7 +250,7 @@ resource "aws_security_group_rule" "primary_egress" {
 #######
 resource "aws_instance" "jenkins_worker" {
   count                = "${var.num_workers}"
-  ami                  = "${data.aws_ami.amazon_linux_2.id}"
+  ami                  = "${data.aws_ami.base.id}"
   instance_type        = "t2.micro"
   key_name             = "infrastructure"
   iam_instance_profile = "${var.worker_iam_profile}"
@@ -266,9 +271,6 @@ resource "aws_instance" "jenkins_worker" {
 
   user_data = <<-EOF
               #!/bin/bash
-              yum update -y
-              yum install -y docker
-              systemctl enable --now docker
               docker run --restart always \
                 -v /var/run/docker.sock:/var/run/docker.sock \
                 csanchez/jenkins-swarm-slave -master "http://${aws_instance.jenkins_primary.private_ip}":8080 -username adhoc -password adhoc -executors "${var.num_executors}"
