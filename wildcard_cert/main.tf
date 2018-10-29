@@ -26,9 +26,9 @@ resource "aws_acm_certificate_validation" "domain" {
 
 resource "aws_route53_record" "validation" {
   count   = "${length(aws_acm_certificate.domain.domain_validation_options)}"
-  name    = "${element(aws_acm_certificate.domain.domain_validation_options.*.resource_record_name, count.index)}"
-  type    = "${element(aws_acm_certificate.domain.domain_validation_options.*.resource_record_type, count.index)}"
+  name    = "${lookup(aws_acm_certificate.domain.domain_validation_options[count.index], "resource_record_name")}"
+  type    = "${lookup(aws_acm_certificate.domain.domain_validation_options[count.index], "resource_record_type")}"
   zone_id = "${data.aws_route53_zone.external.id}"
-  records = ["${element(aws_acm_certificate.domain.domain_validation_options.*.resource_record_value, count.index)}"]
+  records = ["${lookup(aws_acm_certificate.domain.domain_validation_options[count.index], "resource_record_value")}"]
   ttl     = 60
 }
