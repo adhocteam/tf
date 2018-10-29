@@ -8,31 +8,6 @@
         name: '*'
         state: latest
 
-    - name: install teleport binaries
-      copy:
-        src: files/teleport/{{item}}
-        dest: /usr/local/bin/
-      with_items:
-        - tctl
-        - teleport
-        - teleport-secrets
-
-    - name: install teleport configurations
-      copy:
-        src: files/teleport/{{item}}
-        dest: /etc/
-      with_items:
-        - teleport.yaml
-
-    - name: install teleport systemd units
-      copy:
-        src: files/teleport/{{item}}
-        dest: /etc/systemd/system/
-      with_items:
-        - teleport.service
-        - teleport_proxy.service
-        - teleport_auth.service
-
     - name: Add the teleport user
       user:
         name: teleport
@@ -46,14 +21,38 @@
 
     - name: Create directories for Teleport files
       file:
-        path: "{{ item }}"
+        path: /var/lib/teleport
         state: directory
         mode: 0755
         owner: teleport
         group: adm
+
+    - name: install teleport binaries
+      copy:
+        src: files/teleport/{{item}}
+        dest: /usr/local/bin/
+        owner: teleport
+        group: adm
+        mode: 0755
       with_items:
-        - /var/run/teleport
-        - /var/lib/teleport
+        - tctl
+        - teleport
+        - teleport-secrets
+
+    - name: install teleport configuration
+      copy:
+        src: files/teleport/teleport.yaml
+        dest: /etc/
+        mode: 0644
+
+    - name: install teleport systemd units
+      copy:
+        src: files/teleport/{{item}}
+        dest: /etc/systemd/system/
+      with_items:
+        - teleport.service
+        - teleport_proxy.service
+        - teleport_auth.service
 
     - name: install packages
       yum:
