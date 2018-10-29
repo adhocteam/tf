@@ -27,9 +27,11 @@ proxy_service:
   public_addr: ${proxy_domain}
 EOF
 
-# Stop the local node service
+# Stop the local default services
 systemctl disable --now teleport
+systemctl disable --now docker
 
+chown -R teleport:adm /var/lib/teleport
 # Start daemon and endure through restarts
 systemctl enable --now teleport_proxy.service
 

@@ -57,11 +57,12 @@ spec:
       logins:
         - ec2-user
 EOF
-chown -R teleport:adm /var/lib/teleport
 
-# Stop the local node service
+# Stop the local default services
 systemctl disable --now teleport
+systemctl disable --now docker
 
+chown -R teleport:adm /var/lib/teleport
 # Start daemon and endure through restarts
 systemctl enable --now teleport_auth
 
