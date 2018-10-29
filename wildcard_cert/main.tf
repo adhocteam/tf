@@ -21,14 +21,15 @@ resource "aws_acm_certificate" "domain" {
 
 resource "aws_acm_certificate_validation" "domain" {
   certificate_arn         = "${aws_acm_certificate.domain.arn}"
-  validation_record_fqdns = ["${var.domain}", "*.${var.domain}"]
+  validation_record_fqdns = ["${aws_route53_record.validation.*.fqdn}"]
 }
 
 # Only need to validate the first record because the wildcard entry will use the same DNS record
 resource "aws_route53_record" "validation" {
-  name    = "${aws_acm_certificate.domain.domain_validation_options.0.resource_record_name}"
-  type    = "${aws_acm_certificate.domain.domain_validation_options.0.resource_record_type}"
+  count   = "${length(aws_acm_certificate.domain.domain_validation_options)}"
+  name    = "${lookup(aws_acm_certificate.domain.domain_validation_options[count.index], "resource_record_name")}"
+  type    = "${lookup(aws_acm_certificate.domain.domain_validation_options[count.index], "resource_record_type")}"
   zone_id = "${data.aws_route53_zone.external.id}"
-  records = ["${aws_acm_certificate.domain.domain_validation_options.0.resource_record_value}"]
+  records = ["${lookup(aws_acm_certificate.domain.domain_validation_options[count.index], "resource_record_value")}"]
   ttl     = 60
 }
