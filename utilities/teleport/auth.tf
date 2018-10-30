@@ -8,10 +8,11 @@
 #######
 
 resource "aws_lb" "auth" {
-  name_prefix        = "telep-"
-  internal           = true
-  load_balancer_type = "network"
-  subnets            = ["${data.aws_subnet.application_subnet.*.id}"]
+  name_prefix                      = "telep-"
+  internal                         = true
+  load_balancer_type               = "network"
+  subnets                          = ["${data.aws_subnet.application_subnet.*.id}"]
+  enable_cross_zone_load_balancing = true
 
   ip_address_type = "ipv4"
 
@@ -135,13 +136,13 @@ resource "aws_security_group_rule" "auth_webui" {
   security_group_id = "${aws_security_group.auths.id}"
 }
 
-# Allow it to talk out to the internet to pull in binaries
+# Allow it to talk out only to the VPC
 resource "aws_security_group_rule" "auth_egress" {
   type        = "egress"
   from_port   = 0
   to_port     = 0
   protocol    = "-1"
-  cidr_blocks = ["0.0.0.0/0"]
+  cidr_blocks = ["${data.aws_vpc.vpc.cidr_block}"]
 
   security_group_id = "${aws_security_group.auths.id}"
 }
@@ -316,6 +317,12 @@ resource "aws_iam_role" "auth" {
     ]
 }
 EOF
+}
+
+# Give it base teleport permissions
+resource "aws_iam_role_policy_attachment" "auth_teleport" {
+  role       = "${aws_iam_role.auth.name}"
+  policy_arn = "${aws_iam_policy.teleport_secrets.arn}"
 }
 
 // Auth server uses DynamoDB as a backend, and this is to allow read/write from the dynamo tables

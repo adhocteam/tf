@@ -54,3 +54,27 @@ resource "aws_secretsmanager_secret_version" "cluster_token" {
   secret_id     = "${var.env}/teleport/cluster_token"
   secret_string = "${random_string.cluster_token.result}"
 }
+
+resource "aws_iam_policy" "teleport_secrets" {
+  name        = "teleport-secrets"
+  path        = "${var.env}/teleport"
+  description = "Allows nodes to run local teleport daemon"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect" : "Allow",
+            "Action" : "ec2:DescribeTags",
+            "Resource" : "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "secretsmanager:GetSecretValue",
+            "Resource": "${data.aws_secretsmanager_secret.cluster_token.arn}"
+        }
+    ]
+}
+EOF
+}

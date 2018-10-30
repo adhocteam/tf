@@ -56,8 +56,20 @@
 
     - name: install packages
       yum:
-        name: [curl, git, jq, docker]
+        name: [curl, git, jq, docker, yum-cron]
         state: present
+
+    - name: install yum-cron config for security updates
+      copy:
+        src: files/yum-cron.conf
+        dest: /etc/yum
+        mode: 0644
+
+    - name: add ec2-user to docker group
+      user:
+        name: ec2-user
+        append: yes
+        groups: docker
 
     - name: enable services
       service:
@@ -66,9 +78,4 @@
       with_items:
         - docker
         - teleport
-
-    - name: add ec2-user to docker group
-      user:
-        name: ec2-user
-        append: yes
-        groups: docker
+        - yum-cron
