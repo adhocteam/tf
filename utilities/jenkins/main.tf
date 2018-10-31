@@ -442,7 +442,7 @@ EOF
 
 resource "aws_kms_grant" "primary" {
   name              = "jenkins-primary-main"
-  key_id            = "${data.aws_kms_alias.main.target_key.arn}"
+  key_id            = "${data.aws_kms_alias.main.target_key_arn}"
   grantee_principal = "${aws_iam_role.primary.arn}"
   operations        = ["Decrypt"]
 }
