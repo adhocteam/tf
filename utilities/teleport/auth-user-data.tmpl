@@ -67,7 +67,9 @@ chown -R teleport:adm /var/lib/teleport
 systemctl enable --now teleport_auth
 
 echo "Create GitHub authenticator"
-# Sleep to allow time for the authentication service to start up
-sleep 20 && sudo -u teleport /usr/local/bin/tctl create /var/lib/teleport/github.yaml
+
+# Sleep to allow time for the authentication service to start up and then retry a few times
+sleep 15
+for i in {1..5}; do sudo -u teleport /usr/local/bin/tctl create /var/lib/teleport/github.yaml && break || sleep 15; done
 
 echo "Teleport install complete"

@@ -136,13 +136,13 @@ resource "aws_security_group_rule" "auth_webui" {
   security_group_id = "${aws_security_group.auths.id}"
 }
 
-# Allow it to talk out only to the VPC
+# Allow it to talk to any address to be able to hit AWS APIs for Dynamo, S3
 resource "aws_security_group_rule" "auth_egress" {
   type        = "egress"
   from_port   = 0
   to_port     = 0
   protocol    = "-1"
-  cidr_blocks = ["${data.aws_vpc.vpc.cidr_block}"]
+  cidr_blocks = ["0.0.0.0/0"]
 
   security_group_id = "${aws_security_group.auths.id}"
 }
