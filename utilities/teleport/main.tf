@@ -60,7 +60,7 @@ resource "aws_iam_policy" "teleport_secrets" {
   path        = "${var.env}/teleport"
   description = "Allows nodes to run local teleport daemon"
 
-  assume_role_policy = <<EOF
+  policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
