@@ -39,8 +39,3 @@ variable "user_data" {
   description = "OPTIONAL: user data script to run on initialization"
   default     = ""
 }
-
-variable "instance_role" {
-  description = "OPTIONAL: IAM instance role to provide to the application"
-  default     = ""
-}

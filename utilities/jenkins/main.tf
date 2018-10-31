@@ -383,7 +383,7 @@ resource "aws_iam_role_policy_attachment" "primary_teleport" {
 ### Worker
 resource "aws_iam_instance_profile" "worker" {
   name = "${var.env}-jenkins-worker"
-  role = "${aws_iam_role.primary.name}"
+  role = "${aws_iam_role.worker.name}"
 }
 
 # Auth instance profile and roles
@@ -429,6 +429,16 @@ resource "aws_iam_policy" "teleport_secrets" {
             "Effect": "Allow",
             "Action": "secretsmanager:GetSecretValue",
             "Resource": "${data.aws_secretsmanager_secret.cluster_token.arn}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+              "kms:Encrypt",
+              "kms:Decrypt"
+            ],
+            "Resource": [
+              "${data.aws_kms_alias.main.arn}"
+          ]
         }
     ]
 }

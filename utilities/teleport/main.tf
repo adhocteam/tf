@@ -73,6 +73,16 @@ resource "aws_iam_policy" "teleport_secrets" {
             "Effect": "Allow",
             "Action": "secretsmanager:GetSecretValue",
             "Resource": "${data.aws_secretsmanager_secret.cluster_token.arn}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+              "kms:Encrypt",
+              "kms:Decrypt"
+            ],
+            "Resource": [
+              "${data.aws_kms_alias.main.arn}"
+          ]
         }
     ]
 }

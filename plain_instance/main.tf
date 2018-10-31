@@ -13,7 +13,7 @@ resource "aws_instance" "application" {
   ami           = "${data.aws_ami.base.id}"
   instance_type = "${var.instance_size}"
 
-  iam_instance_profile = "${var.instance_role}"
+  iam_instance_profile = "${aws_iam_instance_profile.iam}"
   user_data            = "${var.user_data}"
   key_name             = "${var.key_pair}"
 
@@ -63,4 +63,71 @@ resource "aws_security_group_rule" "jumpbox" {
   source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${module.base.app_sg_id}"
+}
+
+#####
+# Base IAM instance profile
+#####
+resource "aws_iam_instance_profile" "iam" {
+  name = "${var.env}-plain-instance"
+  role = "${aws_iam_role.iam.name}"
+}
+
+# Auth instance profile and roles
+resource "aws_iam_role" "iam" {
+  name = "${var.env}-plain-instance"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {"Service": "ec2.amazonaws.com"},
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+EOF
+}
+
+# Give it base teleport permissions
+resource "aws_iam_role_policy_attachment" "worker_teleport" {
+  role       = "${aws_iam_role.worker.name}"
+  policy_arn = "${aws_iam_policy.teleport_secrets.arn}"
+}
+
+### Shared IAM role for teleport
+resource "aws_iam_policy" "teleport_secrets" {
+  name        = "jenkins-teleport-secrets"
+  path        = "/${var.env}/jenkins/"
+  description = "Allows nodes to run local teleport daemon"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect" : "Allow",
+            "Action" : "ec2:DescribeTags",
+            "Resource" : "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "secretsmanager:GetSecretValue",
+            "Resource": "${data.aws_secretsmanager_secret.cluster_token.arn}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+              "kms:Encrypt",
+              "kms:Decrypt"
+            ],
+            "Resource": [
+              "${data.aws_kms_alias.main.arn}"
+          ]
+        }
+    ]
+}
+EOF
 }
