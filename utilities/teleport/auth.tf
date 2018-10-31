@@ -322,12 +322,6 @@ resource "aws_iam_role" "auth" {
 EOF
 }
 
-# Give it base teleport permissions
-resource "aws_iam_role_policy_attachment" "auth_teleport" {
-  role       = "${aws_iam_role.auth.name}"
-  policy_arn = "${aws_iam_policy.teleport_secrets.arn}"
-}
-
 // Auth server uses DynamoDB as a backend, and this is to allow read/write from the dynamo tables
 resource "aws_iam_role_policy" "auth_dynamo" {
   name = "${var.env}-teleport-auth-dynamo"

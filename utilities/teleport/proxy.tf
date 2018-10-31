@@ -115,8 +115,7 @@ resource "aws_instance" "proxies" {
   instance_type = "t3.micro"
   key_name      = "${var.key_pair}"
 
-  iam_instance_profile = "${aws_iam_instance_profile.proxy.name}"
-  user_data            = "${element(data.template_file.user_data.*.rendered, count.index)}"
+  user_data = "${element(data.template_file.user_data.*.rendered, count.index)}"
 
   associate_public_ip_address = false
   subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,count.index)}" #distribute instances across AZs
@@ -202,37 +201,4 @@ resource "aws_security_group_rule" "jumpbox_proxy" {
   source_security_group_id = "${var.jumpbox_sg}"
 
   security_group_id = "${aws_security_group.proxies.id}"
-}
-
-#######
-# IAM accesses for the instance
-#######
-
-resource "aws_iam_instance_profile" "proxy" {
-  name = "${var.env}-teleport-proxy"
-  role = "${aws_iam_role.proxy.name}"
-}
-
-// Auth instance profile and roles
-resource "aws_iam_role" "proxy" {
-  name = "${var.env}-teleport-proxy"
-
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {"Service": "ec2.amazonaws.com"},
-            "Action": "sts:AssumeRole"
-        }
-    ]
-}
-EOF
-}
-
-# Give it base teleport permissions
-resource "aws_iam_role_policy_attachment" "proxy_teleport" {
-  role       = "${aws_iam_role.proxy.name}"
-  policy_arn = "${aws_iam_policy.teleport_secrets.arn}"
 }
