@@ -32,6 +32,14 @@ resource "aws_elb" "proxy" {
     ssl_certificate_id = "${module.cert.arn}"
   }
 
+  listener {
+    instance_port      = 3080
+    instance_protocol  = "tcp"
+    lb_port            = 3080
+    lb_protocol        = "ssl"
+    ssl_certificate_id = "${module.cert.arn}"
+  }
+
   health_check {
     healthy_threshold   = 2
     unhealthy_threshold = 2
@@ -69,6 +77,16 @@ resource "aws_security_group_rule" "lb_webui_ingress" {
   type        = "ingress"
   from_port   = 443
   to_port     = 443
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = "${aws_security_group.proxy_lb.id}"
+}
+
+resource "aws_security_group_rule" "lb_client_ingress" {
+  type        = "ingress"
+  from_port   = 3080
+  to_port     = 3080
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
 
