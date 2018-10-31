@@ -38,6 +38,14 @@ data "aws_security_group" "jumpbox" {
   }
 }
 
+data "aws_secretsmanager_secret" "cluster_token" {
+  name = "${var.env}/teleport/cluster_token"
+}
+
+data "aws_kms_alias" "main" {
+  name = "alias/${var.env}-main"
+}
+
 data "aws_ami" "base" {
   most_recent = true
   owners      = ["self"]

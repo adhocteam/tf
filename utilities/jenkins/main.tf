@@ -145,6 +145,8 @@ resource "aws_instance" "jenkins_primary" {
   subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,1)}"
   vpc_security_group_ids      = ["${aws_security_group.jenkins_primary.id}"]
 
+  iam_instance_profile = "${aws_iam_instance_profile.primary.name}"
+
   user_data = <<-EOF
               #!/bin/bash
               docker run -d --restart always \
@@ -263,7 +265,7 @@ resource "aws_instance" "jenkins_worker" {
   ami                  = "${data.aws_ami.base.id}"
   instance_type        = "t2.micro"
   key_name             = "infrastructure"
-  iam_instance_profile = "${var.worker_iam_profile}"
+  iam_instance_profile = "${aws_iam_instance_profile.worker.name}"
 
   associate_public_ip_address = false
   subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,count.index)}" #distribute instances across AZs
@@ -342,4 +344,112 @@ resource "aws_security_group_rule" "worker_egress" {
   cidr_blocks = ["0.0.0.0/0"]
 
   security_group_id = "${aws_security_group.jenkins_worker.id}"
+}
+
+#######
+# IAM accesses
+#######
+
+### Primary
+resource "aws_iam_instance_profile" "primary" {
+  name = "${var.env}-jenkins-primary"
+  role = "${aws_iam_role.primary.name}"
+}
+
+# Auth instance profile and roles
+resource "aws_iam_role" "primary" {
+  name = "${var.env}-jenkins-primary"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {"Service": "ec2.amazonaws.com"},
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+EOF
+}
+
+# Give it base teleport permissions
+resource "aws_iam_role_policy_attachment" "primary_teleport" {
+  role       = "${aws_iam_role.primary.name}"
+  policy_arn = "${aws_iam_policy.teleport_secrets.arn}"
+}
+
+### Worker
+resource "aws_iam_instance_profile" "worker" {
+  name = "${var.env}-jenkins-worker"
+  role = "${aws_iam_role.worker.name}"
+}
+
+# Auth instance profile and roles
+resource "aws_iam_role" "worker" {
+  name = "${var.env}-jenkins-worker"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {"Service": "ec2.amazonaws.com"},
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+EOF
+}
+
+# Give it base teleport permissions
+resource "aws_iam_role_policy_attachment" "worker_teleport" {
+  role       = "${aws_iam_role.worker.name}"
+  policy_arn = "${aws_iam_policy.teleport_secrets.arn}"
+}
+
+### Shared IAM role for teleport
+resource "aws_iam_policy" "teleport_secrets" {
+  name        = "jenkins-teleport-secrets"
+  path        = "/${var.env}/jenkins/"
+  description = "Allows nodes to run local teleport daemon"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect" : "Allow",
+            "Action" : "ec2:DescribeTags",
+            "Resource" : "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "secretsmanager:GetSecretValue",
+            "Resource": "${data.aws_secretsmanager_secret.cluster_token.arn}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "kms:Decrypt",
+            "Resource": "${data.aws_kms_alias.main.target_key_arn}"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_kms_grant" "primary" {
+  name              = "jenkins-primary-main"
+  key_id            = "${data.aws_kms_alias.main.target_key_arn}"
+  grantee_principal = "${aws_iam_role.primary.arn}"
+  operations        = ["Decrypt"]
+}
+
+resource "aws_kms_grant" "worker" {
+  name              = "jenkins-worker-main"
+  key_id            = "${data.aws_kms_alias.main.target_key_arn}"
+  grantee_principal = "${aws_iam_role.worker.arn}"
+  operations        = ["Decrypt"]
 }

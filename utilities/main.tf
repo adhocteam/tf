@@ -4,7 +4,7 @@ module "jumpbox" {
   domain_name = "${var.domain_name}"
 
   # Turned off by default
-  enabled = false
+  enabled = "${var.jumpbox_enabled}"
 }
 
 module "teleport" {

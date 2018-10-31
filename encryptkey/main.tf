@@ -3,6 +3,7 @@ resource "aws_kms_key" "main" {
   deletion_window_in_days = 10
   enable_key_rotation     = true
 
+  # TODO(bob) Factor out the hard-coded accounts
   policy = <<POLICY
   {
   "Version": "2012-10-17",

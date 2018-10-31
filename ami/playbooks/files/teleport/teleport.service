@@ -6,6 +6,7 @@ After=network.target
 Type=simple
 Restart=always
 RestartSec=5
+RuntimeDirectory=teleport
 ExecStartPre=/usr/local/bin/teleport-secrets
 ExecStart=/usr/local/bin/teleport start --config=/etc/teleport.yaml --diag-addr=0.0.0.0:3434 --insecure-no-tls
 ExecReload=/bin/kill -HUP \$MAINPID
