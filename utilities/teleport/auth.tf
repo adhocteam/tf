@@ -24,11 +24,14 @@ resource "aws_lb" "auth" {
   }
 }
 
+# Must use target type IP to allow auth instances to call back through the LB
+# https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-troubleshooting.html
 resource "aws_lb_target_group" "auth" {
   name_prefix = "telep-"
   port        = 3025
   protocol    = "TCP"
   vpc_id      = "${data.aws_vpc.vpc.id}"
+  target_type = "ip"
 
   depends_on = ["aws_lb.auth"]
 
@@ -107,7 +110,7 @@ resource "aws_instance" "auths" {
 resource "aws_lb_target_group_attachment" "auth" {
   count            = "${var.auth_count}"
   target_group_arn = "${aws_lb_target_group.auth.arn}"
-  target_id        = "${element(aws_instance.auths.*.id,count.index)}"
+  target_id        = "${element(aws_instance.auths.*.private_ip,count.index)}"
 }
 
 #######
