@@ -129,7 +129,7 @@ EOF
 
 resource "aws_kms_grant" "main" {
   name              = "${env}-${application_name}-main"
-  key_id            = "${data.aws_kms_alias.main.target_key.arn}"
+  key_id            = "${data.aws_kms_alias.main.target_key_arn}"
   grantee_principal = "${aws_iam_role.iam.arn}"
   operations        = ["Decrypt"]
 }

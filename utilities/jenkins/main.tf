@@ -449,7 +449,7 @@ resource "aws_kms_grant" "primary" {
 
 resource "aws_kms_grant" "worker" {
   name              = "jenkins-worker-main"
-  key_id            = "${data.aws_kms_alias.main.target_key.arn}"
+  key_id            = "${data.aws_kms_alias.main.target_key_arn}"
   grantee_principal = "${aws_iam_role.worker.arn}"
   operations        = ["Decrypt"]
 }
