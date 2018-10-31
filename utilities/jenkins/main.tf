@@ -413,7 +413,7 @@ resource "aws_iam_role_policy_attachment" "worker_teleport" {
 ### Shared IAM role for teleport
 resource "aws_iam_policy" "teleport_secrets" {
   name        = "teleport-secrets"
-  path        = "${var.env}/jenkins/"
+  path        = "/${var.env}/jenkins/"
   description = "Allows nodes to run local teleport daemon"
 
   policy = <<EOF
