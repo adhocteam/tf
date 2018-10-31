@@ -57,7 +57,7 @@ resource "aws_secretsmanager_secret_version" "cluster_token" {
 
 resource "aws_iam_policy" "teleport_secrets" {
   name        = "teleport-secrets"
-  path        = "${var.env}/teleport"
+  path        = "${var.env}/teleport/"
   description = "Allows nodes to run local teleport daemon"
 
   policy = <<EOF
