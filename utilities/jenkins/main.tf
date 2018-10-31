@@ -439,3 +439,17 @@ resource "aws_iam_policy" "teleport_secrets" {
 }
 EOF
 }
+
+resource "aws_kms_grant" "primary" {
+  name              = "jenkins-primary-main"
+  key_id            = "${data.aws_kms_alias.main.target_key.arn}"
+  grantee_principal = "${aws_iam_role.primary.arn}"
+  operations        = ["Decrypt"]
+}
+
+resource "aws_kms_grant" "worker" {
+  name              = "jenkins-worker-main"
+  key_id            = "${data.aws_kms_alias.main.target_key.arn}"
+  grantee_principal = "${aws_iam_role.worker.arn}"
+  operations        = ["Decrypt"]
+}

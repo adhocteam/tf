@@ -92,15 +92,15 @@ EOF
 }
 
 # Give it base teleport permissions
-resource "aws_iam_role_policy_attachment" "worker_teleport" {
-  role       = "${aws_iam_role.worker.name}"
+resource "aws_iam_role_policy_attachment" "iam_teleport" {
+  role       = "${aws_iam_role.iam.name}"
   policy_arn = "${aws_iam_policy.teleport_secrets.arn}"
 }
 
 ### Shared IAM role for teleport
 resource "aws_iam_policy" "teleport_secrets" {
-  name        = "jenkins-teleport-secrets"
-  path        = "/${var.env}/jenkins/"
+  name        = "instance-teleport-secrets"
+  path        = "/${var.env}/plain-instance/"
   description = "Allows nodes to run local teleport daemon"
 
   policy = <<EOF
@@ -125,4 +125,11 @@ resource "aws_iam_policy" "teleport_secrets" {
     ]
 }
 EOF
+}
+
+resource "aws_kms_grant" "main" {
+  name              = "${env}-${application_name}-main"
+  key_id            = "${data.aws_kms_alias.main.target_key.arn}"
+  grantee_principal = "${aws_iam_role.iam.arn}"
+  operations        = ["Decrypt"]
 }
