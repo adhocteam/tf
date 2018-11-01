@@ -13,7 +13,7 @@ resource "aws_instance" "application" {
   ami           = "${data.aws_ami.base.id}"
   instance_type = "${var.instance_size}"
 
-  iam_instance_profile = "${aws_iam_instance_profile.iam}"
+  iam_instance_profile = "${aws_iam_instance_profile.iam.name}"
   user_data            = "${var.user_data}"
   key_name             = "${var.key_pair}"
 
@@ -128,7 +128,7 @@ EOF
 }
 
 resource "aws_kms_grant" "main" {
-  name              = "${env}-${application_name}-main"
+  name              = "${var.env}-${var.application_name}-main"
   key_id            = "${data.aws_kms_alias.main.target_key_arn}"
   grantee_principal = "${aws_iam_role.iam.arn}"
   operations        = ["Decrypt"]
