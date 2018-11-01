@@ -13,7 +13,7 @@ resource "aws_instance" "application" {
   ami           = "${data.aws_ami.base.id}"
   instance_type = "${var.instance_size}"
 
-  iam_instance_profile = "${aws_iam_instance_profile.iam}"
+  iam_instance_profile = "${aws_iam_instance_profile.iam.name}"
   user_data            = "${var.user_data}"
   key_name             = "${var.key_pair}"
 
