@@ -28,7 +28,7 @@ resource "aws_route53_zone" "teleport" {
   comment = "${var.env} Teleport internal DNS"
 
   vpc {
-    vpc_id = "${aws_vpc.primary.id}"
+    vpc_id = "${data.aws_vpc.vpc.id}"
   }
 
   tags {
