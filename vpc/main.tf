@@ -23,7 +23,7 @@ resource "aws_vpc" "primary" {
 
 resource "aws_route53_zone" "internal" {
   name    = "${var.env}.local"
-  vpc     = "${aws_vpc.primary.id}"
+  vpc     = ["${aws_vpc.primary.id}"]
   comment = "${var.env} internal DNS"
 
   tags {
