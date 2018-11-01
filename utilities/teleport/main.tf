@@ -25,8 +25,11 @@ module "cert" {
 # Private DNS name inside VPC for auth nodes as light-weight service discovery
 resource "aws_route53_zone" "teleport" {
   name    = "teleport.local"
-  vpc     = ["${data.aws_vpc.vpc.id}"]
   comment = "${var.env} Teleport internal DNS"
+
+  vpc {
+    vpc_id = "${aws_vpc.primary.id}"
+  }
 
   tags {
     env       = "${var.env}"
