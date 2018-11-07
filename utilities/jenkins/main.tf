@@ -153,7 +153,7 @@ resource "aws_instance" "jenkins_primary" {
                 --name jenkins \
                 -p 8080:8080 \
                 -p 50000:50000 \
-                jskeets/jenkins-primary
+                adhocteam/jenkins
               EOF
 
   lifecycle {
