@@ -1,0 +1,33 @@
+#!usr/bin/env bash
+set -ex
+
+curl --create-dirs -sSLo /usr/share/jenkins/swarm-client.jar \
+    https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/3.14/swarm-client-3.14.jar
+
+chmod 755 /usr/share/jenkins
+
+yum install -y java-1.8.0-openjdk
+
+cat << EOF > /etc/systemd/system/jenkins_worker.service
+
+[Unit]
+Description=Jenkins swarm worker client application
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user
+ExecStart=/usr/bin/java -jar /usr/share/jenkins/swarm-client.jar \
+    -master ${master} \
+    -name "${labels}-${count}" \
+    -labels ${labels} \
+    -username ${username} \
+    -password ${password} \
+    -executors ${executors}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable --now jenkins_worker

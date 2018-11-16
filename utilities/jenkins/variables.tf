@@ -6,14 +6,36 @@ variable "domain_name" {
   description = "the external domain name for reaching the public resources. must have a certificate in ACM associated with it."
 }
 
-variable "num_workers" {
-  description = "How many worker nodes to create"
-  default     = 2
+variable "workers" {
+  description = "A list of maps describing workers. Lists are of the form: like { \"label\" = \"\", \"instance_type\"= \"\", \"number_of_executors\"= \"\"}"
+
+  default = [
+    {
+      "label"               = "general"
+      "instance_type"       = "t3.medium"
+      "number_of_executors" = "6"
+    },
+    {
+      "label"               = "general"
+      "instance_type"       = "t3.medium"
+      "number_of_executors" = "6"
+    },
+  ]
 }
 
-variable "num_executors" {
-  description = "How many execution slots per node"
-  default     = 4
+variable "github_user" {
+  description = "GitHub account to use for Jenkins admin features (e.g., setting up hooks) and posting messages"
+  default     = "jenkins-adhoc-team"
+}
+
+variable "docker_user" {
+  description = "Docker Hub account to use for publishing public images"
+  default     = "adhocjenkins"
+}
+
+variable "admin_team" {
+  description = "GitHub team to have admin access in the form: organization*team"
+  default     = "adhocteam*Infrastructure Team"
 }
 
 variable "jumpbox_sg" {
@@ -23,5 +45,10 @@ variable "jumpbox_sg" {
 
 variable "ssh_proxy_sg" {
   description = "OPTIONAL: the security group of the Teleport proxies"
+  default     = ""
+}
+
+variable "jenkins_url" {
+  description = "OPTIONAL: the URL at which jenkins will be served. Default is jenkins.{var.env}.{var.domain_name}"
   default     = ""
 }

@@ -14,10 +14,6 @@ data "aws_subnet" "application_subnet" {
   }
 }
 
-data "aws_secretsmanager_secret_version" "cluster_token" {
-  secret_id = "${var.env}/teleport/cluster_token"
-}
-
 data "aws_security_group" "ssh_proxies" {
   vpc_id = "${data.aws_vpc.vpc.id}"
 
