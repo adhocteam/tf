@@ -27,7 +27,7 @@ variable "docker_user" {
 
 variable "admin_team" {
   description = "GitHub team to have admin access in the form: organization*team"
-  default     = "adhocteam*Infrastructure Team"
+  default     = "adhocteam"
 }
 
 variable "jumpbox_sg" {
