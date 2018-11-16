@@ -289,17 +289,17 @@ data "template_file" "jenkins_worker" {
   vars {
     count     = "${count.index}"
     master    = "http://${aws_route53_record.primary.fqdn}:8080"
-    labels    = "${lookup(element(var.workers, count.index), "label")}"
+    labels    = "${element(split(",", element(var.workers, count.index)), 0)}"
     username  = "${var.github_user}"
     password  = "${data.aws_secretsmanager_secret_version.github_password.secret_string}"
-    executors = "${lookup(element(var.workers, count.index), "number_of_executors")}"
+    executors = "${element(split(",", element(var.workers, count.index)), 2)}"
   }
 }
 
 resource "aws_instance" "jenkins_worker" {
   count                = "${length(var.workers)}"
   ami                  = "${data.aws_ami.base.id}"
-  instance_type        = "${lookup(element(var.workers, count.index), "instance_type")}"
+  instance_type        = "${element(split(",", element(var.workers, count.index)), 1)}"
   key_name             = "infrastructure"
   iam_instance_profile = "${aws_iam_instance_profile.worker.name}"
 
@@ -310,9 +310,9 @@ resource "aws_instance" "jenkins_worker" {
   tags {
     env       = "${var.env}"
     terraform = "true"
-    Name      = "jenkins-${lookup(element(var.workers, count.index), "label")}-${count.index}"
+    Name      = "jenkins-${element(split(",", element(var.workers, count.index)), 0)}-${count.index}"
     app       = "jenkins"
-    label     = "${lookup(element(var.workers, count.index), "label")}"
+    label     = "${element(split(",", element(var.workers, count.index)), 0)}"
     role      = "worker"
   }
 
@@ -329,7 +329,7 @@ resource "aws_instance" "jenkins_worker" {
 resource "aws_route53_record" "worker" {
   count   = "${length(var.workers)}"
   zone_id = "${data.aws_route53_zone.internal.id}"
-  name    = "${lookup(element(var.workers, count.index), "label")}-${count.index}.jenkins"
+  name    = "${element(split(",", element(var.workers, count.index)), 0)}-${count.index}.jenkins"
   type    = "CNAME"
   ttl     = 30
 

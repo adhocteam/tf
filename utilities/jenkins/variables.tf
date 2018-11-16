@@ -7,19 +7,11 @@ variable "domain_name" {
 }
 
 variable "workers" {
-  description = "A list of maps describing workers. Lists are of the form: like { \"label\" = \"\", \"instance_type\"= \"\", \"number_of_executors\"= \"\"}"
+  description = "A list of strings describing workers. Lists are of the form: label,instance_type,number_of_executors}"
 
   default = [
-    {
-      "label"               = "general"
-      "instance_type"       = "t3.medium"
-      "number_of_executors" = "6"
-    },
-    {
-      "label"               = "general"
-      "instance_type"       = "t3.medium"
-      "number_of_executors" = "6"
-    },
+    "general,t3.medium,6",
+    "general,t3.medium,6",
   ]
 }
 
