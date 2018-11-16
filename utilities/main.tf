@@ -20,4 +20,5 @@ module "jenkins" {
   domain_name  = "${var.domain_name}"
   jumpbox_sg   = "${module.jumpbox.security_group}"
   ssh_proxy_sg = "${module.teleport.security_group}"
+  workers      = "${var.jenkins_workers}"
 }

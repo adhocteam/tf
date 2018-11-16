@@ -4,7 +4,8 @@
 #######
 
 locals {
-  url         = "$coalesce(var.jenkins_url, "jenkins.${var.env}.${var.domain_name}"}"
+  default_url = "jenkins.${var.env}.${var.domain_name}"
+  url         = "$coalesce(var.jenkins_url, local.default_url}"
 }
 
 resource "aws_alb" "jenkins" {
@@ -93,6 +94,12 @@ resource "aws_alb_listener" "https" {
   }
 }
 
+# Also allow it serve direct subdomains
+resource "aws_lb_listener_certificate" "domain_name" {
+  listener_arn    = "${aws_lb_listener.https.arn}"
+  certificate_arn = "${data.aws_acm_certificate.wildcard.arn}"
+}
+
 # Security group
 resource "aws_security_group" "alb" {
   name_prefix = "$jenkins-alb-"
@@ -161,7 +168,7 @@ resource "aws_instance" "jenkins_primary" {
                 -e github_client_id="${data.aws_secretsmanager_secret_version.github_client_id.secret_string}" \
                 -e github_client_secret="${data.aws_secretsmanager_secret_version.github_client_secret.secret_string}" \
                 -e admin_team="${var.admin_team}" \
-                -e jenkins_url="https://jenkins.shared.adhoc.team" \
+                -e jenkins_url="${local.url}" \
                 -e github_user="${var.github_user}" \
                 -e github_password="${data.aws_secretsmanager_secret_version.github_password.secret_string}" \
                 -e docker_user="${var.docker_user}" \
