@@ -95,8 +95,8 @@ resource "aws_alb_listener" "https" {
 }
 
 # Also allow it serve direct subdomains like jenkins.domain_name
-resource "aws_lb_listener_certificate" "domain_name" {
-  listener_arn    = "${aws_lb_listener.https.arn}"
+resource "aws_alb_listener_certificate" "domain_name" {
+  listener_arn    = "${aws_alb_listener.https.arn}"
   certificate_arn = "${data.aws_acm_certificate.wildcard.arn}"
 }
 
@@ -283,7 +283,7 @@ resource "aws_security_group_rule" "primary_egress" {
 #######
 
 data "template_file" "jenkins_worker" {
-  count    = "$length(var.workers)"
+  count    = "${length(var.workers)}"
   template = "${file("${path.module}/worker.tmpl")}"
 
   vars {
@@ -310,7 +310,7 @@ resource "aws_instance" "jenkins_worker" {
   tags {
     env       = "${var.env}"
     terraform = "true"
-    Name      = "jenkins-worker-${count.index}"
+    Name      = "jenkins-${lookup(element(var.workers, count.index), "label")}-${count.index}"
     app       = "jenkins"
     label     = "${lookup(element(var.workers, count.index), "label")}"
     role      = "worker"
@@ -327,9 +327,9 @@ resource "aws_instance" "jenkins_worker" {
 
 # Internal DNS references to each worker node
 resource "aws_route53_record" "worker" {
-  count   = "${var.num_workers}"
+  count   = "${length(var.workers)}"
   zone_id = "${data.aws_route53_zone.internal.id}"
-  name    = "worker-${count.index}.jenkins"
+  name    = "${lookup(element(var.workers, count.index), "label")}-${count.index}.jenkins"
   type    = "CNAME"
   ttl     = 30
 
