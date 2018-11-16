@@ -94,7 +94,7 @@ resource "aws_alb_listener" "https" {
   }
 }
 
-# Also allow it serve direct subdomains
+# Also allow it serve direct subdomains like jenkins.domain_name
 resource "aws_lb_listener_certificate" "domain_name" {
   listener_arn    = "${aws_lb_listener.https.arn}"
   certificate_arn = "${data.aws_acm_certificate.wildcard.arn}"
@@ -289,17 +289,17 @@ data "template_file" "jenkins_worker" {
   vars {
     count     = "${count.index}"
     master    = "http://${aws_route53_record.primary.fqdn}:8080"
-    labels    = "$lookup(element(var.workers, count.index), "label")"
+    labels    = "${lookup(element(var.workers, count.index), "label")}"
     username  = "${var.github_user}"
     password  = "${data.aws_secretsmanager_secret_version.github_password.secret_string}"
-    executors = "$lookup(element(var.workers, count.index), "number_of_executors")"
+    executors = "${lookup(element(var.workers, count.index), "number_of_executors")}"
   }
 }
 
 resource "aws_instance" "jenkins_worker" {
-  count                = "$length(var.workers)"
+  count                = "${length(var.workers)}"
   ami                  = "${data.aws_ami.base.id}"
-  instance_type        = "$lookup(element(var.workers, count.index), "instance_type")"
+  instance_type        = "${lookup(element(var.workers, count.index), "instance_type")}"
   key_name             = "infrastructure"
   iam_instance_profile = "${aws_iam_instance_profile.worker.name}"
 
@@ -312,7 +312,7 @@ resource "aws_instance" "jenkins_worker" {
     terraform = "true"
     Name      = "jenkins-worker-${count.index}"
     app       = "jenkins"
-    label     = "$lookup(element(var.workers, count.index), "label")"
+    label     = "${lookup(element(var.workers, count.index), "label")}"
     role      = "worker"
   }
 
