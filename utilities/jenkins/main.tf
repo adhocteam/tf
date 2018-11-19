@@ -4,7 +4,7 @@
 #######
 
 locals {
-  default_url = "jenkins.${var.env}.${var.domain_name}"
+  default_url = "https://jenkins.${var.env}.${var.domain_name}"
   url         = "${coalesce(var.jenkins_url, local.default_url)}"
 }
 
@@ -167,14 +167,13 @@ resource "aws_instance" "jenkins_primary" {
                 -p 50000:50000 \
                 -e github_client_id="${data.aws_secretsmanager_secret_version.github_client_id.secret_string}" \
                 -e github_client_secret="${data.aws_secretsmanager_secret_version.github_client_secret.secret_string}" \
-                -e admin_team="${var.admin_team}" \
                 -e jenkins_url="${local.url}" \
                 -e github_user="${var.github_user}" \
                 -e github_password="${data.aws_secretsmanager_secret_version.github_password.secret_string}" \
                 -e docker_user="${var.docker_user}" \
                 -e docker_password="${data.aws_secretsmanager_secret_version.docker_password.secret_string}" \
                 -e slack_token="${data.aws_secretsmanager_secret_version.slack_token.secret_string}" \
-                adhocteam/jenkins
+                adhocteam/jenkins:latest
               EOF
 
   lifecycle {

@@ -25,11 +25,6 @@ variable "docker_user" {
   default     = "adhocjenkins"
 }
 
-variable "admin_team" {
-  description = "GitHub team to have admin access in the form: organization*team"
-  default     = "adhocteam"
-}
-
 variable "jumpbox_sg" {
   description = "OPTIONAL: the security group of any jumpbox to provide SSH access"
   default     = ""
