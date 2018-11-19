@@ -5,7 +5,7 @@
 
 locals {
   default_url = "jenkins.${var.env}.${var.domain_name}"
-  url         = "$coalesce(var.jenkins_url, local.default_url}"
+  url         = "$coalesce(var.jenkins_url, local.default_url)"
 }
 
 resource "aws_alb" "jenkins" {
