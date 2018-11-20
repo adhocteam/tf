@@ -19,8 +19,8 @@ User=ec2-user
 WorkingDirectory=/home/ec2-user
 ExecStart=/usr/bin/java -jar /usr/share/jenkins/swarm-client.jar \
     -master ${master} \
-    -name "${labels}-${count}" \
-    -labels ${labels} \
+    -name "${label}-${count}" \
+    -labels ${label} worker \
     -username ${username} \
     -password ${password} \
     -executors ${executors}

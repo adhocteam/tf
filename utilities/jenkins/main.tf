@@ -288,7 +288,7 @@ data "template_file" "jenkins_worker" {
   vars {
     count     = "${count.index}"
     master    = "http://${aws_route53_record.primary.fqdn}:8080"
-    labels    = "${element(split(",", element(var.workers, count.index)), 0)}"
+    label     = "${element(split(",", element(var.workers, count.index)), 0)}"
     username  = "${var.github_user}"
     password  = "${data.aws_secretsmanager_secret_version.github_password.secret_string}"
     executors = "${element(split(",", element(var.workers, count.index)), 2)}"
