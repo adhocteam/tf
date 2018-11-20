@@ -296,15 +296,23 @@ data "template_file" "jenkins_worker" {
 }
 
 resource "aws_instance" "jenkins_worker" {
-  count                = "${length(var.workers)}"
-  ami                  = "${data.aws_ami.base.id}"
-  instance_type        = "${element(split(",", element(var.workers, count.index)), 1)}"
-  key_name             = "infrastructure"
+  count         = "${length(var.workers)}"
+  ami           = "${data.aws_ami.base.id}"
+  instance_type = "${element(split(",", element(var.workers, count.index)), 1)}"
+  key_name      = "infrastructure"
+
   iam_instance_profile = "${aws_iam_instance_profile.worker.name}"
+  user_data            = "${element(data.template_file.jenkins_worker.*.rendered, count.index)}"
 
   associate_public_ip_address = false
   subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,count.index)}" #distribute workers across AZs
   vpc_security_group_ids      = ["${aws_security_group.jenkins_worker.id}"]
+
+  root_block_device {
+    volume_type           = "gp2"
+    volume_size           = 40
+    delete_on_termination = true
+  }
 
   tags {
     env       = "${var.env}"
@@ -316,8 +324,6 @@ resource "aws_instance" "jenkins_worker" {
   }
 
   depends_on = ["aws_instance.jenkins_primary"]
-
-  user_data = "${element(data.template_file.jenkins_worker.*.rendered, count.index)}"
 
   lifecycle {
     ignore_changes = ["ami"]
