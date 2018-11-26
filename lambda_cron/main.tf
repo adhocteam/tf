@@ -18,6 +18,10 @@ resource "aws_lambda_function" "job" {
 
   role = "${aws_iam_role.job.arn}"
 
+  environment {
+    variables = "${var.env_vars}"
+  }
+
   // Encrypts any environment variables
   kms_key_arn = "${data.aws_kms_alias.main.target_key_arn}"
 

@@ -7,7 +7,7 @@ variable "domain_name" {
 }
 
 variable "job_name" {
-  description = "name of the application to be hosted. must be unique in the environment."
+  description = "name of the job to be run. must be unique in the environment."
 }
 
 variable "cron_expression" {
@@ -27,6 +27,12 @@ variable "handler" {
 variable "memory_size" {
   description = "OPTIONAL: memory to allocate to the lambda function. Defaults to 1024mb"
   default     = "1024"
+}
+
+variable "env_vars" {
+  type        = "map"
+  description = "OPTIONAL: a map of environment variables to set for the job"
+  default     = ""
 }
 
 variable "secrets" {
