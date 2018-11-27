@@ -86,8 +86,8 @@ resource "aws_cloudwatch_event_rule" "crontab" {
 
 resource "aws_cloudwatch_event_target" "crontab" {
   target_id = "propman_sync_lambda_target"
-  rule      = "${aws_cloudwatch_event_rule.job.name}"
-  arn       = "${aws_lambda_function.crontab.arn}"
+  rule      = "${aws_cloudwatch_event_rule.crontab.name}"
+  arn       = "${aws_lambda_function.job.arn}"
 }
 
 resource "aws_lambda_permission" "allow_cloudwatch_to_call_crontab" {
@@ -180,6 +180,6 @@ resource "aws_iam_role_policy_attachment" "shared_key_access" {
 resource "aws_kms_grant" "primary" {
   name              = "${var.env}-cron-${var.job_name}"
   key_id            = "${data.aws_kms_alias.main.target_key_arn}"
-  grantee_principal = "${aws_iam_role.primary.arn}"
+  grantee_principal = "${aws_iam_role.job.arn}"
   operations        = ["Decrypt"]
 }
