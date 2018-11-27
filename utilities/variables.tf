@@ -19,3 +19,8 @@ variable "jenkins_workers" {
     "general,t3.medium,6",
   ]
 }
+
+variable "jenkins_url" {
+  description = "OPTIONAL: the URL at which jenkins will be served. Default is jenkins.{var.env}.{var.domain_name}"
+  default     = ""
+}

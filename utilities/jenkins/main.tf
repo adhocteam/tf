@@ -66,7 +66,7 @@ resource "aws_lb_listener" "redirect_to_https" {
 # Assign domain name
 resource "aws_route53_record" "alb" {
   zone_id = "${data.aws_route53_zone.external.id}"
-  name    = "jenkins.${var.env}"
+  name    = "${local.url}"
   type    = "CNAME"
   ttl     = 30
 
