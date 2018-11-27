@@ -38,5 +38,5 @@ variable "env_vars" {
 variable "secrets" {
   type        = "list"
   description = "OPTIONAL: a list of ARNs for Secret Manager secrets to allow job to access"
-  default     = ""
+  default     = []
 }
