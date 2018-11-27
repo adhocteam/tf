@@ -32,7 +32,7 @@ variable "memory_size" {
 variable "env_vars" {
   type        = "map"
   description = "OPTIONAL: a map of environment variables to set for the job"
-  default     = ""
+  default     = {}
 }
 
 variable "secrets" {
