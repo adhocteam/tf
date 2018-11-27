@@ -3,6 +3,11 @@
 # It terminates TLS and redirects HTTP to HTTPS for secure access.
 #######
 
+locals {
+  default_url = "https://jenkins.${var.env}.${var.domain_name}"
+  url         = "${coalesce(var.jenkins_url, local.default_url)}"
+}
+
 resource "aws_alb" "jenkins" {
   name            = "jenkins-load-balancer"
   internal        = false
@@ -89,6 +94,12 @@ resource "aws_alb_listener" "https" {
   }
 }
 
+# Also allow it serve direct subdomains like jenkins.domain_name
+resource "aws_alb_listener_certificate" "domain_name" {
+  listener_arn    = "${aws_alb_listener.https.arn}"
+  certificate_arn = "${data.aws_acm_certificate.wildcard.arn}"
+}
+
 # Security group
 resource "aws_security_group" "alb" {
   name_prefix = "$jenkins-alb-"
@@ -138,7 +149,7 @@ resource "aws_security_group_rule" "alb_egress" {
 
 resource "aws_instance" "jenkins_primary" {
   ami           = "${data.aws_ami.base.id}"
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
   key_name      = "infrastructure"
 
   associate_public_ip_address = false
@@ -148,12 +159,21 @@ resource "aws_instance" "jenkins_primary" {
   iam_instance_profile = "${aws_iam_instance_profile.primary.name}"
 
   user_data = <<-EOF
-              #!/bin/bash
+              #!/usr/bin/env bash
               docker run -d --restart always \
+                -v jenkins_home:/var/jenkins_home \
                 --name jenkins \
                 -p 8080:8080 \
                 -p 50000:50000 \
-                jskeets/jenkins-primary
+                -e github_client_id="${data.aws_secretsmanager_secret_version.github_client_id.secret_string}" \
+                -e github_client_secret="${data.aws_secretsmanager_secret_version.github_client_secret.secret_string}" \
+                -e jenkins_url="${local.url}" \
+                -e github_user="${var.github_user}" \
+                -e github_password="${data.aws_secretsmanager_secret_version.github_password.secret_string}" \
+                -e docker_user="${var.docker_user}" \
+                -e docker_password="${data.aws_secretsmanager_secret_version.docker_password.secret_string}" \
+                -e slack_token="${data.aws_secretsmanager_secret_version.slack_token.secret_string}" \
+                adhocteam/jenkins:latest
               EOF
 
   lifecycle {
@@ -260,33 +280,50 @@ resource "aws_security_group_rule" "primary_egress" {
 #######
 ### Jenkins workers who actually execute the work
 #######
+
+data "template_file" "jenkins_worker" {
+  count    = "${length(var.workers)}"
+  template = "${file("${path.module}/worker.tmpl")}"
+
+  vars {
+    count     = "${count.index}"
+    master    = "http://${aws_route53_record.primary.fqdn}:8080"
+    label     = "${element(split(",", element(var.workers, count.index)), 0)}"
+    username  = "${var.github_user}"
+    password  = "${data.aws_secretsmanager_secret_version.github_password.secret_string}"
+    executors = "${element(split(",", element(var.workers, count.index)), 2)}"
+  }
+}
+
 resource "aws_instance" "jenkins_worker" {
-  count                = "${var.num_workers}"
-  ami                  = "${data.aws_ami.base.id}"
-  instance_type        = "t2.micro"
-  key_name             = "infrastructure"
+  count         = "${length(var.workers)}"
+  ami           = "${data.aws_ami.base.id}"
+  instance_type = "${element(split(",", element(var.workers, count.index)), 1)}"
+  key_name      = "infrastructure"
+
   iam_instance_profile = "${aws_iam_instance_profile.worker.name}"
+  user_data            = "${element(data.template_file.jenkins_worker.*.rendered, count.index)}"
 
   associate_public_ip_address = false
-  subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,count.index)}" #distribute instances across AZs
+  subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,count.index)}" #distribute workers across AZs
   vpc_security_group_ids      = ["${aws_security_group.jenkins_worker.id}"]
+
+  root_block_device {
+    volume_type           = "gp2"
+    volume_size           = 40
+    delete_on_termination = true
+  }
 
   tags {
     env       = "${var.env}"
     terraform = "true"
-    Name      = "jenkins-worker-${count.index}"
+    Name      = "jenkins-${element(split(",", element(var.workers, count.index)), 0)}-${count.index}"
     app       = "jenkins"
+    label     = "${element(split(",", element(var.workers, count.index)), 0)}"
     role      = "worker"
   }
 
   depends_on = ["aws_instance.jenkins_primary"]
-
-  user_data = <<-EOF
-              #!/bin/bash
-              docker run --restart always \
-                -v /var/run/docker.sock:/var/run/docker.sock \
-                csanchez/jenkins-swarm-slave -master "http://${aws_instance.jenkins_primary.private_ip}":8080 -username adhoc -password adhoc -executors "${var.num_executors}"
-              EOF
 
   lifecycle {
     ignore_changes = ["ami"]
@@ -295,9 +332,9 @@ resource "aws_instance" "jenkins_worker" {
 
 # Internal DNS references to each worker node
 resource "aws_route53_record" "worker" {
-  count   = "${var.num_workers}"
+  count   = "${length(var.workers)}"
   zone_id = "${data.aws_route53_zone.internal.id}"
-  name    = "worker-${count.index}.jenkins"
+  name    = "${element(split(",", element(var.workers, count.index)), 0)}-${count.index}.jenkins"
   type    = "CNAME"
   ttl     = 30
 

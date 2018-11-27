@@ -10,3 +10,12 @@ variable "jumpbox_enabled" {
   description = "OPTIONAL: whether or not to enable the jumpbox"
   default     = "false"
 }
+
+variable "jenkins_workers" {
+  description = "A list of strings describing workers. Lists are of the form: label,instance_type,number_of_executors}"
+
+  default = [
+    "general,t3.medium,6",
+    "general,t3.medium,6",
+  ]
+}

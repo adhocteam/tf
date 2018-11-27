@@ -14,3 +14,13 @@ Under user groups give the authenticated group permission you desire, at a minim
  Open blue ocean
  Add personal access token
  Select organization/repo
+
+## Redeploying
+
+To deploy an updated Jenkins primary node, e.g., after updating the Docker image to a new Jenkins version, use _taint_ in Terraform to mark it for redeployment.
+
+`terraform taint -module=utilities.jenkins aws_instance.jenkins_primary`
+
+then a subsequent `terraform apply` will pull down and deploy a new primary.
+
+**Note:** This process will incur a brief period of downtime.
