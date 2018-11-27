@@ -26,8 +26,8 @@ resource "aws_lambda_function" "job" {
   kms_key_arn = "${data.aws_kms_alias.main.target_key_arn}"
 
   vpc_config {
-    subnet_ids         = "${data.aws_subnet.application_subnet.*.id}"
-    security_group_ids = "[${aws_security_group.job.id}]"
+    subnet_ids         = ["${data.aws_subnet.application_subnet.*.id}"]
+    security_group_ids = ["${aws_security_group.job.id}]"]
   }
 
   tags {
