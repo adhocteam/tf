@@ -18,3 +18,19 @@ module "wildcard" {
   root_domain = "${var.domain_name}"
   domain      = "${var.domain_name}"
 }
+
+resource "aws_s3_bucket" "lambda_releases" {
+  bucket = "${var.domain_name}-${var.env}-lambda-releases"
+  acl    = "private"
+
+  versioning {
+    enabled = true
+  }
+
+  tags {
+    env         = "${var.env}"
+    domain_name = "${var.domain_name}"
+    terraform   = "True"
+    app         = "lambda-releases"
+  }
+}
