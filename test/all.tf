@@ -68,3 +68,22 @@ module "postgres" {
   app_sg           = "${module.demo.app_sg_id}"
   password         = "{$var.db_password}"
 }
+
+module "lambda_cron" {
+  source = "../lambda_cron"
+
+  env             = "${local.env}"
+  domain_name     = "${local.domain_name}"
+  job_name        = "crontab"
+  cron_expression = "* * ? * * *"
+
+  env_vars = {
+    "SOMETHING"      = "ANYTHING"
+    "SOMETHING_ELSE" = "NOTHING"
+  }
+
+  secrets = [
+    "arn:aws:secretsmanager:us-east-1:000000000000:secret:${local.env}/lambda/crontab/secret1",
+    "arn:aws:secretsmanager:us-east-1:000000000000:secret:${local.env}/lambda/crontab/secret2",
+  ]
+}
