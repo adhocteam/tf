@@ -4,7 +4,7 @@
 #######
 
 locals {
-  default_url = "https://jenkins.${var.env}.${var.domain_name}"
+  default_url = "jenkins.${var.env}.${var.domain_name}"
   url         = "${coalesce(var.jenkins_url, local.default_url)}"
 }
 
@@ -78,7 +78,7 @@ module "cert" {
 
   env         = "${var.env}"
   root_domain = "${var.domain_name}"
-  domain      = "${aws_route53_record.alb.fqdn}"
+  domain      = "${local.default_url}"
 }
 
 resource "aws_alb_listener" "https" {
@@ -167,7 +167,7 @@ resource "aws_instance" "jenkins_primary" {
                 -p 50000:50000 \
                 -e github_client_id="${data.aws_secretsmanager_secret_version.github_client_id.secret_string}" \
                 -e github_client_secret="${data.aws_secretsmanager_secret_version.github_client_secret.secret_string}" \
-                -e jenkins_url="${local.url}" \
+                -e jenkins_url="https://${local.url}" \
                 -e github_user="${var.github_user}" \
                 -e github_password="${data.aws_secretsmanager_secret_version.github_password.secret_string}" \
                 -e docker_user="${var.docker_user}" \
