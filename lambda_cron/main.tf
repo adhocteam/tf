@@ -126,8 +126,8 @@ EOF
 # Helper for allowing access to securely stored secrets
 # The helper uses the main shared key, provide your own by attaching to the output
 # role if you have a more restricted key used in Secrets Manager
-resource "aws_iam_role_policy_attachment" "basic-exec-role" {
-  role       = "${aws_iam_role.lambda_propman.name}"
+resource "aws_iam_role_policy_attachment" "basic_exec_role" {
+  role       = "${aws_iam_role.job.name}"
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
@@ -147,9 +147,9 @@ resource "aws_iam_policy" "secrets" {
   policy = "${data.aws_iam_policy_document.secrets.json}"
 }
 
-resource "aws_iam_role_policy_attachment" "propman-access-serviceaccount" {
-  role       = "${aws_iam_role.lambda_propman.name}"
-  policy_arn = "${aws_iam_policy.propman-access-serviceaccount.arn}"
+resource "aws_iam_role_policy_attachment" "secrets" {
+  role       = "${aws_iam_role.job.name}"
+  policy_arn = "${aws_iam_policy.secrets.arn}"
 }
 
 # Use of the shared KMS key for secrets decryption
@@ -172,8 +172,13 @@ resource "aws_iam_policy" "shared_key_access" {
 EOF
 }
 
+resource "aws_iam_role_policy_attachment" "shared_key_access" {
+  role       = "${aws_iam_role.job.name}"
+  policy_arn = "${aws_iam_policy.shared_key_access.arn}"
+}
+
 resource "aws_kms_grant" "primary" {
-  name              = "jenkins-primary-main"
+  name              = "${var.env}-cron-${var.job_name}"
   key_id            = "${data.aws_kms_alias.main.target_key_arn}"
   grantee_principal = "${aws_iam_role.primary.arn}"
   operations        = ["Decrypt"]
