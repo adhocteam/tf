@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'website'
+        label 'general'
     }
 
     stages {
