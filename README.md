@@ -16,3 +16,7 @@ Ad Hoc's Work:
 - [ACO API Challenge](https://github.com/adhocteam/aco-api-rfq)
 - [QPP Foundational Challenge](https://github.com/adhocteam/qpp-infra-challenge)
 - [USCIS RFDS RFI Response](https://github.com/adhocteam/uscis_rfi_response)
+
+### AWS Provider version
+
+The modules rely on [implicit provider inheritance](https://www.terraform.io/docs/modules/usage.html#implicit-provider-inheritance). We suggest `version = "~> 1.41"` or higher.
