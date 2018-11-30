@@ -27,7 +27,7 @@ resource "aws_lambda_function" "job" {
 
   vpc_config {
     subnet_ids         = ["${data.aws_subnet.application_subnet.*.id}"]
-    security_group_ids = ["${aws_security_group.job.id}]"]
+    security_group_ids = ["${aws_security_group.job.id}"]
   }
 
   tags {
