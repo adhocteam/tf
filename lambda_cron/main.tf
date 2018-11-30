@@ -131,6 +131,11 @@ resource "aws_iam_role_policy_attachment" "basic_exec_role" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "vpc_access" {
+  role       = "${aws_iam_role.job.name}"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+
 data "aws_iam_policy_document" "secrets" {
   statement {
     actions = [
