@@ -3,7 +3,6 @@ resource "aws_kms_key" "main" {
   deletion_window_in_days = 10
   enable_key_rotation     = true
 
-  # TODO(bob) Factor out the hard-coded accounts
   policy = <<POLICY
   {
   "Version": "2012-10-17",
@@ -13,7 +12,7 @@ resource "aws_kms_key" "main" {
       "Sid": "Enable IAM User Permissions",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::968246069280:root"
+        "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
       },
       "Action": "kms:*",
       "Resource": "*"
@@ -22,7 +21,7 @@ resource "aws_kms_key" "main" {
       "Sid": "Allow access for Key Administrators",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::769192554739:role/OrganizationAccountAccessRole"
+        "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/OrganizationAccountAccessRole"
       },
       "Action": [
         "kms:Create*",
@@ -46,7 +45,7 @@ resource "aws_kms_key" "main" {
       "Sid": "Allow use of the key",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::769192554739:role/OrganizationAccountAccessRole"
+        "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/OrganizationAccountAccessRole"
       },
       "Action": [
         "kms:Encrypt",
@@ -61,7 +60,7 @@ resource "aws_kms_key" "main" {
       "Sid": "Allow attachment of persistent resources",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::769192554739:role/OrganizationAccountAccessRole"
+        "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/OrganizationAccountAccessRole"
       },
       "Action": [
         "kms:CreateGrant",
