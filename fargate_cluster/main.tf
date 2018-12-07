@@ -31,15 +31,10 @@ data "template_file" "task" {
   }
 }
 
-resource "aws_ecs_task_definition" "application" {
-  family = "${var.env}-${var.application_name}"
-
-  # This is extra verbose because otherwise Terraform always thinks that the
-  # container_definitions has changed for some reason, and then tries to
-  # create a new task definition and deploy it
+resource "aws_ecs_task_definition" "app" {
+  family                = "${var.env}-${var.application_name}"
   container_definitions = "${data.template_file.task.rendered}"
-
-  execution_role_arn = "${aws_iam_role.ecs_execution.arn}"
+  execution_role_arn    = "${aws_iam_role.ecs_execution.arn}"
 
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
