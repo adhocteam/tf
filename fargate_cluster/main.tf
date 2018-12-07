@@ -19,7 +19,7 @@ resource "aws_ecs_cluster" "app" {
 resource "aws_ecs_service" "app" {
   name            = "${var.application_name}"
   cluster         = "${aws_ecs_cluster.app.id}"
-  task_definition = "${aws_ecs_task_definition.app.arn}"
+  task_definition = "${aws_ecs_task_definition.application.arn}"
   launch_type     = "FARGATE"
   desired_count   = 2
 
@@ -45,8 +45,6 @@ resource "aws_ecs_service" "app" {
     # This prevents errors with the load balancer targeting group
     # not being linked yet causing invalid parameter errors
     "module.fargate_base",
-
-    "aws_ecs_task_definition.app",
   ]
 
   lifecycle {
@@ -72,7 +70,7 @@ data "template_file" "task" {
   }
 }
 
-resource "aws_ecs_task_definition" "app" {
+resource "aws_ecs_task_definition" "application" {
   family = "${var.env}-${var.application_name}"
 
   # This is extra verbose because otherwise Terraform always thinks that the
