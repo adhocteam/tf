@@ -15,11 +15,13 @@
     "memory": 2048,
     "mountPoints": [],
     "name": "${name}",
-    "portMappings": [{
-        "containerPort": ${port}
-      	"hostPort": ${port},
-    	"protocol": "tcp"
-	}],
-	"volumesFrom": []
+    "portMappings": [
+      {
+        "containerPort": ${port},
+        "hostPort": ${port},
+        "protocol": "tcp"
+      }
+    ],
+    "volumesFrom": []
   }
 ]

@@ -16,6 +16,37 @@ resource "aws_ecs_cluster" "app" {
   name = "${var.application_name}"
 }
 
+# Must use template here to get ports as ints
+data "template_file" "task" {
+  template = "${file("${path.module}/container_task.json")}"
+
+  vars {
+    image                 = "${var.docker_image}"
+    awslogs-group         = "${aws_cloudwatch_log_group.app.name}"
+    awslogs-region        = "${data.aws_region.current.name}"
+    awslogs-stream-prefix = "${var.env}-${var.application_name}"
+    name                  = "${var.application_name}"
+    port                  = "${var.application_port}"
+    environment_variables = "${jsonencode(var.environment_variables)}"
+  }
+}
+
+resource "aws_ecs_task_definition" "application" {
+  family = "${var.env}-${var.application_name}"
+
+  # This is extra verbose because otherwise Terraform always thinks that the
+  # container_definitions has changed for some reason, and then tries to
+  # create a new task definition and deploy it
+  container_definitions = "${data.template_file.task.rendered}"
+
+  execution_role_arn = "${aws_iam_role.ecs_execution.arn}"
+
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "1024"      # 1 vCPU
+  memory                   = "2048"      # 2 GiB
+}
+
 resource "aws_ecs_service" "app" {
   name            = "${var.application_name}"
   cluster         = "${aws_ecs_cluster.app.id}"
@@ -53,37 +84,6 @@ resource "aws_ecs_service" "app" {
       "desired_count",
     ]
   }
-}
-
-# Must use template here to get ports as ints
-data "template_file" "task" {
-  template = "${file("${path.module}/container_task.json")}"
-
-  vars {
-    image                 = "${var.docker_image}"
-    awslogs-group         = "${aws_cloudwatch_log_group.app.name}"
-    awslogs-region        = "${data.aws_region.current.name}"
-    awslogs-stream-prefix = "${var.env}-${var.application_name}"
-    name                  = "${var.application_name}"
-    port                  = "${var.application_port}"
-    environment_variables = "${jsonencode(var.environment_variables)}"
-  }
-}
-
-resource "aws_ecs_task_definition" "application" {
-  family = "${var.env}-${var.application_name}"
-
-  # This is extra verbose because otherwise Terraform always thinks that the
-  # container_definitions has changed for some reason, and then tries to
-  # create a new task definition and deploy it
-  container_definitions = "${data.template_file.task.rendered}"
-
-  execution_role_arn = "${aws_iam_role.ecs_execution.arn}"
-
-  requires_compatibilities = ["FARGATE"]
-  network_mode             = "awsvpc"
-  cpu                      = "1024"      # 1 vCPU
-  memory                   = "2048"      # 2 GiB
 }
 
 resource "aws_cloudwatch_log_group" "app" {
