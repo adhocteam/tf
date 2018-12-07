@@ -45,6 +45,8 @@ resource "aws_ecs_service" "app" {
     # This prevents errors with the load balancer targeting group
     # not being linked yet causing invalid parameter errors
     "module.fargate_base",
+
+    "aws_ecs_task_definition.app",
   ]
 
   lifecycle {
