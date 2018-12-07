@@ -24,3 +24,8 @@ variable "jenkins_url" {
   description = "OPTIONAL: the URL at which jenkins will be served. Default is jenkins.{var.env}.{var.domain_name}"
   default     = ""
 }
+
+variable "jenkins_github_user" {
+  description = "GitHub account to use for Jenkins admin features (e.g., setting up hooks) and posting messages"
+  default     = "jenkins-adhoc-team"
+}

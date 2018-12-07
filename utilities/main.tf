@@ -22,4 +22,5 @@ module "jenkins" {
   ssh_proxy_sg = "${module.teleport.security_group}"
   workers      = "${var.jenkins_workers}"
   jenkins_url  = "${var.jenkins_url}"
+  github_user  = "${var.jenkins_github_user}"
 }
