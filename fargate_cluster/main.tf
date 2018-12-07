@@ -42,44 +42,44 @@ resource "aws_ecs_task_definition" "app" {
   memory                   = "2048"      # 2 GiB
 }
 
-# resource "aws_ecs_service" "application" {
-#   name            = "${var.application_name}"
-#   cluster         = "${aws_ecs_cluster.app.id}"
-#   task_definition = "${aws_ecs_task_definition.app.arn}"
-#   launch_type     = "FARGATE"
-#   desired_count   = 2
+resource "aws_ecs_service" "application" {
+  name            = "${var.application_name}"
+  cluster         = "${aws_ecs_cluster.app.id}"
+  task_definition = "${aws_ecs_task_definition.app.arn}"
+  launch_type     = "FARGATE"
+  desired_count   = 2
 
-#   network_configuration {
-#     subnets         = ["${data.aws_subnet.application_subnet.*.id}"]
-#     security_groups = ["${module.fargate_base.app_sg_id}"]
-#   }
+  network_configuration {
+    subnets         = ["${data.aws_subnet.application_subnet.*.id}"]
+    security_groups = ["${module.fargate_base.app_sg_id}"]
+  }
 
-#   load_balancer {
-#     target_group_arn = "${module.fargate_base.lb_tg_arn}"
-#     container_name   = "${var.application_name}"
-#     container_port   = "${var.application_port}"
-#   }
+  load_balancer {
+    target_group_arn = "${module.fargate_base.lb_tg_arn}"
+    container_name   = "${var.application_name}"
+    container_port   = "${var.application_port}"
+  }
 
-#   depends_on = [
-#     # https://www.terraform.io/docs/providers/aws/r/ecs_service.html
-#     # Note: To prevent a race condition during service deletion,
-#     # make sure to set depends_on to the related aws_iam_role_policy;
-#     # otherwise, the policy may be destroyed too soon and
-#     # the ECS service will then get stuck in the DRAINING state.
-#     "aws_iam_role_policy.ecs_execution",
+  depends_on = [
+    # https://www.terraform.io/docs/providers/aws/r/ecs_service.html
+    # Note: To prevent a race condition during service deletion,
+    # make sure to set depends_on to the related aws_iam_role_policy;
+    # otherwise, the policy may be destroyed too soon and
+    # the ECS service will then get stuck in the DRAINING state.
+    "aws_iam_role_policy.ecs_execution",
 
-#     # This prevents errors with the load balancer targeting group
-#     # not being linked yet causing invalid parameter errors
-#     "module.fargate_base",
-#   ]
+    # This prevents errors with the load balancer targeting group
+    # not being linked yet causing invalid parameter errors
+    "module.fargate_base",
+  ]
 
-#   lifecycle {
-#     ignore_changes = [
-#       # Ignore changes to the desired count (which may be due to autoscaling)
-#       "desired_count",
-#     ]
-#   }
-# }
+  lifecycle {
+    ignore_changes = [
+      # Ignore changes to the desired count (which may be due to autoscaling)
+      "desired_count",
+    ]
+  }
+}
 
 resource "aws_cloudwatch_log_group" "app" {
   name = "${var.env}-${var.application_name}"
