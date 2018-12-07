@@ -45,7 +45,7 @@ resource "aws_ecs_task_definition" "app" {
 resource "aws_ecs_service" "app" {
   name            = "${var.application_name}"
   cluster         = "${aws_ecs_cluster.app.id}"
-  task_definition = "${aws_ecs_task_definition.application.arn}"
+  task_definition = "${aws_ecs_task_definition.app.arn}"
   launch_type     = "FARGATE"
   desired_count   = 2
 
