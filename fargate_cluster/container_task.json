@@ -1,8 +1,9 @@
 [
   {
-    "cpu":1024,
+    "cpu": 1024,
     "essential": true,
     "image": "${image}",
+    "environment": "${environment_variables}",
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
@@ -16,11 +17,15 @@
     "name": "${name}",
     "portMappings": [
       {
-        "containerPort": ${port},
-        "hostPort": ${port},
-        "protocol": "tcp"
+        "containerPort": ${port
+        }
+      },
+      "hostPort": ${port
       }
-    ],
-    "volumesFrom": []
+    },
+    "protocol": "tcp"
   }
+],
+"volumesFrom": []
+}
 ]

@@ -66,6 +66,7 @@ data "template_file" "task" {
     awslogs-stream-prefix = "${var.env}-${var.application_name}"
     name                  = "${var.application_name}"
     port                  = "${var.application_port}"
+    environment_variables = "${jsonencode(var.environment_variables)}"
   }
 }
 
