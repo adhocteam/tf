@@ -42,7 +42,7 @@ resource "aws_ecs_task_definition" "app" {
   memory                   = "2048"      # 2 GiB
 }
 
-resource "aws_ecs_service" "app" {
+resource "aws_ecs_service" "application" {
   name            = "${var.application_name}"
   cluster         = "${aws_ecs_cluster.app.id}"
   task_definition = "${aws_ecs_task_definition.app.arn}"
