@@ -34,7 +34,3 @@ resource "aws_s3_bucket" "lambda_releases" {
     app         = "lambda-releases"
   }
 }
-
-resource "aws_ecr_repository" "main" {
-  name = "${var.domain_name}-${var.env}-main"
-}
