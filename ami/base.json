@@ -5,28 +5,32 @@
         "ssh_username": "ec2-user",
         "ami_name": "adhoc_base"
     },
-    "builders": [{
-        "type": "amazon-ebs",
-        "region": "{{user `aws_region`}}",
-        "source_ami_filter": {
-          "filters": {
-            "name": "amzn2-ami-hvm-*",
-            "root-device-type": "ebs",
-            "virtualization-type": "hvm"
-          },
-          "owners": ["amazon"],
-          "most_recent": true
-        },
-        "instance_type": "{{user `instance_type`}}",
-        "ssh_username": "{{user `ssh_username`}}",
-        "ami_name": "{{user `ami_name`}}-{{isotime \"2006-01-02T03-04-05\"}}",
-        "ami_description": "Ad Hoc Base (based on Amazon Linux 2 AMI)",
-        "tags": {
-            "app": "base",
-            "docker": "true",
-            "teleport": "true"
+    "builders": [
+        {
+            "type": "amazon-ebs",
+            "region": "{{user `aws_region`}}",
+            "source_ami_filter": {
+                "filters": {
+                    "name": "amzn2-ami-hvm-*-x86_64*",
+                    "root-device-type": "ebs",
+                    "virtualization-type": "hvm"
+                },
+                "owners": [
+                    "amazon"
+                ],
+                "most_recent": true
+            },
+            "instance_type": "{{user `instance_type`}}",
+            "ssh_username": "{{user `ssh_username`}}",
+            "ami_name": "{{user `ami_name`}}-{{isotime \"2006-01-02T03-04-05\"}}",
+            "ami_description": "Ad Hoc Base (based on Amazon Linux 2 AMI)",
+            "tags": {
+                "app": "base",
+                "docker": "true",
+                "teleport": "true"
+            }
         }
-    }],
+    ],
     "provisioners": [
         {
             "type": "ansible",

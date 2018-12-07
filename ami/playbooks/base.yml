@@ -54,6 +54,9 @@
         - teleport_proxy.service
         - teleport_auth.service
 
+    - name: enable docker in amazon linux extras
+      command: amazon-linux-extras install -y docker
+
     - name: install packages
       yum:
         name: [curl, git, jq, docker, yum-cron]
