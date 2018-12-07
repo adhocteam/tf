@@ -76,14 +76,6 @@ resource "aws_ecs_task_definition" "app" {
   # This is extra verbose because otherwise Terraform always thinks that the
   # container_definitions has changed for some reason, and then tries to
   # create a new task definition and deploy it
-  #
-  # TODO(bob): Add support for this or equivalent
-  # "environment": [
-  #   {
-  #     "name": "AWS_PARAMETER_STORE",
-  #     "value": "/${var.env}-${var.environment}"
-  #   }
-  # ],
   container_definitions = "${data.template_file.task.rendered}"
 
   execution_role_arn = "${aws_iam_role.ecs_execution.arn}"
