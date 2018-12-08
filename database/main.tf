@@ -3,12 +3,12 @@
 ####
 
 resource "aws_db_subnet_group" "db_subnet_group" {
-  name       = "rds_subnet_group"
+  name       = "${var.env}-${var.application_name}-rds-subnet-group"
   subnet_ids = ["${data.aws_subnet.data_subnet.*.id}"]
 }
 
 resource "aws_security_group" "db_sg" {
-  name        = "db-sg"
+  name        = "${var.env}-${var.application_name}-db-sg"
   description = "SG for database servers"
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
