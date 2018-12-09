@@ -149,7 +149,7 @@ resource "aws_security_group_rule" "alb_egress" {
 
 resource "aws_instance" "jenkins_primary" {
   ami           = "${data.aws_ami.base.id}"
-  instance_type = "t3.micro"
+  instance_type = "t3.small"
   key_name      = "infrastructure"
 
   associate_public_ip_address = false
