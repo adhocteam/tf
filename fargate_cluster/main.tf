@@ -38,16 +38,17 @@ resource "aws_ecs_task_definition" "app" {
 
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "1024"      # 1 vCPU
-  memory                   = "2048"      # 2 GiB
+  cpu                      = "2048"      # 2 vCPU
+  memory                   = "4096"      # 4 GiB
 }
 
 resource "aws_ecs_service" "application" {
-  name            = "${var.application_name}"
-  cluster         = "${aws_ecs_cluster.app.id}"
-  task_definition = "${aws_ecs_task_definition.app.arn}"
-  launch_type     = "FARGATE"
-  desired_count   = 2
+  name                              = "${var.application_name}"
+  cluster                           = "${aws_ecs_cluster.app.id}"
+  task_definition                   = "${aws_ecs_task_definition.app.arn}"
+  launch_type                       = "FARGATE"
+  desired_count                     = 2
+  health_check_grace_period_seconds = 7200
 
   network_configuration {
     subnets         = ["${data.aws_subnet.application_subnet.*.id}"]
