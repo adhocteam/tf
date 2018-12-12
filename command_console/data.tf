@@ -4,42 +4,14 @@ data "aws_vpc" "vpc" {
   }
 }
 
-data "aws_subnet" "application_subnet" {
+data "aws_subnet" "public" {
   count  = 3
   vpc_id = "${data.aws_vpc.vpc.id}"
 
   tags {
-    name = "app-sub-${count.index}"
+    name = "public-sub-${count.index}"
     env  = "${var.env}"
   }
-}
-
-data "aws_security_group" "ssh_proxies" {
-  vpc_id = "${data.aws_vpc.vpc.id}"
-
-  tags {
-    env  = "${var.env}"
-    app  = "teleport"
-    Name = "teleport-proxies"
-  }
-}
-
-data "aws_security_group" "jumpbox" {
-  vpc_id = "${data.aws_vpc.vpc.id}"
-
-  tags {
-    env  = "${var.env}"
-    app  = "teleport"
-    Name = "teleport-jumpbox"
-  }
-}
-
-data "aws_secretsmanager_secret" "cluster_token" {
-  name = "${var.env}/teleport/cluster_token"
-}
-
-data "aws_kms_alias" "main" {
-  name = "alias/${var.env}-main"
 }
 
 data "aws_ami" "base" {
