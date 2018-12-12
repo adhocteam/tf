@@ -11,21 +11,27 @@ resource "aws_security_group" "db_sg" {
   name        = "${var.env}-${var.application_name}-db-sg"
   description = "SG for database servers"
   vpc_id      = "${data.aws_vpc.vpc.id}"
+}
 
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = ["${var.app_sg}"]
-  }
+resource "aws_security_group_rule" "app_gress" {
+  type            = "ingress"
+  from_port       = 5432
+  to_port         = 5432
+  protocol        = "tcp"
+  security_groups = ["${var.app_sg}"]
 
-  # TODO(bob) Can probably lock this down to just 5432 to apps
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  security_group_id = "${aws_security_group.db_sg}"
+}
+
+# TODO(bob) confirm this can be locked to egress 5432 only
+resource "aws_security_group_rule" "egress" {
+  type        = "egress"
+  from_port   = 0
+  to_port     = 0
+  protocol    = "-1"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = "${aws_security_group.db_sg}"
 }
 
 ####
