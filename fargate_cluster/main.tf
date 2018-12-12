@@ -6,6 +6,7 @@ module "fargate_base" {
   application_name  = "${var.application_name}"
   application_port  = "${var.application_port}"
   loadbalancer_port = "${var.loadbalancer_port}"
+  health_check_path = "${var.health_check_path}"
 }
 
 # TODO(bob) May need a call to create a service linked role first:
@@ -43,12 +44,11 @@ resource "aws_ecs_task_definition" "app" {
 }
 
 resource "aws_ecs_service" "application" {
-  name                              = "${var.application_name}"
-  cluster                           = "${aws_ecs_cluster.app.id}"
-  task_definition                   = "${aws_ecs_task_definition.app.arn}"
-  launch_type                       = "FARGATE"
-  desired_count                     = 2
-  health_check_grace_period_seconds = 7200
+  name            = "${var.application_name}"
+  cluster         = "${aws_ecs_cluster.app.id}"
+  task_definition = "${aws_ecs_task_definition.app.arn}"
+  launch_type     = "FARGATE"
+  desired_count   = 2
 
   network_configuration {
     subnets         = ["${data.aws_subnet.application_subnet.*.id}"]
