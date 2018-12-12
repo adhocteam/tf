@@ -1,5 +1,4 @@
 resource "aws_instance" "console" {
-  count         = "${var.instance_count}"
   ami           = "${data.aws_ami.base.id}"
   instance_type = "${var.instance_size}"
 
@@ -10,8 +9,8 @@ resource "aws_instance" "console" {
   associate_public_ip_address = false
 
   #distribute instances across AZs
-  subnet_id              = "${element(data.aws_subnet.application_subnet.*.id,count.index)}"
-  vpc_security_group_ids = ["${module.base.app_sg_id}"]
+  subnet_id              = "${element(data.aws_subnet.application_subnet.*.id,0)}"
+  vpc_security_group_ids = ["${aws_security_group.sg.id}"]
 
   lifecycle {
     ignore_changes = ["ami"]
@@ -22,7 +21,7 @@ resource "aws_instance" "console" {
   }
 
   tags {
-    Name = "command-console-${var.env}-${count.index}"
+    Name = "command-console-${var.env}"
     app  = "command-console"
     env  = "${var.env}"
   }
@@ -41,17 +40,6 @@ resource "aws_security_group" "sg" {
   }
 }
 
-# Allow inbound only to our application port
-resource "aws_security_group_rule" "ingress" {
-  type                     = "ingress"
-  from_port                = "${var.application_port}"
-  to_port                  = "${var.application_port}"
-  protocol                 = "tcp"
-  source_security_group_id = "${aws_security_group.application_alb_sg.id}"
-
-  security_group_id = "${aws_security_group.app_sg.id}"
-}
-
 # Allow all outbound, e.g. third-pary API endpoints, by default
 resource "aws_security_group_rule" "egress" {
   type        = "egress"
@@ -60,7 +48,7 @@ resource "aws_security_group_rule" "egress" {
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.app_sg.id}"
+  security_group_id = "${aws_security_group.sg.id}"
 }
 
 # Add rule to allow SSH proxies to connect
@@ -71,7 +59,7 @@ resource "aws_security_group_rule" "proxy_ssh" {
   protocol                 = "tcp"
   source_security_group_id = "${data.aws_security_group.ssh_proxies.id}"
 
-  security_group_id = "${aws_security_group_rule.sg.id}"
+  security_group_id = "${aws_security_group.sg.id}"
 }
 
 resource "aws_security_group_rule" "jumpbox" {
@@ -81,7 +69,7 @@ resource "aws_security_group_rule" "jumpbox" {
   protocol                 = "tcp"
   source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
-  security_group_id = "${aws_security_group_rule.sg.id}"
+  security_group_id = "${aws_security_group.sg.id}"
 }
 
 #####
