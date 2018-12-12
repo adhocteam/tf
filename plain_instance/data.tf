@@ -29,8 +29,8 @@ data "aws_security_group" "jumpbox" {
 
   tags {
     env  = "${var.env}"
-    app  = "teleport"
-    Name = "teleport-jumpbox"
+    app  = "utilities"
+    Name = "jumpbox"
   }
 }
 
