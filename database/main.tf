@@ -13,14 +13,14 @@ resource "aws_security_group" "db_sg" {
   vpc_id      = "${data.aws_vpc.vpc.id}"
 }
 
-resource "aws_security_group_rule" "app_gress" {
+resource "aws_security_group_rule" "app_ingress" {
   type            = "ingress"
   from_port       = 5432
   to_port         = 5432
   protocol        = "tcp"
   security_groups = ["${var.app_sg}"]
 
-  security_group_id = "${aws_security_group.db_sg}"
+  security_group_id = "${aws_security_group.db_sg.id}"
 }
 
 # TODO(bob) confirm this can be locked to egress 5432 only
@@ -31,7 +31,7 @@ resource "aws_security_group_rule" "egress" {
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.db_sg}"
+  security_group_id = "${aws_security_group.db_sg.id}"
 }
 
 ####
