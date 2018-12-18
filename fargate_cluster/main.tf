@@ -6,6 +6,7 @@ module "fargate_base" {
   application_name  = "${var.application_name}"
   application_port  = "${var.application_port}"
   loadbalancer_port = "${var.loadbalancer_port}"
+  health_check_path = "${var.health_check_path}"
 }
 
 # TODO(bob) May need a call to create a service linked role first:
@@ -38,8 +39,8 @@ resource "aws_ecs_task_definition" "app" {
 
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = "1024"      # 1 vCPU
-  memory                   = "2048"      # 2 GiB
+  cpu                      = "2048"      # 2 vCPU
+  memory                   = "4096"      # 4 GiB
 }
 
 resource "aws_ecs_service" "application" {
