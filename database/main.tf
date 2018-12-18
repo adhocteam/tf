@@ -60,14 +60,14 @@ resource "aws_db_instance" "primary" {
   storage_encrypted   = true
   kms_key_id          = "${data.aws_kms_key.main.arn}"
 
-  backup_retention_period = 7
+  #  enabled_cloudwatch_logs_exports = ["postgres", "update"]
 
+  backup_retention_period = 7
   lifecycle {
     ignore_changes = ["snapshot_identifier",
       "engine_version",
     ]
   }
-
   tags {
     env       = "${var.env}"
     app       = "${var.application_name}"
