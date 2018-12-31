@@ -1,5 +1,5 @@
 ####
-# Internal DNS names to allow for predictable names in code and as light-weight service discovery
+# Main infrastructure to host a static website
 ####
 
 # Setup DNS records for the static site
@@ -82,6 +82,9 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "${var.subdomain}-${var.domain_name}"
 
+    # Use gzip compression
+    compress = true
+
     forwarded_values {
       query_string = false
 
@@ -111,5 +114,55 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     env       = "${var.env}"
     terraform = "true"
     name      = "cdn-${var.subdomain}.${var.domain_name}"
+  }
+}
+
+####
+# Create preview site to hold builds of PRs
+####
+
+resource "aws_route53_record" "preview" {
+  zone_id = "${data.aws_route53_zone.domain.zone_id}"
+  name    = "preview.${var.subdomain}"
+  type    = "CNAME"
+  ttl     = "300"
+
+  records = ["${aws_s3_bucket.preview.bucket_domain_name}"]
+}
+
+# Create bucket to host the content
+
+resource "aws_s3_bucket" "preview" {
+  bucket = "preview.${var.subdomain}.${var.domain_name}"
+  acl    = "public-read"
+
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Stmt1516660482311",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::preview.${var.subdomain}.${var.domain_name}/*"
+      ]
+    }
+  ]
+}
+POLICY
+
+  website {
+    index_document = "index.html"
+    error_document = "error.html"
+  }
+
+  tags {
+    env       = "${var.env}"
+    terraform = "true"
+    name      = "preview.${var.subdomain}.${var.domain_name}"
   }
 }
