@@ -127,7 +127,7 @@ resource "aws_route53_record" "preview" {
   type    = "CNAME"
   ttl     = "300"
 
-  records = ["${aws_s3_bucket.preview.website_domain_name}"]
+  records = ["${aws_s3_bucket.preview.website_domain}"]
 }
 
 # Create bucket to host the content
