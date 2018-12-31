@@ -61,7 +61,7 @@ resource "aws_db_instance" "primary" {
   kms_key_id          = "${data.aws_kms_key.main.arn}"
 
   parameter_group_name            = "${aws_db_parameter_group.postgres.id}"
-  enabled_cloudwatch_logs_exports = ["postgres", "update"]
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
   backup_retention_period = 7
 
