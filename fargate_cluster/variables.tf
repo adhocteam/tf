@@ -30,6 +30,11 @@ variable "environment_variables" {
   default     = []
 }
 
+variable "health_check_path" {
+  description = "path used by load balancer to health check application. should return 200."
+  default     = "/"
+}
+
 # Currently not supported by Fargate. Placeholder until it is.
 # https://docs.amazonaws.cn/en_us/AmazonECS/latest/developerguide/specifying-sensitive-data.html
 # variable "secrets" {

@@ -39,7 +39,7 @@ resource "aws_security_group_rule" "egress" {
 ####
 
 resource "aws_db_instance" "primary" {
-  identifier_prefix = "${var.env}-"
+  identifier_prefix = "${var.env}-${var.application_name}-"
 
   username = "${var.user}"
   password = "${var.password}"
@@ -51,14 +51,17 @@ resource "aws_db_instance" "primary" {
 
   instance_class = "db.t2.small"
   engine         = "postgres"
-  engine_version = "9.6.9"
+  engine_version = "10.5"
   port           = 5432
 
   storage_type        = "gp2"
   skip_final_snapshot = true
-  allocated_storage   = 10
+  allocated_storage   = 30
   storage_encrypted   = true
   kms_key_id          = "${data.aws_kms_key.main.arn}"
+
+  parameter_group_name            = "${aws_db_parameter_group.postgres.id}"
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
   backup_retention_period = 7
 
@@ -73,6 +76,34 @@ resource "aws_db_instance" "primary" {
     app       = "${var.application_name}"
     terraform = "true"
     name      = "${var.env}-db"
+  }
+}
+
+# Enable query logging
+resource "aws_db_parameter_group" "postgres" {
+  name_prefix = "${var.env}-${var.application_name}-"
+  family      = "postgres10"
+
+  parameter {
+    name  = "log_connections"
+    value = "1"
+  }
+
+  parameter {
+    name  = "log_disconnections"
+    value = "1"
+  }
+
+  # Log only IP address to prevent potential performance penalty
+  # https://www.postgresql.org/docs/9.5/runtime-config-logging.html#what-to-log
+  parameter {
+    name  = "log_hostname"
+    value = "0"
+  }
+
+  parameter {
+    name  = "log_statement"
+    value = "all"
   }
 }
 
