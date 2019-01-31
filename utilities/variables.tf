@@ -29,3 +29,8 @@ variable "jenkins_github_user" {
   description = "GitHub account to use for Jenkins admin features (e.g., setting up hooks) and posting messages"
   default     = "jenkins-adhoc-team"
 }
+
+variable "teleport_github_team" {
+  description = "GitHub team who can SSH via Teleport proxy"
+  default     = "infrastructure-team"
+}

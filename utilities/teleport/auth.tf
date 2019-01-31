@@ -73,6 +73,7 @@ data "template_file" "auth_user_data" {
     client_id                = "${data.aws_secretsmanager_secret_version.github_client_id.secret_string}"
     client_secret            = "${data.aws_secretsmanager_secret_version.github_secret.secret_string}"
     proxy_domain             = "${aws_route53_record.public.fqdn}"
+    gh_team                  = "${var.gh_team}"
   }
 }
 

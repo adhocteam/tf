@@ -12,6 +12,7 @@ module "teleport" {
   env         = "${var.env}"
   domain_name = "${var.domain_name}"
   jumpbox_sg  = "${module.jumpbox.security_group}"
+  gh_team     = "${var.teleport_github_team}"
 }
 
 module "jenkins" {
