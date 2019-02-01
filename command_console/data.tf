@@ -36,6 +36,10 @@ data "aws_security_group" "jumpbox" {
   }
 }
 
+data "aws_kms_alias" "main" {
+  name = "alias/${var.env}-main"
+}
+
 data "aws_ami" "base" {
   most_recent = true
   owners      = ["self"]
