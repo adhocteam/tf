@@ -57,3 +57,33 @@ resource "aws_secretsmanager_secret_version" "cluster_token" {
   secret_id     = "${var.env}/teleport/cluster_token"
   secret_string = "${random_string.cluster_token.result}"
 }
+
+### Shared IAM role for instances running teleport
+resource "aws_iam_policy" "teleport_secrets" {
+  name        = "instance-teleport-secrets"
+  path        = "/${var.env}/teleport/"
+  description = "Allows nodes to run local teleport daemon"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect" : "Allow",
+            "Action" : "ec2:DescribeTags",
+            "Resource" : "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "secretsmanager:GetSecretValue",
+            "Resource": "${data.aws_secretsmanager_secret.cluster_token.arn}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "kms:Decrypt",
+            "Resource": "${data.aws_kms_alias.main.target_key_arn}"
+        }
+    ]
+}
+EOF
+}
