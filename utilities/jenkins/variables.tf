@@ -39,3 +39,8 @@ variable "jenkins_url" {
   description = "OPTIONAL: the URL at which jenkins will be served. Default is jenkins.{var.env}.{var.domain_name}"
   default     = ""
 }
+
+variable "jenkins_image" {
+  description = "OPTIONAL: the image name for the container to use for the jenkins primary"
+  default     = "adhocteam/jenkins:latest"
+}

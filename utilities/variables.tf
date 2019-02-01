@@ -25,6 +25,11 @@ variable "jenkins_url" {
   default     = ""
 }
 
+variable "jenkins_image" {
+  description = "OPTIONAL: the image name for the container to use for the jenkins primary"
+  default     = "adhocteam/jenkins:latest"
+}
+
 variable "jenkins_github_user" {
   description = "GitHub account to use for Jenkins admin features (e.g., setting up hooks) and posting messages"
   default     = "jenkins-adhoc-team"

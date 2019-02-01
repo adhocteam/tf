@@ -16,12 +16,13 @@ module "teleport" {
 }
 
 module "jenkins" {
-  source       = "./jenkins"
-  env          = "${var.env}"
-  domain_name  = "${var.domain_name}"
-  jumpbox_sg   = "${module.jumpbox.security_group}"
-  ssh_proxy_sg = "${module.teleport.security_group}"
-  workers      = "${var.jenkins_workers}"
-  jenkins_url  = "${var.jenkins_url}"
-  github_user  = "${var.jenkins_github_user}"
+  source        = "./jenkins"
+  env           = "${var.env}"
+  domain_name   = "${var.domain_name}"
+  jumpbox_sg    = "${module.jumpbox.security_group}"
+  ssh_proxy_sg  = "${module.teleport.security_group}"
+  workers       = "${var.jenkins_workers}"
+  jenkins_url   = "${var.jenkins_url}"
+  jenkins_image = "${var.jenkins_image}"
+  github_user   = "${var.jenkins_github_user}"
 }

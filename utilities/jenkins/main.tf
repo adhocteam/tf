@@ -173,7 +173,7 @@ resource "aws_instance" "jenkins_primary" {
                 -e docker_user="${var.docker_user}" \
                 -e docker_password="${data.aws_secretsmanager_secret_version.docker_password.secret_string}" \
                 -e slack_token="${data.aws_secretsmanager_secret_version.slack_token.secret_string}" \
-                adhocteam/jenkins:latest
+                ${var.jenkins_image}
               EOF
 
   lifecycle {
