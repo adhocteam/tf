@@ -105,7 +105,7 @@ resource "aws_iam_role_policy_attachment" "iam_teleport" {
 }
 
 resource "aws_kms_grant" "main" {
-  name              = "${var.env}-${var.application_name}-main"
+  name              = "command-console-${var.env}-main"
   key_id            = "${data.aws_kms_alias.main.target_key_arn}"
   grantee_principal = "${aws_iam_role.iam.arn}"
   operations        = ["Decrypt"]
