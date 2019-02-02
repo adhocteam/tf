@@ -74,6 +74,20 @@
         append: yes
         groups: docker
 
+    - name: Get latest docker compose version
+      shell: curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -rc '.assets[] | select(.name == "docker-compose-Linux-x86_64") | .browser_download_url'
+      register: dcversion
+      args:
+        warn: False
+
+    - name: install docker compose
+      get_url:
+        url: "{{ dcversion.stdout }}"
+        dest: /usr/local/bin/docker-compose
+        mode: 0755
+        owner: ec2-user
+        group: ec2-user
+
     - name: enable services
       service:
         name: "{{ item }}"
