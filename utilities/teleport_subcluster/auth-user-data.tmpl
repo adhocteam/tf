@@ -28,34 +28,15 @@ auth_service:
   listen_addr: 0.0.0.0:3025
   public_addr: auth.teleport.local:3025
   tokens:
-  - "auth,proxy,node,trusted_cluster:${cluster_token}"
+  - "auth,proxy,node:${cluster_token}"
   cluster_name: ${cluster_name}
   session_recording: "node"
   client_idle_timeout: "1h"
   disconnect_expired_cert: "yes"
-  authentication:
-    type: github
 ssh_service:
   enabled: "no"
 proxy_service:
   enabled: "no"
-EOF
-
-cat << EOF > /var/lib/teleport/github.yaml
-kind: github
-version: v3
-metadata:
-  name: github
-spec:
-  client_id: ${client_id}
-  client_secret: ${client_secret}
-  display: Github
-  redirect_url: https://${proxy_domain}/v1/webapi/github/callback
-  teams_to_logins:
-    - organization: adhocteam
-      team: ${gh_team}
-      logins:
-        - ec2-user
 EOF
 
 # Stop the local default services
@@ -66,10 +47,23 @@ chown -R teleport:adm /var/lib/teleport
 # Start daemon and endure through restarts
 systemctl enable --now teleport_auth
 
-echo "Create GitHub authenticator"
+echo "Create link to main cluster"
+
+# Connect to the main cluster
+cat << EOF > /var/lib/teleport/cluster.yaml
+kind: trusted_cluster
+version: v2
+metadata:
+  name: ${main_cluster}
+spec:
+  enabled: true
+  token: ${main_cluster_token}
+  tunnel_addr: ${main_cluster_url}:3024
+  web_proxy_addr: ${main_cluster_url}:3080
+EOF
 
 # Sleep to allow time for the authentication service to start up and then retry a few times
 sleep 15
-for i in {1..5}; do sudo -u teleport /usr/local/bin/tctl create /var/lib/teleport/github.yaml && break || sleep 15; done
+for i in {1..5}; do sudo -u teleport /usr/local/bin/tctl create /var/lib/teleport/cluster.yaml && break || sleep 15; done
 
 echo "Teleport install complete"

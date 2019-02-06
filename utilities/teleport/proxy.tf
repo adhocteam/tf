@@ -25,6 +25,13 @@ resource "aws_elb" "proxy" {
   }
 
   listener {
+    instance_port     = 3024
+    instance_protocol = "tcp"
+    lb_port           = 3024
+    lb_protocol       = "tcp"
+  }
+
+  listener {
     instance_port      = 3080
     instance_protocol  = "tcp"
     lb_port            = 443
@@ -97,6 +104,16 @@ resource "aws_security_group_rule" "lb_ssh_ingress" {
   type        = "ingress"
   from_port   = 3023
   to_port     = 3023
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = "${aws_security_group.proxy_lb.id}"
+}
+
+resource "aws_security_group_rule" "lb_cluster_ingress" {
+  type        = "ingress"
+  from_port   = 3024
+  to_port     = 3024
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
 
@@ -199,6 +216,16 @@ resource "aws_security_group_rule" "proxy_ssh" {
   security_group_id = "${aws_security_group.proxies.id}"
 }
 
+resource "aws_security_group_rule" "proxy_cluster" {
+  type                     = "ingress"
+  from_port                = 3024
+  to_port                  = 3024
+  protocol                 = "tcp"
+  source_security_group_id = "${aws_security_group.proxy_lb.id}"
+
+  security_group_id = "${aws_security_group.proxies.id}"
+}
+
 # Must allow talking to the world to call out to AWS APIs
 resource "aws_security_group_rule" "proxy_egress" {
   type        = "egress"
@@ -212,6 +239,7 @@ resource "aws_security_group_rule" "proxy_egress" {
 
 # Support for emergency jumpbox
 resource "aws_security_group_rule" "jumpbox_proxy" {
+  count                    = "${var.jumpbox_sg != "" ? 1 : 0}"
   type                     = "ingress"
   from_port                = 22
   to_port                  = 22

@@ -70,10 +70,9 @@ data "template_file" "auth_user_data" {
     dynamo_events_table_name = "${aws_dynamodb_table.teleport_events.name}"
     s3_bucket                = "${aws_s3_bucket.recordings.id}"
     cluster_name             = "${var.env}"
-    client_id                = "${data.aws_secretsmanager_secret_version.github_client_id.secret_string}"
-    client_secret            = "${data.aws_secretsmanager_secret_version.github_secret.secret_string}"
-    proxy_domain             = "${aws_route53_record.public.fqdn}"
-    gh_team                  = "${var.gh_team}"
+    main_cluster             = "${var.main_cluster}"
+    main_cluster_token       = "${data.aws_secretsmanager_secret.main_cluster_token.secret_string}"
+    main_cluster_url         = "teleport.${var.main_cluster}.${var.domain_name}"
   }
 }
 

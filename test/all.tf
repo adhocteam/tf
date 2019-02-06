@@ -87,3 +87,18 @@ module "lambda_cron" {
     "arn:aws:secretsmanager:us-east-1:000000000000:secret:${local.env}/lambda/crontab/secret2",
   ]
 }
+
+module "base" {
+  source = "../"
+
+  env         = "prod"
+  domain_name = "${local.domain_name}"
+}
+
+module "teleport_subcluster" {
+  source = "../utilities/teleport_subcluster"
+
+  env          = "prod"
+  domain_name  = "${local.domain_name}"
+  main_cluster = "${local.env}"
+}
