@@ -28,8 +28,8 @@ data "aws_secretsmanager_secret" "cluster_token" {
   name = "${var.env}/teleport/cluster_token"
 }
 
-data "aws_secretsmanager_secret" "main_cluster_token" {
-  name = "${var.main_cluster}/teleport/cluster_token"
+data "aws_secretsmanager_secret_version" "main_cluster_token" {
+  secret_id = "${var.main_cluster}/teleport/cluster_token"
 }
 
 data "aws_kms_alias" "main" {
