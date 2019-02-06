@@ -14,7 +14,6 @@ data "template_file" "user_data" {
   vars {
     nodename      = "teleport-proxy-${count.index}"
     cluster_token = "${random_string.cluster_token.result}"
-    proxy_domain  = "${aws_route53_record.public.fqdn}"
   }
 }
 
