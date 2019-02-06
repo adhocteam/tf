@@ -1,0 +1,69 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Overwrite teleport auth config file"
+
+cat << EOF > /etc/teleport_auth.yaml
+teleport:
+  nodename: ${nodename}
+  data_dir: /var/lib/teleport
+  pid_file: /var/run/teleport/teleport.pid
+  auth_token: ${cluster_token}
+  auth_servers:
+  - auth.teleport.local:3025
+  connection_limits:
+    max_connections: 100
+    max_users: 50
+  log:
+    output: stderr
+    severity: INFO
+  storage:
+    type: dynamodb
+    region: ${region}
+    table_name: ${dynamo_table_name}
+    audit_events_uri: dynamodb://${dynamo_events_table_name}
+    audit_sessions_uri: s3://${s3_bucket}/records
+auth_service:
+  enabled: "yes"
+  listen_addr: 0.0.0.0:3025
+  public_addr: auth.teleport.local:3025
+  tokens:
+  - "auth,proxy,node:${cluster_token}"
+  cluster_name: ${cluster_name}
+  session_recording: "node"
+  client_idle_timeout: "1h"
+  disconnect_expired_cert: "yes"
+ssh_service:
+  enabled: "no"
+proxy_service:
+  enabled: "no"
+EOF
+
+# Stop the local default services
+systemctl disable --now teleport
+systemctl disable --now docker
+
+chown -R teleport:adm /var/lib/teleport
+# Start daemon and endure through restarts
+systemctl enable --now teleport_auth
+
+echo "Create link to main cluster"
+
+# Connect to the main cluster
+cat << EOF > /var/lib/teleport/cluster.yaml
+kind: trusted_cluster
+version: v2
+metadata:
+  name: ${main_cluster}
+spec:
+  enabled: true
+  token: ${main_cluster_token}
+  tunnel_addr: ${main_cluster_url}:3024
+  web_proxy_addr: ${main_cluster_url}:3080
+EOF
+
+# Sleep to allow time for the authentication service to start up and then retry a few times
+sleep 15
+for i in {1..5}; do sudo -u teleport /usr/local/bin/tctl create /var/lib/teleport/cluster.yaml && break || sleep 15; done
+
+echo "Teleport install complete"
