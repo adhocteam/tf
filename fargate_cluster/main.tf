@@ -148,11 +148,31 @@ resource "aws_appautoscaling_target" "service" {
   min_capacity       = 2
 }
 
+# Alarms to trigger actions
+
 resource "aws_cloudwatch_metric_alarm" "cpu_utilization_high" {
   alarm_name          = "${var.env}-${var.application_name}-CPU-Utilization-High"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = 80
+
+  dimensions {
+    ClusterName = "${aws_ecs_cluster.app.name}"
+    ServiceName = "${aws_ecs_service.application.name}"
+  }
+
+  alarm_actions = ["${aws_appautoscaling_policy.up.arn}"]
+}
+
+resource "aws_cloudwatch_metric_alarm" "memory_utilization_high" {
+  alarm_name          = "${var.env}-${var.application_name}-Memory-Utilization-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "MemoryUtilization"
   namespace           = "AWS/ECS"
   period              = "60"
   statistic           = "Average"
@@ -174,7 +194,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
   namespace           = "AWS/ECS"
   period              = "60"
   statistic           = "Average"
-  threshold           = 40
+  threshold           = 20
 
   dimensions {
     ClusterName = "${aws_ecs_cluster.app.name}"
@@ -184,6 +204,25 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
   alarm_actions = ["${aws_appautoscaling_policy.down.arn}"]
 }
 
+resource "aws_cloudwatch_metric_alarm" "memory_utilization_low" {
+  alarm_name          = "${var.env}-${var.application_name}-Memory-Utilization-High"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/ECS"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = 20
+
+  dimensions {
+    ClusterName = "${aws_ecs_cluster.app.name}"
+    ServiceName = "${aws_ecs_service.application.name}"
+  }
+
+  alarm_actions = ["${aws_appautoscaling_policy.down.arn}"]
+}
+
+# Autoscaling actions
 resource "aws_appautoscaling_policy" "up" {
   name               = "app-scale-up"
   service_namespace  = "${aws_appautoscaling_target.service.service_namespace}"
