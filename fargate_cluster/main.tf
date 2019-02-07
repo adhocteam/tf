@@ -158,7 +158,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_high" {
   metric_name         = "CPUUtilization"
   namespace           = "AWS/ECS"
   period              = "300"
-  statistic           = "Maxmium"
+  statistic           = "Maximum"
   threshold           = 80
 
   dimensions {
