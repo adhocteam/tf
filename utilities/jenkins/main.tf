@@ -228,6 +228,7 @@ resource "aws_security_group_rule" "primary_proxy_ssh" {
 }
 
 resource "aws_security_group_rule" "primary_ssh_ingress" {
+  count                    = "${var.jumpbox_sg != "" ? 1 : 0}"
   type                     = "ingress"
   from_port                = 22
   to_port                  = 22
@@ -364,6 +365,7 @@ resource "aws_security_group_rule" "worker_proxy_ssh" {
 }
 
 resource "aws_security_group_rule" "worker_ssh_ingress" {
+  count                    = "${var.jumpbox_sg != "" ? 1 : 0}"
   type                     = "ingress"
   from_port                = 22
   to_port                  = 22
