@@ -126,6 +126,7 @@ resource "aws_iam_role_policy" "ecs_execution" {
         "ecr:BatchCheckLayerAvailability",
         "ecr:GetDownloadUrlForLayer",
         "ecr:BatchGetImage",
+        "ecs:StartTelemetrySession",
         "logs:CreateLogStream",
         "logs:PutLogEvents"
       ],
@@ -153,11 +154,11 @@ resource "aws_appautoscaling_target" "service" {
 resource "aws_cloudwatch_metric_alarm" "cpu_utilization_high" {
   alarm_name          = "${var.env}-${var.application_name}-CPU-Utilization-High"
   comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = "1"
+  evaluation_periods  = "2"
   metric_name         = "CPUUtilization"
   namespace           = "AWS/ECS"
-  period              = "60"
-  statistic           = "Average"
+  period              = "300"
+  statistic           = "Maxmium"
   threshold           = 80
 
   dimensions {
@@ -165,25 +166,39 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_high" {
     ServiceName = "${aws_ecs_service.application.name}"
   }
 
-  alarm_actions = ["${aws_appautoscaling_policy.up.arn}"]
+  alarm_description = "Scale up if maximum CPU Utilization is above 80% for two consecutive 5 minute periods"
+  alarm_actions     = ["${aws_appautoscaling_policy.up.arn}"]
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_cloudwatch_metric_alarm" "memory_utilization_high" {
   alarm_name          = "${var.env}-${var.application_name}-Memory-Utilization-High"
   comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = "1"
+  evaluation_periods  = "3"
   metric_name         = "MemoryUtilization"
   namespace           = "AWS/ECS"
-  period              = "60"
-  statistic           = "Average"
-  threshold           = 80
+  period              = "300"
+  statistic           = "Maximum"
+  threshold           = 90
 
   dimensions {
     ClusterName = "${aws_ecs_cluster.app.name}"
     ServiceName = "${aws_ecs_service.application.name}"
   }
 
-  alarm_actions = ["${aws_appautoscaling_policy.up.arn}"]
+  alarm_description = "Scale up if maximum Memory Reservation is above 90% for two consecutive 5 minute periods"
+  alarm_actions     = ["${aws_appautoscaling_policy.up.arn}"]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  # This is required to make cloudwatch alarms creation sequential, AWS doesn't
+  # support modifying alarms concurrently.
+  depends_on = ["aws_cloudwatch_metric_alarm.cpu_utilization_high"]
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
@@ -192,7 +207,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
   evaluation_periods  = "1"
   metric_name         = "CPUUtilization"
   namespace           = "AWS/ECS"
-  period              = "60"
+  period              = "300"
   statistic           = "Average"
   threshold           = 20
 
@@ -201,7 +216,16 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
     ServiceName = "${aws_ecs_service.application.name}"
   }
 
-  alarm_actions = ["${aws_appautoscaling_policy.down.arn}"]
+  alarm_description = "Scale down if the CPU Utilitization is below 20% for 5 minutes"
+  alarm_actions     = ["${aws_appautoscaling_policy.down.arn}"]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  # This is required to make cloudwatch alarms creation sequential, AWS doesn't
+  # support modifying alarms concurrently.
+  depends_on = ["aws_cloudwatch_metric_alarm.memory_utilization_high"]
 }
 
 resource "aws_cloudwatch_metric_alarm" "memory_utilization_low" {
@@ -210,7 +234,7 @@ resource "aws_cloudwatch_metric_alarm" "memory_utilization_low" {
   evaluation_periods  = "1"
   metric_name         = "MemoryUtilization"
   namespace           = "AWS/ECS"
-  period              = "60"
+  period              = "300"
   statistic           = "Average"
   threshold           = 20
 
@@ -219,7 +243,16 @@ resource "aws_cloudwatch_metric_alarm" "memory_utilization_low" {
     ServiceName = "${aws_ecs_service.application.name}"
   }
 
-  alarm_actions = ["${aws_appautoscaling_policy.down.arn}"]
+  alarm_description = "Scale down if the Memory Usage is below 20% for 5 minutes"
+  alarm_actions     = ["${aws_appautoscaling_policy.down.arn}"]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  # This is required to make cloudwatch alarms creation sequential, AWS doesn't
+  # support modifying alarms concurrently.
+  depends_on = ["aws_cloudwatch_metric_alarm.cpu_utilization_low"]
 }
 
 # Autoscaling actions
