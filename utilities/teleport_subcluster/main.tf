@@ -46,7 +46,7 @@ resource "aws_secretsmanager_secret_version" "cluster_token" {
 
 ### Shared IAM role for instances running teleport
 resource "aws_iam_policy" "teleport_secrets" {
-  name        = "instance-teleport-secrets"
+  name        = "${var.env}-instance-teleport-secrets"
   path        = "/${var.env}/teleport/"
   description = "Allows nodes to run local teleport daemon"
 
