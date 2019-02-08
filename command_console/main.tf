@@ -63,12 +63,11 @@ resource "aws_security_group_rule" "proxy_ssh" {
 }
 
 resource "aws_security_group_rule" "jumpbox" {
-  count                    = "${var.jumpbox_sg != "" ? 1 : 0}"
   type                     = "ingress"
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${var.jumpbox_sg}"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${aws_security_group.sg.id}"
 }
