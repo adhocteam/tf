@@ -202,7 +202,7 @@ resource "aws_cloudwatch_metric_alarm" "memory_utilization_high" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
-  alarm_name          = "${var.env}-${var.application_name}-CPU-Utilization-High"
+  alarm_name          = "${var.env}-${var.application_name}-CPU-Utilization-Low"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = "1"
   metric_name         = "CPUUtilization"
@@ -229,7 +229,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_utilization_low" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "memory_utilization_low" {
-  alarm_name          = "${var.env}-${var.application_name}-Memory-Utilization-High"
+  alarm_name          = "${var.env}-${var.application_name}-Memory-Utilization-Low"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = "1"
   metric_name         = "MemoryUtilization"
