@@ -23,6 +23,16 @@ data "aws_route53_zone" "external" {
   private_zone = false
 }
 
+data "aws_security_group" "jumpbox" {
+  vpc_id = "${data.aws_vpc.vpc.id}"
+
+  tags {
+    env  = "${var.env}"
+    app  = "utilities"
+    Name = "jumpbox"
+  }
+}
+
 data "aws_ami" "amazon_linux_2" {
   most_recent = true
   owners      = ["amazon"]

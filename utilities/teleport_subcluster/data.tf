@@ -32,8 +32,14 @@ data "aws_secretsmanager_secret_version" "main_cluster_token" {
   secret_id = "${var.main_cluster}/teleport/cluster_token"
 }
 
-data "aws_kms_alias" "main" {
-  name = "alias/${var.env}-main"
+data "aws_security_group" "jumpbox" {
+  vpc_id = "${data.aws_vpc.vpc.id}"
+
+  tags {
+    env  = "${var.env}"
+    app  = "utilities"
+    Name = "jumpbox"
+  }
 }
 
 data "aws_ami" "base" {

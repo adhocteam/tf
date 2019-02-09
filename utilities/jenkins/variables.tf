@@ -25,11 +25,6 @@ variable "docker_user" {
   default     = "adhocjenkins"
 }
 
-variable "jumpbox_sg" {
-  description = "OPTIONAL: the security group of any jumpbox to provide SSH access"
-  default     = ""
-}
-
 variable "ssh_proxy_sg" {
   description = "OPTIONAL: the security group of the Teleport proxies"
   default     = ""

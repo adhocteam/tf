@@ -16,8 +16,3 @@ variable "user_data" {
   description = "OPTIONAL: user data script to run on initialization"
   default     = ""
 }
-
-variable "jumpbox_sg" {
-  description = "OPTIONAL: the security group of any jumpbox to provide SSH access"
-  default     = ""
-}

@@ -44,20 +44,9 @@ resource "aws_instance" "jumpbox" {
 }
 
 #######
-# Security group for jumpbox
+# Security group for jumpbox alreeady exists
+# This just adds the configuration
 #######
-
-resource "aws_security_group" "jumpbox" {
-  name_prefix = "jumpbox-"
-  vpc_id      = "${data.aws_vpc.vpc.id}"
-
-  tags {
-    env       = "${var.env}"
-    terraform = "true"
-    app       = "utilities"
-    Name      = "jumpbox"
-  }
-}
 
 resource "aws_security_group_rule" "jumpbox_ssh" {
   type        = "ingress"
@@ -66,7 +55,7 @@ resource "aws_security_group_rule" "jumpbox_ssh" {
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.jumpbox.id}"
+  security_group_id = "${data.aws_security_group.jumpbox.id}"
 }
 
 resource "aws_security_group_rule" "jump_into_vpc" {
@@ -76,7 +65,7 @@ resource "aws_security_group_rule" "jump_into_vpc" {
   protocol    = "tcp"
   cidr_blocks = ["${data.aws_vpc.vpc.cidr_block}"]
 
-  security_group_id = "${aws_security_group.jumpbox.id}"
+  security_group_id = "${data.aws_security_group.jumpbox.id}"
 }
 
 # TODO(bob) If using https://github.com/widdix/aws-ec2-ssh

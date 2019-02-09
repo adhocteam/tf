@@ -5,6 +5,10 @@ module "vpc" {
   cidr = "${var.cidr}"
 }
 
+#####
+# Create base resources that the other modules will look up
+#####
+
 module "encryptkey" {
   source = "./encryptkey"
 
@@ -32,5 +36,17 @@ resource "aws_s3_bucket" "lambda_releases" {
     domain_name = "${var.domain_name}"
     terraform   = "True"
     app         = "lambda-releases"
+  }
+}
+
+resource "aws_security_group" "jumpbox" {
+  name_prefix = "jumpbox-"
+  vpc_id      = "${module.vpc.id}"
+
+  tags {
+    env       = "${var.env}"
+    terraform = "true"
+    app       = "utilities"
+    Name      = "jumpbox"
   }
 }

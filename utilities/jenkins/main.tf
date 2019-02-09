@@ -228,12 +228,11 @@ resource "aws_security_group_rule" "primary_proxy_ssh" {
 }
 
 resource "aws_security_group_rule" "primary_ssh_ingress" {
-  count                    = "${var.jumpbox_sg != "" ? 1 : 0}"
   type                     = "ingress"
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${var.jumpbox_sg}"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${aws_security_group.jenkins_primary.id}"
 }
@@ -365,12 +364,11 @@ resource "aws_security_group_rule" "worker_proxy_ssh" {
 }
 
 resource "aws_security_group_rule" "worker_ssh_ingress" {
-  count                    = "${var.jumpbox_sg != "" ? 1 : 0}"
   type                     = "ingress"
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${var.jumpbox_sg}"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${aws_security_group.jenkins_worker.id}"
 }
