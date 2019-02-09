@@ -67,7 +67,7 @@ resource "aws_iam_policy" "teleport_secrets" {
         {
             "Effect": "Allow",
             "Action": "kms:Decrypt",
-            "Resource": "${data.aws_kms_alias.main.target_key_arn}"
+            "Resource": "${data.aws_kms_key.main.arn}"
         }
     ]
 }
