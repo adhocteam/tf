@@ -19,7 +19,7 @@ resource "aws_ecs_cluster" "app" {
 
 # Must use template here to get ports as ints
 data "template_file" "task" {
-  template = "${file("${path.module}/container_task.json")}"
+  template = "${file("${path.module}/container_task.tmpl")}"
 
   vars {
     image                 = "${var.docker_image}"
