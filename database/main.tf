@@ -63,6 +63,9 @@ resource "aws_db_instance" "primary" {
   parameter_group_name            = "${aws_db_parameter_group.postgres.id}"
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
+  monitoring_interval = 30
+  monitoring_role_arn = "${aws_iam_role.monitoring.arn}"
+
   backup_retention_period = 7
 
   lifecycle {
@@ -106,6 +109,7 @@ resource "aws_db_parameter_group" "postgres" {
     value = "all"
   }
 
+  # Enable pg_stat_statements for extra analytics
   parameter {
     name  = "shared_preload_libraries"
     value = "pg_stat_statements"
@@ -133,6 +137,31 @@ resource "aws_route53_record" "rds_cname" {
   ttl     = 30
 
   records = ["${aws_db_instance.primary.address}"]
+}
+
+##################################################
+# Create an IAM role to allow enhanced monitoring
+##################################################
+resource "aws_iam_role" "monitoring" {
+  name = "${var.env}-${var.application_name}-rds-monitoring-role"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {"Service": "monitoring.rds.amazonaws.com"},
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "monitoring" {
+  role       = "${aws_iam_role.monitoring.name}"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 
 ## TODO(bob) Add read replicas?
