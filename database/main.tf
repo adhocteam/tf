@@ -115,6 +115,11 @@ resource "aws_db_parameter_group" "postgres" {
     name  = "pg_stat_statements.track"
     value = "ALL"
   }
+
+  parameter {
+    name  = "track_activity_query_size"
+    value = "2048"
+  }
 }
 
 ####
