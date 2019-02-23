@@ -105,6 +105,16 @@ resource "aws_db_parameter_group" "postgres" {
     name  = "log_statement"
     value = "all"
   }
+
+  parameter {
+    name  = "shared_preload_libraries"
+    value = "pg_stat_statements"
+  }
+
+  parameter {
+    name  = "pg_stat_statements.track"
+    value = "ALL"
+  }
 }
 
 ####
