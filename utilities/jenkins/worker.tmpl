@@ -4,7 +4,7 @@ set -ex
 export SWARM_CLIENT_VERSION=$(curl -s https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/maven-metadata.xml | awk -F'[<|>]' '/<latest>/ {print $3}')
 
 curl --create-dirs -sSLo /usr/share/jenkins/swarm-client.jar \
-    "https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/${SWARM_CLIENT_VERSION}/swarm-client-${SWARM_CLIENT_VERSION}.jar"
+    "https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/$SWARM_CLIENT_VERSION/swarm-client-$SWARM_CLIENT_VERSION.jar"
 
 echo "${label} worker" > /usr/share/jenkins/labels.txt
 
