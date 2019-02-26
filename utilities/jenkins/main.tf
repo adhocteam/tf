@@ -176,6 +176,12 @@ resource "aws_instance" "jenkins_primary" {
                 adhocteam/jenkins:latest
               EOF
 
+  root_block_device {
+    volume_type           = "gp2"
+    volume_size           = 20
+    delete_on_termination = true
+  }
+
   lifecycle {
     ignore_changes = ["ami"]
   }
