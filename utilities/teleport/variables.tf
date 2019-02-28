@@ -21,7 +21,7 @@ variable "key_pair" {
   default     = "infrastructure"
 }
 
-variable "jumpbox_sg" {
-  description = "OPTIONAL: the security group of any jumpbox to provide SSH access"
-  default     = ""
+variable "gh_team" {
+  description = "OPTIONAL: the Github team to provide access to via Teleport"
+  default     = "infrastructure-team"
 }

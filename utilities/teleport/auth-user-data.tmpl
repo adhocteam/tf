@@ -28,7 +28,7 @@ auth_service:
   listen_addr: 0.0.0.0:3025
   public_addr: auth.teleport.local:3025
   tokens:
-  - "auth,proxy,node:${cluster_token}"
+  - "auth,proxy,node,trusted_cluster:${cluster_token}"
   cluster_name: ${cluster_name}
   session_recording: "node"
   client_idle_timeout: "1h"
@@ -53,7 +53,7 @@ spec:
   redirect_url: https://${proxy_domain}/v1/webapi/github/callback
   teams_to_logins:
     - organization: adhocteam
-      team: infrastructure-team
+      team: ${gh_team}
       logins:
         - ec2-user
 EOF

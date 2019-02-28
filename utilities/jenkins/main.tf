@@ -173,7 +173,7 @@ resource "aws_instance" "jenkins_primary" {
                 -e docker_user="${var.docker_user}" \
                 -e docker_password="${data.aws_secretsmanager_secret_version.docker_password.secret_string}" \
                 -e slack_token="${data.aws_secretsmanager_secret_version.slack_token.secret_string}" \
-                adhocteam/jenkins:latest
+                ${var.jenkins_image}
               EOF
 
   root_block_device {
@@ -238,7 +238,7 @@ resource "aws_security_group_rule" "primary_ssh_ingress" {
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${var.jumpbox_sg}"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${aws_security_group.jenkins_primary.id}"
 }
@@ -374,7 +374,7 @@ resource "aws_security_group_rule" "worker_ssh_ingress" {
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${var.jumpbox_sg}"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${aws_security_group.jenkins_worker.id}"
 }
