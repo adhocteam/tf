@@ -79,11 +79,7 @@ resource "aws_security_group_rule" "jumpbox_proxy" {
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-<<<<<<< HEAD
-  source_security_group_id = "${var.jumpbox_sg}"
-=======
   source_security_group_id = "${data.aws_security_group.jumpbox.id}"
->>>>>>> va-demo
 
   security_group_id = "${aws_security_group.proxies.id}"
 }
