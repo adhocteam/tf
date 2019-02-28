@@ -88,7 +88,7 @@ module "lambda_cron" {
   ]
 }
 
-module "base" {
+module "production" {
   source = "../"
 
   env         = "prod"
