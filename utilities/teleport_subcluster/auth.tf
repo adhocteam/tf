@@ -71,7 +71,7 @@ data "template_file" "auth_user_data" {
     s3_bucket                = "${aws_s3_bucket.recordings.id}"
     cluster_name             = "${var.env}"
     main_cluster             = "${var.main_cluster}"
-    main_cluster_token       = "${data.aws_secretsmanager_secret.main_cluster_token.secret_string}"
+    main_cluster_token       = "${data.aws_secretsmanager_secret_version.main_cluster_token.secret_string}"
     main_cluster_url         = "teleport.${var.main_cluster}.${var.domain_name}"
   }
 }
@@ -156,7 +156,7 @@ resource "aws_security_group_rule" "jumpbox_auth" {
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${var.jumpbox_sg}"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${aws_security_group.auths.id}"
 }

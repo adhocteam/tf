@@ -73,6 +73,7 @@ data "template_file" "auth_user_data" {
     client_id                = "${data.aws_secretsmanager_secret_version.github_client_id.secret_string}"
     client_secret            = "${data.aws_secretsmanager_secret_version.github_secret.secret_string}"
     proxy_domain             = "${aws_route53_record.public.fqdn}"
+    gh_team                  = "${var.gh_team}"
   }
 }
 
@@ -156,7 +157,7 @@ resource "aws_security_group_rule" "jumpbox_auth" {
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${var.jumpbox_sg}"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
   security_group_id = "${aws_security_group.auths.id}"
 }
