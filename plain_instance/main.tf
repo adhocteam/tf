@@ -62,7 +62,7 @@ resource "aws_security_group_rule" "jumpbox" {
   protocol                 = "tcp"
   source_security_group_id = "${data.aws_security_group.jumpbox.id}"
 
-  security_group_id = "${aws_security_group.sg.id}"
+  security_group_id = "${module.base.app_sg_id}"
 }
 
 #####
