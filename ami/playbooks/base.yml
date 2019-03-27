@@ -27,7 +27,31 @@
         owner: teleport
         group: adm
 
+    - name: Download Teleport v3.1.7
+      get_url:
+        url: https://get.gravitational.com/teleport-v3.1.7-linux-amd64-bin.tar.gz
+        dest: /tmp/teleport.tar.gz
+        checksum: sha256:040d2bac51002a6490dda8f5e541da5cd7eef165bd35723b22b70f679b036d9a
+
+    - name: Extract Teleport Archive
+      unarchive:
+        src: /tmp/teleport.tar.gz
+        dest: /tmp
+        remote_src: yes
+
     - name: install teleport binaries
+      copy:
+        src: /tmp/teleport/{{item}}
+        dest: /usr/local/bin/
+        owner: teleport
+        group: adm
+        mode: 0755
+        remote_src: yes
+      with_items:
+        - tctl
+        - teleport
+
+    - name: install teleport scripts
       copy:
         src: files/teleport/{{item}}
         dest: /usr/local/bin/
@@ -35,8 +59,6 @@
         group: adm
         mode: 0755
       with_items:
-        - tctl
-        - teleport
         - teleport-secrets
 
     - name: install teleport configuration
@@ -73,6 +95,20 @@
         name: ec2-user
         append: yes
         groups: docker
+
+    - name: Get latest docker compose version
+      shell: curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -rc '.assets[] | select(.name == "docker-compose-Linux-x86_64") | .browser_download_url'
+      register: dcversion
+      args:
+        warn: False
+
+    - name: install docker compose
+      get_url:
+        url: "{{ dcversion.stdout }}"
+        dest: /usr/local/bin/docker-compose
+        mode: 0755
+        owner: ec2-user
+        group: ec2-user
 
     - name: enable services
       service:
