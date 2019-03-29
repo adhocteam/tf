@@ -31,7 +31,7 @@ resource "aws_lb_listener" "http" {
 }
 
 resource "aws_lb_target_group" "http" {
-  name_prefix = "in_http"
+  name_prefix = "inhttp"
   port        = "80"
   protocol    = "TCP"
   vpc_id      = "${data.aws_vpc.vpc.id}"
@@ -66,7 +66,7 @@ resource "aws_lb_listener" "https" {
 }
 
 resource "aws_lb_target_group" "https" {
-  name_prefix = "in_https"
+  name_prefix = "in-tls"
   port        = "8080"
   protocol    = "TCP"
   vpc_id      = "${data.aws_vpc.vpc.id}"
