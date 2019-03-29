@@ -118,7 +118,7 @@ resource "aws_instance" "nginx" {
 
   #distribute instances across AZs
   subnet_id              = "${element(data.aws_subnet.application_subnet.*.id,count.index)}"
-  vpc_security_group_ids = ["${awsnginx.id}"]
+  vpc_security_group_ids = ["${aws_security_group.nginx.id}"]
 
   lifecycle {
     ignore_changes = ["ami"]
