@@ -91,13 +91,13 @@ resource "aws_lb_target_group" "https" {
 
 resource "aws_alb_target_group_attachment" "http" {
   count            = 1
-  target_group_arn = "${aws_lb_target_group.http}"
+  target_group_arn = "${aws_lb_target_group.http.arn}"
   target_id        = "${element(aws_instance.nginx.*.private_ip, count.index)}"
 }
 
 resource "aws_alb_target_group_attachment" "https" {
   count            = 1
-  target_group_arn = "${aws_lb_target_group.https}"
+  target_group_arn = "${aws_lb_target_group.https.arn}"
   target_id        = "${element(aws_instance.nginx.*.private_ip, count.index)}"
 }
 
