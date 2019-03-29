@@ -105,6 +105,10 @@ resource "aws_alb_target_group_attachment" "https" {
 # Nginx Reverse Proxy to send data to our backends
 #######
 
+resource "aws_ecr_repository" "nginx" {
+  name = "nginx-${var.env}"
+}
+
 resource "aws_instance" "nginx" {
   count         = 1
   ami           = "${data.aws_ami.base.id}"
@@ -112,7 +116,18 @@ resource "aws_instance" "nginx" {
 
   iam_instance_profile = "${aws_iam_instance_profile.iam.name}"
 
-  #user_data            = "${var.user_data}"
+  user_data = <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+
+eval $(aws ecr get-login --region=us-east-1 --no-include-email)
+
+docker pull ${aws_ecr_repository.nginx.repository_url}:latest
+docker run -d --restart=unless-stopped \
+  -name nginx \
+  ${aws_ecr_repository.nginx.repository_url}:latest
+EOF
+
   key_name = "infrastructure"
 
   associate_public_ip_address = false
