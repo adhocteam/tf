@@ -111,13 +111,14 @@ resource "aws_instance" "nginx" {
   instance_type = "t3.medium"
 
   iam_instance_profile = "${aws_iam_instance_profile.iam.name}"
-  user_data            = "${var.user_data}"
-  key_name             = "infrastructure"
+
+  #user_data            = "${var.user_data}"
+  key_name = "infrastructure"
 
   associate_public_ip_address = false
 
   #distribute instances across AZs
-  subnet_id              = "${element(data.aws_subnet.application_subnet.*.id,count.index)}"
+  subnet_id              = "${element(data.aws_subnet.application.*.id,count.index)}"
   vpc_security_group_ids = ["${aws_security_group.nginx.id}"]
 
   lifecycle {
