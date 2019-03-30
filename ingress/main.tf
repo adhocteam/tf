@@ -125,6 +125,7 @@ eval $(aws ecr get-login --region=us-east-1 --no-include-email)
 docker pull ${aws_ecr_repository.nginx.repository_url}:latest
 docker run -d --restart=unless-stopped \
   --name nginx \
+  -P \
   ${aws_ecr_repository.nginx.repository_url}:latest
 EOF
 
@@ -248,4 +249,176 @@ resource "aws_route53_record" "external_cname" {
   ttl     = 30
 
   records = ["${aws_lb.nlb.dns_name}"]
+}
+
+#######
+# ALB with self-signed cert in front of HTTP service
+#######
+
+resource "aws_alb" "application_alb" {
+  # max 6 characters for name prefix
+  name_prefix     = "app-lb"
+  internal        = false
+  security_groups = ["${aws_security_group.application_alb_sg.id}"]
+  subnets         = ["${data.aws_subnet.public.*.id}"]
+
+  ip_address_type = "ipv4"
+
+  tags {
+    env       = "${var.env}"
+    terraform = "true"
+    app       = "helloworld"
+    name      = "alb-helloworld"
+  }
+}
+
+resource "aws_alb_listener" "application_alb_https" {
+  load_balancer_arn = "${aws_alb.application_alb.arn}"
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = ""
+
+  default_action {
+    target_group_arn = "${aws_alb_target_group.application_target_group.arn}"
+    type             = "forward"
+  }
+}
+
+# Security Group: world -> alb
+resource "aws_security_group" "application_alb_sg" {
+  name_prefix = "app-alb-"
+  vpc_id      = "${data.aws_vpc.vpc.id}"
+
+  tags {
+    env       = "${var.env}"
+    terraform = "true"
+    app       = "helloworld"
+    name      = "world->alb-sg-helloworld"
+  }
+}
+
+// Allow inbound only to our listening port
+resource "aws_security_group_rule" "lb_ingress" {
+  type        = "ingress"
+  from_port   = "443"
+  to_port     = "443"
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = "${aws_security_group.application_alb_sg.id}"
+}
+
+// Allow all outbound by default
+resource "aws_security_group_rule" "lb_egress" {
+  type        = "egress"
+  from_port   = 0
+  to_port     = 0
+  protocol    = "-1"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = "${aws_security_group.application_alb_sg.id}"
+}
+
+#######
+# Web server
+#######
+
+resource "aws_instance" "application" {
+  ami           = "${data.aws_ami.base.id}"
+  instance_type = "t3.micro"
+
+  user_data = <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+
+docker run -d --restart=unless-stopped \
+  --name nginx \
+  -P -d nginxdemos/hello
+EOF
+
+  key_name = "infrastructure"
+
+  associate_public_ip_address = false
+
+  #distribute instances across AZs
+  subnet_id              = "${element(data.aws_subnet.application.*.id,count.index)}"
+  vpc_security_group_ids = ["${aws_security_group.app_sg.id}"]
+
+  lifecycle {
+    ignore_changes = ["ami"]
+  }
+
+  credit_specification {
+    cpu_credits = "unlimited"
+  }
+
+  tags {
+    Name = "helloworld-${count.index}"
+    app  = "helloworld"
+    env  = "${var.env}"
+  }
+}
+
+resource "aws_alb_target_group" "application" {
+  # max 6 characters for name prefix
+  name_prefix = "app-lb"
+  port        = "80"
+  protocol    = "HTTP"
+  vpc_id      = "${data.aws_vpc.vpc.id}"
+  target_type = "ip"                     # Must use IP to support fargate
+
+  health_check {
+    interval            = 60
+    path                = "/"
+    port                = "80"
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  depends_on = ["aws_alb.application_alb"]
+
+  tags {
+    env       = "${var.env}"
+    terraform = "true"
+    app       = "helloworld"
+    name      = "alb-tg-helloworld:80"
+  }
+}
+
+resource "aws_alb_target_group_attachment" "application_targets" {
+  target_group_arn = "${aws_alb_target_group.application.arn}"
+  target_id        = "${aws_instance.application.private_ip}"
+}
+
+resource "aws_security_group" "app_sg" {
+  name_prefix = "helloworld-app-"
+  vpc_id      = "${data.aws_vpc.vpc.id}"
+
+  tags {
+    app = "helloworld"
+    env = "${var.env}"
+  }
+}
+
+// Allow inbound only to our application port
+resource "aws_security_group_rule" "app_ingress" {
+  type                     = "ingress"
+  from_port                = "80"
+  to_port                  = "80"
+  protocol                 = "tcp"
+  source_security_group_id = "${aws_security_group.application_alb_sg.id}"
+
+  security_group_id = "${aws_security_group.app_sg.id}"
+}
+
+// Allow all outbound, e.g. third-pary API endpoints, by default
+resource "aws_security_group_rule" "app_egress" {
+  type        = "egress"
+  from_port   = 0
+  to_port     = 0
+  protocol    = "-1"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = "${aws_security_group.app_sg.id}"
 }
