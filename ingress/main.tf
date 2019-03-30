@@ -124,7 +124,7 @@ eval $(aws ecr get-login --region=us-east-1 --no-include-email)
 
 docker pull ${aws_ecr_repository.nginx.repository_url}:latest
 docker run -d --restart=unless-stopped \
-  -name nginx \
+  --name nginx \
   ${aws_ecr_repository.nginx.repository_url}:latest
 EOF
 
