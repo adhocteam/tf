@@ -125,7 +125,8 @@ eval $(aws ecr get-login --region=us-east-1 --no-include-email)
 docker pull ${aws_ecr_repository.nginx.repository_url}:latest
 docker run -d --restart=unless-stopped \
   --name nginx \
-  -P \
+  -p 80:80 \
+  -p 8080:8080 \
   ${aws_ecr_repository.nginx.repository_url}:latest
 EOF
 
@@ -374,7 +375,8 @@ set -euo pipefail
 
 docker run -d --restart=unless-stopped \
   --name nginx \
-  -P -d nginxdemos/hello
+  -p 80:80 \
+  nginxdemos/hello
 EOF
 
   key_name = "infrastructure"
