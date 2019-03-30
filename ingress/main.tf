@@ -280,7 +280,7 @@ resource "aws_alb_listener" "application_alb_https" {
   certificate_arn   = ""
 
   default_action {
-    target_group_arn = "${aws_alb_target_group.application_target_group.arn}"
+    target_group_arn = "${aws_alb_target_group.application.arn}"
     type             = "forward"
   }
 }
