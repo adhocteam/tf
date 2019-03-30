@@ -231,3 +231,16 @@ resource "aws_kms_grant" "main" {
   grantee_principal = "${aws_iam_role.iam.arn}"
   operations        = ["Decrypt"]
 }
+
+#######
+# DNS Records for proxied site
+#######
+
+resource "aws_route53_record" "external_cname" {
+  zone_id = "${data.aws_route53_zone.external.id}"
+  name    = "helloworld"
+  type    = "CNAME"
+  ttl     = 30
+
+  records = ["${aws_lb.nlb.dns_name}"]
+}
