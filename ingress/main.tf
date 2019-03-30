@@ -252,6 +252,15 @@ resource "aws_route53_record" "external_cname" {
   records = ["${aws_lb.nlb.dns_name}"]
 }
 
+resource "aws_route53_record" "people_staging" {
+  zone_id = "${data.aws_route53_zone.external.id}"
+  name    = "people-staging"
+  type    = "CNAME"
+  ttl     = 30
+
+  records = ["${aws_lb.nlb.dns_name}"]
+}
+
 #######
 # self-signed cert
 #######
