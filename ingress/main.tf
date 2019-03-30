@@ -252,6 +252,46 @@ resource "aws_route53_record" "external_cname" {
 }
 
 #######
+# self-signed cert
+#######
+
+resource "tls_private_key" "example" {
+  algorithm = "RSA"
+}
+
+resource "tls_self_signed_cert" "example" {
+  key_algorithm   = "${tls_private_key.example.algorithm}"
+  private_key_pem = "${tls_private_key.example.private_key_pem}"
+
+  # Certificate expires after 3 months
+  validity_period_hours = 2190
+
+  # Generate a new certificate if Terraform is run a week before
+  early_renewal_hours = 168
+
+  # Reasonable set of uses for a server SSL certificate.
+  allowed_uses = [
+    "key_encipherment",
+    "digital_signature",
+    "server_auth",
+  ]
+
+  dns_names = ["helloworld.adhocdemo.com"]
+
+  subject {
+    common_name  = "helloworld.adhocdemo.com"
+    organization = "Ad Hoc LLC"
+  }
+}
+
+# For example, this can be used to populate an AWS IAM server certificate.
+resource "aws_iam_server_certificate" "helloworld" {
+  name             = "hello-world-self-signed-cert"
+  certificate_body = "${tls_self_signed_cert.example.cert_pem}"
+  private_key      = "${tls_private_key.example.private_key_pem}"
+}
+
+#######
 # ALB with self-signed cert in front of HTTP service
 #######
 
@@ -277,7 +317,7 @@ resource "aws_alb_listener" "application_alb_https" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = ""
+  certificate_arn   = "${aws_iam_server_certificate.helloworld.arn}"
 
   default_action {
     target_group_arn = "${aws_alb_target_group.application.arn}"
