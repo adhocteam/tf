@@ -67,8 +67,8 @@ resource "aws_lb_listener" "https" {
 
 resource "aws_lb_target_group" "https" {
   name_prefix = "in-tls"
-  port        = "8080"
-  protocol    = "TCP"
+  port        = "443"
+  protocol    = "TLS"
   vpc_id      = "${data.aws_vpc.vpc.id}"
 
   # Use IP to support Fargate clusters
@@ -107,7 +107,7 @@ resource "aws_alb_target_group_attachment" "https" {
 
 # Create ECR repo for docker image and provide cross account access if needed
 resource "aws_ecr_repository" "nginx" {
-  name = "nginx-${var.env}"
+  name = "ingress-${var.env}"
 }
 
 resource "aws_ecr_repository_policy" "cross_account_access" {
@@ -180,7 +180,7 @@ docker pull ${aws_ecr_repository.nginx.repository_url}:latest
 docker run -d --restart=unless-stopped \
   --name nginx \
   -p 80:80 \
-  -p 8080:8080 \
+  -p 443:443 \
   ${aws_ecr_repository.nginx.repository_url}:latest
 EOF
 
