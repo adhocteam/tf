@@ -110,7 +110,7 @@ resource "aws_ecr_repository" "nginx" {
   name = "nginx-${var.env}"
 }
 
-resource "aws_ecr_repository_policy" "foopolicy" {
+resource "aws_ecr_repository_policy" "cross_account_access" {
   count      = "${length(var.other_accounts)}"
   repository = "${aws_ecr_repository.nginx.name}"
 
