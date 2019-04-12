@@ -105,8 +105,62 @@ resource "aws_alb_target_group_attachment" "https" {
 # Nginx Reverse Proxy to send data to our backends
 #######
 
+# Create ECR repo for docker image and provide cross account access if needed
 resource "aws_ecr_repository" "nginx" {
   name = "nginx-${var.env}"
+}
+
+resource "aws_ecr_repository_policy" "foopolicy" {
+  count      = "${length(var.other_accounts)}"
+  repository = "${aws_ecr_repository.foo.name}"
+
+  policy = <<EOF
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowCrossAccountAccess",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::${element(var.other_accounts, count.index)}:root"
+      },
+      "Action": [
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:PutImage",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload",
+        "ecr:DescribeRepositories"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+data "aws_iam_policy_document" "cross_account_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["${var.other_accounts}"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "cross_account_assume_role" {
+  name               = "ingress-cross-account-${var.env}"
+  assume_role_policy = "${data.aws_iam_policy_document.cross_account_assume_role.json}"
+}
+
+resource "aws_iam_role_policy_attachment" "cross_account_assume_role" {
+  role       = "${aws_iam_role.cross_account_assume_role.name}"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 }
 
 resource "aws_instance" "nginx" {
