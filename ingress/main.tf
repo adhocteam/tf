@@ -112,7 +112,7 @@ resource "aws_ecr_repository" "nginx" {
 
 resource "aws_ecr_repository_policy" "foopolicy" {
   count      = "${length(var.other_accounts)}"
-  repository = "${aws_ecr_repository.foo.name}"
+  repository = "${aws_ecr_repository.nginx.name}"
 
   policy = <<EOF
 {
