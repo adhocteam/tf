@@ -42,6 +42,10 @@ resource "aws_lb_target_group" "http" {
     protocol = "TCP"
   }
 
+  depends_on = [
+    "aws_lb_listener.http",
+  ]
+
   tags {
     env       = "${var.env}"
     terraform = "true"
@@ -80,6 +84,10 @@ resource "aws_lb_target_group" "https" {
   health_check = {
     protocol = "TCP"
   }
+
+  depends_on = [
+    "aws_lb_listener.https",
+  ]
 
   tags {
     env       = "${var.env}"
