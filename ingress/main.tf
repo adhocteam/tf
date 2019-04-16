@@ -281,10 +281,10 @@ resource "aws_iam_role_policy_attachment" "ecr" {
 }
 
 # Give it base teleport permissions
-resource "aws_iam_role_policy_attachment" "iam_teleport" {
-  role       = "${aws_iam_role.iam.name}"
-  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.env}/teleport/${var.env}-instance-teleport-secrets"
-}
+# resource "aws_iam_role_policy_attachment" "iam_teleport" {
+#   role       = "${aws_iam_role.iam.name}"
+#   policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.env}/teleport/${var.env}-instance-teleport-secrets"
+# }
 
 resource "aws_kms_grant" "main" {
   name              = "${var.env}-ingress-nginx-main"
