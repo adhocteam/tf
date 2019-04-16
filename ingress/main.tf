@@ -40,6 +40,7 @@ resource "aws_lb_target_group" "http" {
 
   health_check = {
     protocol = "TCP"
+    port     = 200
   }
 
   tags {
@@ -79,7 +80,7 @@ resource "aws_lb_target_group" "https" {
 
   health_check = {
     protocol = "TCP"
-    port     = "80"
+    port     = 200
   }
 
   tags {
@@ -181,6 +182,7 @@ docker pull ${aws_ecr_repository.nginx.repository_url}:latest
 docker run -d --restart=unless-stopped \
   --name nginx \
   -p 80:80 \
+  -p 200:200 \
   -p 443:443 \
   ${aws_ecr_repository.nginx.repository_url}:latest
 EOF
@@ -236,6 +238,16 @@ resource "aws_security_group_rule" "nginx_https" {
   type        = "ingress"
   from_port   = "443"
   to_port     = "443"
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = "${aws_security_group.nginx.id}"
+}
+
+resource "aws_security_group_rule" "nginx_healthcheck" {
+  type        = "ingress"
+  from_port   = "200"
+  to_port     = "200"
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
 
