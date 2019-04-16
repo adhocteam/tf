@@ -251,6 +251,16 @@ resource "aws_security_group_rule" "nginx_out" {
   security_group_id = "${aws_security_group.nginx.id}"
 }
 
+resource "aws_security_group_rule" "jumpbox" {
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
+
+  security_group_id = "${aws_security_group.nginx.id}"
+}
+
 # Base IAM instance profile
 resource "aws_iam_instance_profile" "iam" {
   name = "${var.env}-ingress-nginx"
