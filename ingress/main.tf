@@ -79,6 +79,7 @@ resource "aws_lb_target_group" "https" {
 
   health_check = {
     protocol = "TCP"
+    port     = "80"
   }
 
   tags {
