@@ -366,7 +366,7 @@ resource "aws_security_group_rule" "lb_ingress" {
   from_port                = "80"
   to_port                  = "80"
   protocol                 = "tcp"
-  source_security_group_id = ["${aws_security_group.nginx.id}"]
+  source_security_group_id = "${aws_security_group.nginx.id}"
 
   security_group_id = "${aws_security_group.application_alb_sg.id}"
 }
