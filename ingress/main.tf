@@ -331,7 +331,7 @@ resource "aws_route53_record" "alb_cname" {
 resource "aws_alb" "application_alb" {
   # max 6 characters for name prefix
   name_prefix     = "app-lb"
-  internal        = internal
+  internal        = true
   security_groups = ["${aws_security_group.application_alb_sg.id}"]
   subnets         = ["${data.aws_subnet.public.*.id}"]
 
