@@ -32,7 +32,7 @@ module "utilities" {
 
 module "ingress" {
   source = "../ingress"
-  
+
   env         = "${local.env}"
   domain_name = "${local.domain_name}"
 }
