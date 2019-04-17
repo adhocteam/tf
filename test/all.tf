@@ -30,6 +30,13 @@ module "utilities" {
   domain_name = "${local.domain_name}"
 }
 
+module "ingress" {
+  source = "../ingress"
+  
+  env         = "${local.env}"
+  domain_name = "${local.domain_name}"
+}
+
 module "static" {
   source = "../static_site"
 
