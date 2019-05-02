@@ -111,8 +111,9 @@ resource "aws_db_parameter_group" "postgres" {
 
   # Enable pg_stat_statements for extra analytics
   parameter {
-    name  = "shared_preload_libraries"
-    value = "pg_stat_statements"
+    name         = "shared_preload_libraries"
+    value        = "pg_stat_statements"
+    apply_method = "pending_reboot"
   }
 
   parameter {
@@ -121,8 +122,9 @@ resource "aws_db_parameter_group" "postgres" {
   }
 
   parameter {
-    name  = "track_activity_query_size"
-    value = "2048"
+    name         = "track_activity_query_size"
+    value        = "2048"
+    apply_method = "pending_reboot"
   }
 }
 
