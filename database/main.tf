@@ -113,7 +113,7 @@ resource "aws_db_parameter_group" "postgres" {
   parameter {
     name         = "shared_preload_libraries"
     value        = "pg_stat_statements"
-    apply_method = "pending_reboot"
+    apply_method = "pending-reboot"
   }
 
   parameter {
@@ -124,7 +124,7 @@ resource "aws_db_parameter_group" "postgres" {
   parameter {
     name         = "track_activity_query_size"
     value        = "2048"
-    apply_method = "pending_reboot"
+    apply_method = "pending-reboot"
   }
 }
 
