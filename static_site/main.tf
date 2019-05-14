@@ -52,9 +52,10 @@ resource "aws_s3_bucket" "site_content_bucket" {
 }
 POLICY
 
+  # Serve index.html on errors to support client side routing, e.g. React Router
   website {
     index_document = "index.html"
-    error_document = "error.html"
+    error_document = "index.html"
   }
 
   tags {
@@ -76,6 +77,19 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   default_root_object = "index.html"
 
   aliases = ["${var.subdomain}.${var.domain_name}"]
+
+  # Serve index.html on errors to support client side routing, e.g. React Router
+  custom_error_response {
+    error_code         = 403
+    response_code      = 200
+    response_page_path = "/index.html"
+  }
+
+  custom_error_response {
+    error_code         = 404
+    response_code      = 200
+    response_page_path = "/index.html"
+  }
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
@@ -155,9 +169,10 @@ resource "aws_s3_bucket" "preview" {
 }
 POLICY
 
+  # Serve index.html on errors to support client side routing, e.g. React Router
   website {
     index_document = "index.html"
-    error_document = "error.html"
+    error_document = "index.html"
   }
 
   tags {
