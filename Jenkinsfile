@@ -25,7 +25,7 @@ pipeline {
         stage('Terraform validation') {
             agent {
                 docker {
-                    image 'hashicorp/terraform:light'
+                    image 'hashicorp/terraform:0.11.13'
                     args '-w $WORKSPACE --entrypoint=""'
                 }
             }
