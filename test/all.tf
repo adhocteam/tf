@@ -7,7 +7,7 @@ variable "region" {
 }
 
 provider "aws" {
-  region  = "${var.region}"
+  region  = var.region
   version = "~> 2.13.0"
 }
 
@@ -19,45 +19,45 @@ locals {
 module "base" {
   source = "../"
 
-  env         = "${local.env}"
-  domain_name = "${local.domain_name}"
+  env         = local.env
+  domain_name = local.domain_name
 }
 
 module "utilities" {
   source = "../utilities"
 
-  env         = "${local.env}"
-  domain_name = "${local.domain_name}"
+  env         = local.env
+  domain_name = local.domain_name
 }
 
 module "ingress" {
   source = "../ingress"
 
-  env         = "${local.env}"
-  domain_name = "${local.domain_name}"
+  env         = local.env
+  domain_name = local.domain_name
 }
 
 module "static" {
   source = "../static_site"
 
-  env         = "${local.env}"
-  domain_name = "${local.domain_name}"
+  env         = local.env
+  domain_name = local.domain_name
   subdomain   = "pizza"
 }
 
 module "demo" {
   source = "../plain_instance"
 
-  env              = "${local.env}"
-  domain_name      = "${local.domain_name}"
+  env              = local.env
+  domain_name      = local.domain_name
   application_name = "demo"
 }
 
 module "fargate" {
   source = "../fargate_cluster"
 
-  env              = "${local.env}"
-  domain_name      = "${local.domain_name}"
+  env              = local.env
+  domain_name      = local.domain_name
   application_name = "web"
   docker_image     = "nginx:latest"
 }
@@ -70,17 +70,17 @@ variable "db_password" {
 module "postgres" {
   source = "../database"
 
-  env              = "${local.env}"
+  env              = local.env
   application_name = "demo"
-  app_sg           = "${module.demo.app_sg_id}"
+  app_sg           = module.demo.app_sg_id
   password         = "{$var.db_password}"
 }
 
 module "lambda_cron" {
   source = "../lambda_cron"
 
-  env             = "${local.env}"
-  domain_name     = "${local.domain_name}"
+  env             = local.env
+  domain_name     = local.domain_name
   job_name        = "crontab"
   cron_expression = "* * ? * * *"
 
@@ -99,13 +99,14 @@ module "production" {
   source = "../"
 
   env         = "prod"
-  domain_name = "${local.domain_name}"
+  domain_name = local.domain_name
 }
 
 module "teleport_subcluster" {
   source = "../utilities/teleport_subcluster"
 
   env          = "prod"
-  domain_name  = "${local.domain_name}"
-  main_cluster = "${local.env}"
+  domain_name  = local.domain_name
+  main_cluster = local.env
 }
+
