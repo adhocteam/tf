@@ -7,7 +7,8 @@ variable "domain_name" {
 }
 
 variable "other_accounts" {
-  type        = "list"
+  type        = list(string)
   description = "OPTIONAL: Additional accounts to give access to the docker repository housing ingress images"
   default     = []
 }
+
