@@ -25,3 +25,4 @@ variable "gh_team" {
   description = "OPTIONAL: the Github team to provide access to via Teleport"
   default     = "infrastructure-team"
 }
+

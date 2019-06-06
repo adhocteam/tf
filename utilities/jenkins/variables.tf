@@ -39,3 +39,4 @@ variable "jenkins_image" {
   description = "OPTIONAL: the image name for the container to use for the jenkins primary"
   default     = "adhocteam/jenkins:latest"
 }
+

@@ -39,3 +39,4 @@ variable "teleport_github_team" {
   description = "GitHub team who can SSH via Teleport proxy"
   default     = "infrastructure-team"
 }
+

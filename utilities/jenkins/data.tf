@@ -1,31 +1,31 @@
 data "aws_vpc" "vpc" {
-  tags {
-    env = "${var.env}"
+  tags = {
+    env = var.env
   }
 }
 
 data "aws_subnet" "application_subnet" {
   count  = 3
-  vpc_id = "${data.aws_vpc.vpc.id}"
+  vpc_id = data.aws_vpc.vpc.id
 
-  tags {
+  tags = {
     name = "app-sub-${count.index}"
-    env  = "${var.env}"
+    env  = var.env
   }
 }
 
 data "aws_subnet" "public_subnet" {
   count  = 3
-  vpc_id = "${data.aws_vpc.vpc.id}"
+  vpc_id = data.aws_vpc.vpc.id
 
-  tags {
+  tags = {
     name = "public-sub-${count.index}"
-    env  = "${var.env}"
+    env  = var.env
   }
 }
 
 data "aws_route53_zone" "external" {
-  name         = "${var.domain_name}"
+  name         = var.domain_name
   private_zone = false
 }
 
@@ -35,7 +35,7 @@ data "aws_route53_zone" "internal" {
 }
 
 data "aws_acm_certificate" "wildcard" {
-  domain      = "${var.domain_name}"
+  domain      = var.domain_name
   most_recent = true
 }
 
@@ -68,10 +68,10 @@ data "aws_kms_alias" "main" {
 }
 
 data "aws_security_group" "jumpbox" {
-  vpc_id = "${data.aws_vpc.vpc.id}"
+  vpc_id = data.aws_vpc.vpc.id
 
-  tags {
-    env  = "${var.env}"
+  tags = {
+    env  = var.env
     app  = "utilities"
     Name = "jumpbox"
   }
@@ -86,3 +86,4 @@ data "aws_ami" "base" {
     values = ["adhoc_base*"]
   }
 }
+
