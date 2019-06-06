@@ -12,7 +12,7 @@ pipeline {
                 }
             }
             steps {
-                sh 'terraform fmt -check=true -diff=true'
+                sh 'terraform fmt -check=true -diff=true -recursive'
             }
         }
 
