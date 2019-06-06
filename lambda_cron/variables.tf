@@ -30,13 +30,14 @@ variable "memory_size" {
 }
 
 variable "env_vars" {
-  type        = "map"
+  type        = map(string)
   description = "OPTIONAL: a map of environment variables to set for the job"
   default     = {}
 }
 
 variable "secrets" {
-  type        = "list"
+  type        = list(string)
   description = "OPTIONAL: a list of ARNs for Secret Manager secrets to allow job to access"
   default     = []
 }
+
