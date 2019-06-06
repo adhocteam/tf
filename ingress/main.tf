@@ -441,7 +441,7 @@ EOF
   associate_public_ip_address = false
 
   #distribute instances across AZs
-  subnet_id              = element(data.aws_subnet.application.*.id, count.index)
+  subnet_id              = element(data.aws_subnet.application.*.id, 0)
   vpc_security_group_ids = [aws_security_group.app_sg.id]
 
   lifecycle {
@@ -453,7 +453,7 @@ EOF
   }
 
   tags = {
-    Name = "helloworld-${count.index}"
+    Name = "helloworld-0"
     app  = "helloworld"
     env  = var.env
   }
