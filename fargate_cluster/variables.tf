@@ -25,7 +25,7 @@ variable "loadbalancer_port" {
 }
 
 variable "environment_variables" {
-  type        = "list"
+  type        = list(string)
   description = "environment variables to inject into the docker containers. a list of maps."
   default     = []
 }
@@ -42,4 +42,3 @@ variable "health_check_path" {
 #   description = "list of stored secrets to inject into the docker container. a list of maps."
 #   default     = []
 # }
-

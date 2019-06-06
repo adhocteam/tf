@@ -15,4 +15,6 @@ variable "user" {
   default = "dbuser"
 }
 
-variable "password" {}
+variable "password" {
+}
+

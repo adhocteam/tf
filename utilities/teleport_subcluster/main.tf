@@ -13,23 +13,23 @@ resource "aws_route53_zone" "teleport" {
   comment = "${var.env} Teleport internal DNS"
 
   vpc {
-    vpc_id = "${data.aws_vpc.vpc.id}"
+    vpc_id = data.aws_vpc.vpc.id
   }
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     Name      = "teleport-dns"
   }
 }
 
 resource "aws_route53_record" "auth_internal" {
-  zone_id = "${aws_route53_zone.teleport.id}"
+  zone_id = aws_route53_zone.teleport.id
   name    = "auth"
   type    = "CNAME"
   ttl     = 30
 
-  records = ["${aws_lb.auth.dns_name}"]
+  records = [aws_lb.auth.dns_name]
 }
 
 # A create a random cluster token at creation time. No rotation as of now.
@@ -41,7 +41,7 @@ resource "random_string" "cluster_token" {
 
 resource "aws_secretsmanager_secret_version" "cluster_token" {
   secret_id     = "${var.env}/teleport/cluster_token"
-  secret_string = "${random_string.cluster_token.result}"
+  secret_string = random_string.cluster_token.result
 }
 
 ### Shared IAM role for instances running teleport
@@ -72,4 +72,6 @@ resource "aws_iam_policy" "teleport_secrets" {
     ]
 }
 EOF
+
 }
+

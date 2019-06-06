@@ -11,12 +11,12 @@
 ####
 
 resource "aws_vpc" "primary" {
-  cidr_block           = "${var.cidr}"
-  enable_dns_hostnames = true          # necessary for internal DNS support
+  cidr_block           = var.cidr
+  enable_dns_hostnames = true # necessary for internal DNS support
   enable_dns_support   = true
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
   }
 }
@@ -26,11 +26,11 @@ resource "aws_route53_zone" "internal" {
   comment = "${var.env} internal DNS"
 
   vpc {
-    vpc_id = "${aws_vpc.primary.id}"
+    vpc_id = aws_vpc.primary.id
   }
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     name      = "internal-dns"
   }
@@ -44,12 +44,12 @@ resource "aws_route53_zone" "internal" {
 # egress traffic to the internet via NAT gateways
 resource "aws_subnet" "application" {
   count             = 3
-  vpc_id            = "${aws_vpc.primary.id}"
-  cidr_block        = "${cidrsubnet(var.cidr, 2, count.index)}"
-  availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
+  vpc_id            = aws_vpc.primary.id
+  cidr_block        = cidrsubnet(var.cidr, 2, count.index)
+  availability_zone = data.aws_availability_zones.available.names[count.index]
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     name      = "app-sub-${count.index}"
   }
@@ -61,12 +61,12 @@ resource "aws_subnet" "application" {
 # Use the first 3 /21 blocks for public subnets (with full internet accesss via an internet gateway)
 resource "aws_subnet" "public" {
   count             = 3
-  vpc_id            = "${aws_vpc.primary.id}"
-  cidr_block        = "${cidrsubnet(cidrsubnet(var.cidr, 2, 3), 3, count.index)}"
-  availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
+  vpc_id            = aws_vpc.primary.id
+  cidr_block        = cidrsubnet(cidrsubnet(var.cidr, 2, 3), 3, count.index)
+  availability_zone = data.aws_availability_zones.available.names[count.index]
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     name      = "public-sub-${count.index}"
   }
@@ -75,12 +75,12 @@ resource "aws_subnet" "public" {
 # Use the next 3 /21 blocks for data subnets for RDS
 resource "aws_subnet" "data" {
   count             = 3
-  vpc_id            = "${aws_vpc.primary.id}"
-  cidr_block        = "${cidrsubnet(cidrsubnet(var.cidr, 2, 3), 3, count.index+3)}"
-  availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
+  vpc_id            = aws_vpc.primary.id
+  cidr_block        = cidrsubnet(cidrsubnet(var.cidr, 2, 3), 3, count.index + 3)
+  availability_zone = data.aws_availability_zones.available.names[count.index]
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     name      = "data-sub-${count.index}"
   }
@@ -91,25 +91,25 @@ resource "aws_subnet" "data" {
 ####
 
 resource "aws_internet_gateway" "igw" {
-  vpc_id = "${aws_vpc.primary.id}"
+  vpc_id = aws_vpc.primary.id
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     name      = "main-internet-gateway"
   }
 }
 
 resource "aws_route_table" "public_igw" {
-  vpc_id = "${aws_vpc.primary.id}"
+  vpc_id = aws_vpc.primary.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = "${aws_internet_gateway.igw.id}"
+    gateway_id = aws_internet_gateway.igw.id
   }
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     name      = "route-to-internet-gateway"
   }
@@ -117,8 +117,8 @@ resource "aws_route_table" "public_igw" {
 
 resource "aws_route_table_association" "public_with_igw" {
   count          = 3
-  subnet_id      = "${element(aws_subnet.public.*.id, count.index)}"
-  route_table_id = "${aws_route_table.public_igw.id}"
+  subnet_id      = element(aws_subnet.public.*.id, count.index)
+  route_table_id = aws_route_table.public_igw.id
 }
 
 ####
@@ -131,10 +131,10 @@ resource "aws_eip" "nats" {
 
   # Note: EIP may require IGW to exist prior to association. Use depends_on to set an explicit dependency on the IGW.
   # https://www.terraform.io/docs/providers/aws/r/eip.html
-  depends_on = ["aws_internet_gateway.igw"]
+  depends_on = [aws_internet_gateway.igw]
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     name      = "nat-ip-${count.index}"
   }
@@ -142,11 +142,11 @@ resource "aws_eip" "nats" {
 
 resource "aws_nat_gateway" "nats" {
   count         = 3
-  allocation_id = "${element(aws_eip.nats.*.id, count.index)}"
-  subnet_id     = "${element(aws_subnet.public.*.id, count.index)}"
+  allocation_id = element(aws_eip.nats.*.id, count.index)
+  subnet_id     = element(aws_subnet.public.*.id, count.index)
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     name      = "nat-${count.index}"
   }
@@ -154,15 +154,15 @@ resource "aws_nat_gateway" "nats" {
 
 resource "aws_route_table" "nats" {
   count  = 3
-  vpc_id = "${aws_vpc.primary.id}"
+  vpc_id = aws_vpc.primary.id
 
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = "${element(aws_nat_gateway.nats.*.id, count.index)}"
+    nat_gateway_id = element(aws_nat_gateway.nats.*.id, count.index)
   }
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     name      = "route-to-nat-${count.index}"
   }
@@ -170,6 +170,7 @@ resource "aws_route_table" "nats" {
 
 resource "aws_route_table_association" "app_with_nat" {
   count          = 3
-  subnet_id      = "${element(aws_subnet.application.*.id, count.index)}"
-  route_table_id = "${element(aws_route_table.nats.*.id, count.index)}"
+  subnet_id      = element(aws_subnet.application.*.id, count.index)
+  route_table_id = element(aws_route_table.nats.*.id, count.index)
 }
+

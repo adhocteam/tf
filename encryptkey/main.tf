@@ -78,14 +78,16 @@ resource "aws_kms_key" "main" {
 }
 POLICY
 
-  tags {
-    env       = "${var.env}"
+
+  tags = {
+    env = var.env
     terraform = "true"
-    name      = "${var.env}-key-main"
+    name = "${var.env}-key-main"
   }
 }
 
 resource "aws_kms_alias" "main" {
-  name          = "alias/${var.env}-main"
-  target_key_id = "${aws_kms_key.main.key_id}"
+  name = "alias/${var.env}-main"
+  target_key_id = aws_kms_key.main.key_id
 }
+

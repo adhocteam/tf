@@ -11,13 +11,13 @@ resource "aws_lb" "auth" {
   name_prefix                      = "telep-"
   internal                         = true
   load_balancer_type               = "network"
-  subnets                          = ["${data.aws_subnet.application_subnet.*.id}"]
+  subnets                          = data.aws_subnet.application_subnet.*.id
   enable_cross_zone_load_balancing = true
 
   ip_address_type = "ipv4"
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     app       = "teleport"
     name      = "lb-teleport-auth-internal"
@@ -30,13 +30,13 @@ resource "aws_lb_target_group" "auth" {
   name_prefix = "telep-"
   port        = 3025
   protocol    = "TCP"
-  vpc_id      = "${data.aws_vpc.vpc.id}"
+  vpc_id      = data.aws_vpc.vpc.id
   target_type = "ip"
 
-  depends_on = ["aws_lb.auth"]
+  depends_on = [aws_lb.auth]
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     app       = "teleport"
     Name      = "lb-tg-telport-auth"
@@ -44,12 +44,12 @@ resource "aws_lb_target_group" "auth" {
 }
 
 resource "aws_lb_listener" "auth" {
-  load_balancer_arn = "${aws_lb.auth.arn}"
+  load_balancer_arn = aws_lb.auth.arn
   port              = 3025
   protocol          = "TCP"
 
   default_action {
-    target_group_arn = "${aws_lb_target_group.auth.arn}"
+    target_group_arn = aws_lb_target_group.auth.arn
     type             = "forward"
   }
 }
@@ -59,48 +59,48 @@ resource "aws_lb_listener" "auth" {
 #######
 
 data "template_file" "auth_user_data" {
-  count    = "${var.auth_count}"
-  template = "${file("${path.module}/auth-user-data.tmpl")}"
+  count    = var.auth_count
+  template = file("${path.module}/auth-user-data.tmpl")
 
-  vars {
+  vars = {
     nodename                 = "teleport-auth-${count.index}"
-    cluster_token            = "${random_string.cluster_token.result}"
-    region                   = "${data.aws_region.current.name}"
-    dynamo_table_name        = "${aws_dynamodb_table.teleport_state.name}"
-    dynamo_events_table_name = "${aws_dynamodb_table.teleport_events.name}"
-    s3_bucket                = "${aws_s3_bucket.recordings.id}"
-    cluster_name             = "${var.env}"
-    main_cluster             = "${var.main_cluster}"
-    main_cluster_token       = "${data.aws_secretsmanager_secret_version.main_cluster_token.secret_string}"
+    cluster_token            = random_string.cluster_token.result
+    region                   = data.aws_region.current.name
+    dynamo_table_name        = aws_dynamodb_table.teleport_state.name
+    dynamo_events_table_name = aws_dynamodb_table.teleport_events.name
+    s3_bucket                = aws_s3_bucket.recordings.id
+    cluster_name             = var.env
+    main_cluster             = var.main_cluster
+    main_cluster_token       = data.aws_secretsmanager_secret_version.main_cluster_token.secret_string
     main_cluster_url         = "teleport.${var.main_cluster}.${var.domain_name}"
   }
 }
 
 resource "aws_instance" "auths" {
-  count         = "${var.auth_count}"
-  ami           = "${data.aws_ami.base.id}"
+  count         = var.auth_count
+  ami           = data.aws_ami.base.id
   instance_type = "t3.nano"
-  key_name      = "${var.key_pair}"
+  key_name      = var.key_pair
 
-  iam_instance_profile = "${aws_iam_instance_profile.auth.name}"
-  user_data            = "${element(data.template_file.auth_user_data.*.rendered, count.index)}"
+  iam_instance_profile = aws_iam_instance_profile.auth.name
+  user_data            = element(data.template_file.auth_user_data.*.rendered, count.index)
 
   associate_public_ip_address = false
-  subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,count.index)}" #distribute instances across AZs
-  vpc_security_group_ids      = ["${aws_security_group.auths.id}"]
+  subnet_id                   = element(data.aws_subnet.application_subnet.*.id, count.index) #distribute instances across AZs
+  vpc_security_group_ids      = [aws_security_group.auths.id]
 
   lifecycle {
-    ignore_changes = ["ami"]
+    ignore_changes = [ami]
   }
 
   credit_specification {
     cpu_credits = "unlimited"
   }
 
-  tags {
+  tags = {
     Name      = "teleport-auth-${count.index}"
     app       = "teleport"
-    env       = "${var.env}"
+    env       = var.env
     terraform = "true"
   }
 }
@@ -108,9 +108,9 @@ resource "aws_instance" "auths" {
 # Add to target group to attach to LB
 
 resource "aws_lb_target_group_attachment" "auth" {
-  count            = "${var.auth_count}"
-  target_group_arn = "${aws_lb_target_group.auth.arn}"
-  target_id        = "${element(aws_instance.auths.*.private_ip,count.index)}"
+  count            = var.auth_count
+  target_group_arn = aws_lb_target_group.auth.arn
+  target_id        = element(aws_instance.auths.*.private_ip, count.index)
 }
 
 #######
@@ -119,10 +119,10 @@ resource "aws_lb_target_group_attachment" "auth" {
 
 resource "aws_security_group" "auths" {
   name_prefix = "teleport-auth-"
-  vpc_id      = "${data.aws_vpc.vpc.id}"
+  vpc_id      = data.aws_vpc.vpc.id
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     app       = "teleport"
     Name      = "teleport-auth"
@@ -134,9 +134,9 @@ resource "aws_security_group_rule" "auth_webui" {
   from_port   = 3025
   to_port     = 3025
   protocol    = "tcp"
-  cidr_blocks = ["${data.aws_vpc.vpc.cidr_block}"]
+  cidr_blocks = [data.aws_vpc.vpc.cidr_block]
 
-  security_group_id = "${aws_security_group.auths.id}"
+  security_group_id = aws_security_group.auths.id
 }
 
 # Allow it to talk to any address to be able to hit AWS APIs for Dynamo, S3
@@ -147,7 +147,7 @@ resource "aws_security_group_rule" "auth_egress" {
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.auths.id}"
+  security_group_id = aws_security_group.auths.id
 }
 
 # Support for emergency jumpbox
@@ -156,9 +156,9 @@ resource "aws_security_group_rule" "jumpbox_auth" {
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${data.aws_security_group.jumpbox.id}"
+  source_security_group_id = data.aws_security_group.jumpbox.id
 
-  security_group_id = "${aws_security_group.auths.id}"
+  security_group_id = aws_security_group.auths.id
 }
 
 #######
@@ -182,7 +182,10 @@ resource "aws_dynamodb_table" "teleport_state" {
   }
 
   lifecycle {
-    ignore_changes = ["read_capacity", "write_capacity"]
+    ignore_changes = [
+      read_capacity,
+      write_capacity,
+    ]
   }
 
   attribute {
@@ -200,8 +203,8 @@ resource "aws_dynamodb_table" "teleport_state" {
     enabled        = true
   }
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     app       = "teleport"
     Name      = "teleport-auth-state"
@@ -230,7 +233,10 @@ resource "aws_dynamodb_table" "teleport_events" {
   }
 
   lifecycle {
-    ignore_changes = ["read_capacity", "write_capacity"]
+    ignore_changes = [
+      read_capacity,
+      write_capacity,
+    ]
   }
 
   attribute {
@@ -258,8 +264,8 @@ resource "aws_dynamodb_table" "teleport_events" {
     enabled        = true
   }
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     app       = "teleport"
     Name      = "teleport-auth-audit"
@@ -282,14 +288,14 @@ resource "aws_s3_bucket" "recordings" {
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
-        kms_master_key_id = "${data.aws_kms_key.main.arn}" #TODO(bob) switch to unique, restricted key here?
+        kms_master_key_id = data.aws_kms_key.main.arn #TODO(bob) switch to unique, restricted key here?
         sse_algorithm     = "aws:kms"
       }
     }
   }
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     app       = "teleport"
   }
@@ -301,7 +307,7 @@ resource "aws_s3_bucket" "recordings" {
 
 resource "aws_iam_instance_profile" "auth" {
   name = "${var.env}-teleport-auth"
-  role = "${aws_iam_role.auth.name}"
+  role = aws_iam_role.auth.name
 }
 
 // Auth instance profile and roles
@@ -320,12 +326,13 @@ resource "aws_iam_role" "auth" {
     ]
 }
 EOF
+
 }
 
 // Auth server uses DynamoDB as a backend, and this is to allow read/write from the dynamo tables
 resource "aws_iam_role_policy" "auth_dynamo" {
   name = "${var.env}-teleport-auth-dynamo"
-  role = "${aws_iam_role.auth.id}"
+  role = aws_iam_role.auth.id
 
   policy = <<EOF
 {
@@ -352,14 +359,15 @@ resource "aws_iam_role_policy" "auth_dynamo" {
     ]
 }
 EOF
+
 }
 
 // S3 for publishing session recordings to S3 encrypted bucket
 resource "aws_iam_role_policy" "auth_s3" {
-  name = "${var.env}-teleport-auth-s3"
-  role = "${aws_iam_role.auth.id}"
+name = "${var.env}-teleport-auth-s3"
+role = aws_iam_role.auth.id
 
-  policy = <<EOF
+policy = <<EOF
 {
    "Version": "2012-10-17",
    "Statement": [
@@ -387,5 +395,8 @@ resource "aws_iam_role_policy" "auth_s3" {
      }
    ]
  }
- EOF
+ 
+EOF
+
 }
+

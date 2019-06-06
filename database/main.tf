@@ -4,13 +4,13 @@
 
 resource "aws_db_subnet_group" "db_subnet_group" {
   name       = "${var.env}-${var.application_name}-rds-subnet-group"
-  subnet_ids = ["${data.aws_subnet.data_subnet.*.id}"]
+  subnet_ids = data.aws_subnet.data_subnet.*.id
 }
 
 resource "aws_security_group" "db_sg" {
   name        = "${var.env}-${var.application_name}-db-sg"
   description = "SG for database servers"
-  vpc_id      = "${data.aws_vpc.vpc.id}"
+  vpc_id      = data.aws_vpc.vpc.id
 }
 
 resource "aws_security_group_rule" "app_ingress" {
@@ -18,9 +18,9 @@ resource "aws_security_group_rule" "app_ingress" {
   from_port                = 5432
   to_port                  = 5432
   protocol                 = "tcp"
-  source_security_group_id = "${var.app_sg}"
+  source_security_group_id = var.app_sg
 
-  security_group_id = "${aws_security_group.db_sg.id}"
+  security_group_id = aws_security_group.db_sg.id
 }
 
 # TODO(bob) confirm this can be locked to egress 5432 only
@@ -31,7 +31,7 @@ resource "aws_security_group_rule" "egress" {
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.db_sg.id}"
+  security_group_id = aws_security_group.db_sg.id
 }
 
 ####
@@ -41,11 +41,11 @@ resource "aws_security_group_rule" "egress" {
 resource "aws_db_instance" "primary" {
   identifier_prefix = "${var.env}-${var.application_name}-"
 
-  username = "${var.user}"
-  password = "${var.password}"
+  username = var.user
+  password = var.password
 
-  db_subnet_group_name   = "${aws_db_subnet_group.db_subnet_group.id}"
-  vpc_security_group_ids = ["${aws_security_group.db_sg.id}"]
+  db_subnet_group_name   = aws_db_subnet_group.db_subnet_group.id
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
   publicly_accessible    = false
   multi_az               = true
 
@@ -58,25 +58,26 @@ resource "aws_db_instance" "primary" {
   skip_final_snapshot = true
   allocated_storage   = 30
   storage_encrypted   = true
-  kms_key_id          = "${data.aws_kms_key.main.arn}"
+  kms_key_id          = data.aws_kms_key.main.arn
 
-  parameter_group_name            = "${aws_db_parameter_group.postgres.id}"
+  parameter_group_name            = aws_db_parameter_group.postgres.id
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
   monitoring_interval = 30
-  monitoring_role_arn = "${aws_iam_role.monitoring.arn}"
+  monitoring_role_arn = aws_iam_role.monitoring.arn
 
   backup_retention_period = 7
 
   lifecycle {
-    ignore_changes = ["snapshot_identifier",
-      "engine_version",
+    ignore_changes = [
+      snapshot_identifier,
+      engine_version,
     ]
   }
 
-  tags {
-    env       = "${var.env}"
-    app       = "${var.application_name}"
+  tags = {
+    env       = var.env
+    app       = var.application_name
     terraform = "true"
     name      = "${var.env}-db"
   }
@@ -133,12 +134,12 @@ resource "aws_db_parameter_group" "postgres" {
 ####
 
 resource "aws_route53_record" "rds_cname" {
-  zone_id = "${data.aws_route53_zone.internal.id}"
+  zone_id = data.aws_route53_zone.internal.id
   name    = "${var.application_name}-db-primary"
   type    = "CNAME"
   ttl     = 30
 
-  records = ["${aws_db_instance.primary.address}"]
+  records = [aws_db_instance.primary.address]
 }
 
 ##################################################
@@ -159,13 +160,13 @@ resource "aws_iam_role" "monitoring" {
     ]
 }
 EOF
+
 }
 
 resource "aws_iam_role_policy_attachment" "monitoring" {
-  role       = "${aws_iam_role.monitoring.name}"
+  role = aws_iam_role.monitoring.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 
 ## TODO(bob) Add read replicas?
 ## TODO(bob) Store username/password in secrets manager with rotation
-

@@ -1,39 +1,39 @@
 locals {
-  handler = "${coalesce(var.handler, var.job_name)}"
+  handler = coalesce(var.handler, var.job_name)
 }
 
 resource "aws_lambda_function" "job" {
-  function_name = "${var.job_name}"
+  function_name = var.job_name
   description   = "Terraform-managed cron job for ${var.job_name} that invokes ${local.handler}"
 
-  s3_bucket = "${data.aws_s3_bucket.releases.id}"
+  s3_bucket = data.aws_s3_bucket.releases.id
   s3_key    = "${var.job_name}.zip"
 
-  handler = "${local.handler}"
-  runtime = "${var.runtime}"
+  handler = local.handler
+  runtime = var.runtime
 
   // Allow to run up to 5 minutes. Max is 15 minutes
   timeout     = 600
-  memory_size = "${var.memory_size}"
+  memory_size = var.memory_size
 
-  role = "${aws_iam_role.job.arn}"
+  role = aws_iam_role.job.arn
 
   environment {
-    variables = "${var.env_vars}"
+    variables = var.env_vars
   }
 
   // Encrypts any environment variables
-  kms_key_arn = "${data.aws_kms_alias.main.target_key_arn}"
+  kms_key_arn = data.aws_kms_alias.main.target_key_arn
 
   vpc_config {
-    subnet_ids         = ["${data.aws_subnet.application_subnet.*.id}"]
-    security_group_ids = ["${aws_security_group.job.id}"]
+    subnet_ids         = data.aws_subnet.application_subnet.*.id
+    security_group_ids = [aws_security_group.job.id]
   }
 
-  tags {
+  tags = {
     terraform = "True"
-    app       = "${var.job_name}"
-    handler   = "${local.handler}"
+    app       = var.job_name
+    handler   = local.handler
     type      = "cron"
   }
 }
@@ -43,12 +43,12 @@ resource "aws_lambda_function" "job" {
 #####
 resource "aws_security_group" "job" {
   name_prefix = "${var.job_name}-"
-  vpc_id      = "${data.aws_vpc.vpc.id}"
+  vpc_id      = data.aws_vpc.vpc.id
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "True"
-    app       = "${var.job_name}"
+    app       = var.job_name
     name      = "cron-${var.job_name}"
   }
 }
@@ -61,7 +61,7 @@ resource "aws_security_group_rule" "ingress" {
   protocol  = -1
   self      = true
 
-  security_group_id = "${aws_security_group.job.id}"
+  security_group_id = aws_security_group.job.id
 }
 
 // Allow all outbound by default
@@ -72,7 +72,7 @@ resource "aws_security_group_rule" "lb_egress" {
   protocol    = -1
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.job.id}"
+  security_group_id = aws_security_group.job.id
 }
 
 ######
@@ -86,16 +86,16 @@ resource "aws_cloudwatch_event_rule" "crontab" {
 
 resource "aws_cloudwatch_event_target" "crontab" {
   target_id = "propman_sync_lambda_target"
-  rule      = "${aws_cloudwatch_event_rule.crontab.name}"
-  arn       = "${aws_lambda_function.job.arn}"
+  rule      = aws_cloudwatch_event_rule.crontab.name
+  arn       = aws_lambda_function.job.arn
 }
 
 resource "aws_lambda_permission" "allow_cloudwatch_to_call_crontab" {
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
-  function_name = "${aws_lambda_function.job.function_name}"
+  function_name = aws_lambda_function.job.function_name
   principal     = "events.amazonaws.com"
-  source_arn    = "${aws_cloudwatch_event_rule.crontab.arn}"
+  source_arn    = aws_cloudwatch_event_rule.crontab.arn
 }
 
 #####
@@ -121,18 +121,19 @@ resource "aws_iam_role" "job" {
   ]
 }
 EOF
+
 }
 
 # Helper for allowing access to securely stored secrets
 # The helper uses the main shared key, provide your own by attaching to the output
 # role if you have a more restricted key used in Secrets Manager
 resource "aws_iam_role_policy_attachment" "basic_exec_role" {
-  role       = "${aws_iam_role.job.name}"
+  role = aws_iam_role.job.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 resource "aws_iam_role_policy_attachment" "vpc_access" {
-  role       = "${aws_iam_role.job.name}"
+  role = aws_iam_role.job.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
@@ -142,25 +143,25 @@ data "aws_iam_policy_document" "secrets" {
       "secretsmanager:GetSecretValue",
     ]
 
-    resources = "${var.secrets}"
+    resources = var.secrets
   }
 }
 
 resource "aws_iam_policy" "secrets" {
-  name   = "${var.env}-${var.job_name}-secrets"
-  path   = "/${var.env}/${var.job_name}/"
-  policy = "${data.aws_iam_policy_document.secrets.json}"
+  name = "${var.env}-${var.job_name}-secrets"
+  path = "/${var.env}/${var.job_name}/"
+  policy = data.aws_iam_policy_document.secrets.json
 }
 
 resource "aws_iam_role_policy_attachment" "secrets" {
-  role       = "${aws_iam_role.job.name}"
-  policy_arn = "${aws_iam_policy.secrets.arn}"
+  role = aws_iam_role.job.name
+  policy_arn = aws_iam_policy.secrets.arn
 }
 
 # Use of the shared KMS key for secrets decryption
 resource "aws_iam_policy" "shared_key_access" {
-  name        = "${var.env}-${var.job_name}-key-access"
-  path        = "/${var.env}/${var.job_name}/"
+  name = "${var.env}-${var.job_name}-key-access"
+  path = "/${var.env}/${var.job_name}/"
   description = "Allows function to use main KMS key for environment"
 
   policy = <<EOF
@@ -175,16 +176,18 @@ resource "aws_iam_policy" "shared_key_access" {
     ]
 }
 EOF
+
 }
 
 resource "aws_iam_role_policy_attachment" "shared_key_access" {
-  role       = "${aws_iam_role.job.name}"
-  policy_arn = "${aws_iam_policy.shared_key_access.arn}"
+role       = aws_iam_role.job.name
+policy_arn = aws_iam_policy.shared_key_access.arn
 }
 
 resource "aws_kms_grant" "primary" {
-  name              = "${var.env}-cron-${var.job_name}"
-  key_id            = "${data.aws_kms_alias.main.target_key_arn}"
-  grantee_principal = "${aws_iam_role.job.arn}"
-  operations        = ["Decrypt"]
+name              = "${var.env}-cron-${var.job_name}"
+key_id            = data.aws_kms_alias.main.target_key_arn
+grantee_principal = aws_iam_role.job.arn
+operations        = ["Decrypt"]
 }
+

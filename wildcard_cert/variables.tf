@@ -9,3 +9,4 @@ variable "root_domain" {
 variable "domain" {
   description = "the Fully Qualified Domain Name for the new cert, e.g., beta.api.domain.name. Use .fqdn attribute from an aws_route53_record"
 }
+

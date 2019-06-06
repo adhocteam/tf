@@ -1,8 +1,8 @@
 module "vpc" {
   source = "./vpc"
 
-  env  = "${var.env}"
-  cidr = "${var.cidr}"
+  env  = var.env
+  cidr = var.cidr
 }
 
 #####
@@ -12,15 +12,15 @@ module "vpc" {
 module "encryptkey" {
   source = "./encryptkey"
 
-  env = "${var.env}"
+  env = var.env
 }
 
 module "wildcard" {
   source = "./wildcard_cert"
 
-  env         = "${var.env}"
-  root_domain = "${var.domain_name}"
-  domain      = "${var.domain_name}"
+  env         = var.env
+  root_domain = var.domain_name
+  domain      = var.domain_name
 }
 
 resource "aws_s3_bucket" "lambda_releases" {
@@ -31,9 +31,9 @@ resource "aws_s3_bucket" "lambda_releases" {
     enabled = true
   }
 
-  tags {
-    env         = "${var.env}"
-    domain_name = "${var.domain_name}"
+  tags = {
+    env         = var.env
+    domain_name = var.domain_name
     terraform   = "True"
     app         = "lambda-releases"
   }
@@ -41,12 +41,13 @@ resource "aws_s3_bucket" "lambda_releases" {
 
 resource "aws_security_group" "jumpbox" {
   name_prefix = "jumpbox-"
-  vpc_id      = "${module.vpc.id}"
+  vpc_id      = module.vpc.id
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     app       = "utilities"
     Name      = "jumpbox"
   }
 }
+
