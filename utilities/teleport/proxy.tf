@@ -11,8 +11,8 @@
 resource "aws_elb" "proxy" {
   name_prefix     = "telep-"
   internal        = false
-  security_groups = ["${aws_security_group.proxy_lb.id}"]
-  subnets         = ["${data.aws_subnet.public_subnet.*.id}"]
+  security_groups = [aws_security_group.proxy_lb.id]
+  subnets         = data.aws_subnet.public_subnet.*.id
 
   # Allow connections to idle for an hour
   idle_timeout = 3600
@@ -25,11 +25,26 @@ resource "aws_elb" "proxy" {
   }
 
   listener {
+    instance_port     = 3024
+    instance_protocol = "tcp"
+    lb_port           = 3024
+    lb_protocol       = "tcp"
+  }
+
+  listener {
     instance_port      = 3080
     instance_protocol  = "tcp"
     lb_port            = 443
     lb_protocol        = "ssl"
-    ssl_certificate_id = "${data.aws_acm_certificate.wildcard.arn}"
+    ssl_certificate_id = module.cert.arn
+  }
+
+  listener {
+    instance_port      = 3080
+    instance_protocol  = "tcp"
+    lb_port            = 3080
+    lb_protocol        = "ssl"
+    ssl_certificate_id = module.cert.arn
   }
 
   health_check {
@@ -40,8 +55,8 @@ resource "aws_elb" "proxy" {
     interval            = 30
   }
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     app       = "teleport"
     name      = "elb-teleport-proxy"
@@ -55,10 +70,10 @@ resource "aws_elb" "proxy" {
 # Security Group: world -> proxy
 resource "aws_security_group" "proxy_lb" {
   name_prefix = "teleport-proxy-lb-"
-  vpc_id      = "${data.aws_vpc.vpc.id}"
+  vpc_id      = data.aws_vpc.vpc.id
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     app       = "teleport"
     Name      = "world->teleport-proxy"
@@ -72,7 +87,17 @@ resource "aws_security_group_rule" "lb_webui_ingress" {
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.proxy_lb.id}"
+  security_group_id = aws_security_group.proxy_lb.id
+}
+
+resource "aws_security_group_rule" "lb_client_ingress" {
+  type        = "ingress"
+  from_port   = 3080
+  to_port     = 3080
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = aws_security_group.proxy_lb.id
 }
 
 resource "aws_security_group_rule" "lb_ssh_ingress" {
@@ -82,7 +107,17 @@ resource "aws_security_group_rule" "lb_ssh_ingress" {
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.proxy_lb.id}"
+  security_group_id = aws_security_group.proxy_lb.id
+}
+
+resource "aws_security_group_rule" "lb_cluster_ingress" {
+  type        = "ingress"
+  from_port   = 3024
+  to_port     = 3024
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = aws_security_group.proxy_lb.id
 }
 
 resource "aws_security_group_rule" "lb_egress" {
@@ -92,51 +127,47 @@ resource "aws_security_group_rule" "lb_egress" {
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.proxy_lb.id}"
+  security_group_id = aws_security_group.proxy_lb.id
 }
 
 #######
 # Proxy instances
 #######
-
-# Must use template here to get ports as ints
 data "template_file" "user_data" {
-  count    = "${var.proxy_count}"
-  template = "${file("${path.module}/proxy-user-data.tmpl")}"
+  count    = var.proxy_count
+  template = file("${path.module}/proxy-user-data.tmpl")
 
-  vars {
-    teleport_version = "v2.7.4"
-    nodename         = "teleport-proxy-${count.index}"
-    cluster_token    = "${random_string.cluster_token.result}"
-    auth_domain      = "${aws_route53_record.auth_internal.fqdn}"
-    proxy_domain     = "${aws_route53_record.proxies_external.fqdn}"
+  vars = {
+    nodename      = "teleport-proxy-${count.index}"
+    cluster_token = random_string.cluster_token.result
+    proxy_domain  = aws_route53_record.public.fqdn
   }
 }
 
 resource "aws_instance" "proxies" {
-  count         = "${var.proxy_count}"
-  ami           = "${data.aws_ami.amazon_linux_2.id}"
+  count         = var.proxy_count
+  ami           = data.aws_ami.base.id
   instance_type = "t3.micro"
-  key_name      = "infrastructure"
+  key_name      = var.key_pair
 
-  user_data = "${element(data.template_file.user_data.*.rendered, count.index)}"
+  user_data = element(data.template_file.user_data.*.rendered, count.index)
 
   associate_public_ip_address = false
-  subnet_id                   = "${element(data.aws_subnet.application_subnet.*.id,count.index)}" #distribute instances across AZs
-  vpc_security_group_ids      = ["${aws_security_group.proxies.id}"]
+  subnet_id                   = element(data.aws_subnet.application_subnet.*.id, count.index) #distribute instances across AZs
+  vpc_security_group_ids      = [aws_security_group.proxies.id]
 
   lifecycle {
-    ignore_changes = ["ami"]
+    ignore_changes = [ami]
   }
 
   credit_specification {
     cpu_credits = "unlimited"
   }
 
-  tags {
+  tags = {
     Name      = "teleport-proxy-${count.index}"
     app       = "teleport"
-    env       = "${var.env}"
+    env       = var.env
     terraform = "true"
   }
 }
@@ -144,9 +175,9 @@ resource "aws_instance" "proxies" {
 # Add to target group to attach to LB
 
 resource "aws_elb_attachment" "proxy_ssh" {
-  count    = "${var.proxy_count}"
-  elb      = "${aws_elb.proxy.id}"
-  instance = "${element(aws_instance.proxies.*.id,count.index)}"
+  count    = var.proxy_count
+  elb      = aws_elb.proxy.id
+  instance = element(aws_instance.proxies.*.id, count.index)
 }
 
 #######
@@ -155,10 +186,10 @@ resource "aws_elb_attachment" "proxy_ssh" {
 
 resource "aws_security_group" "proxies" {
   name_prefix = "teleport-proxies-"
-  vpc_id      = "${data.aws_vpc.vpc.id}"
+  vpc_id      = data.aws_vpc.vpc.id
 
-  tags {
-    env       = "${var.env}"
+  tags = {
+    env       = var.env
     terraform = "true"
     app       = "teleport"
     Name      = "teleport-proxies"
@@ -170,9 +201,9 @@ resource "aws_security_group_rule" "proxy_webui" {
   from_port                = 3080
   to_port                  = 3080
   protocol                 = "tcp"
-  source_security_group_id = "${aws_security_group.proxy_lb.id}"
+  source_security_group_id = aws_security_group.proxy_lb.id
 
-  security_group_id = "${aws_security_group.proxies.id}"
+  security_group_id = aws_security_group.proxies.id
 }
 
 resource "aws_security_group_rule" "proxy_ssh" {
@@ -180,12 +211,22 @@ resource "aws_security_group_rule" "proxy_ssh" {
   from_port                = 3023
   to_port                  = 3023
   protocol                 = "tcp"
-  source_security_group_id = "${aws_security_group.proxy_lb.id}"
+  source_security_group_id = aws_security_group.proxy_lb.id
 
-  security_group_id = "${aws_security_group.proxies.id}"
+  security_group_id = aws_security_group.proxies.id
 }
 
-# Must allow talking to the world to pull down teleport binaries (for now)
+resource "aws_security_group_rule" "proxy_cluster" {
+  type                     = "ingress"
+  from_port                = 3024
+  to_port                  = 3024
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.proxy_lb.id
+
+  security_group_id = aws_security_group.proxies.id
+}
+
+# Must allow talking to the world to call out to AWS APIs
 resource "aws_security_group_rule" "proxy_egress" {
   type        = "egress"
   from_port   = 0
@@ -193,7 +234,7 @@ resource "aws_security_group_rule" "proxy_egress" {
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = "${aws_security_group.proxies.id}"
+  security_group_id = aws_security_group.proxies.id
 }
 
 # Support for emergency jumpbox
@@ -202,7 +243,8 @@ resource "aws_security_group_rule" "jumpbox_proxy" {
   from_port                = 22
   to_port                  = 22
   protocol                 = "tcp"
-  source_security_group_id = "${aws_security_group.jumpbox.id}"
+  source_security_group_id = data.aws_security_group.jumpbox.id
 
-  security_group_id = "${aws_security_group.proxies.id}"
+  security_group_id = aws_security_group.proxies.id
 }
+

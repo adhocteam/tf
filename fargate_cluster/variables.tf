@@ -23,3 +23,22 @@ variable "loadbalancer_port" {
   description = "port on which the load balancer will be listening. it will terminate TLS on this port."
   default     = "443"
 }
+
+variable "environment_variables" {
+  type        = list(string)
+  description = "environment variables to inject into the docker containers. a list of maps."
+  default     = []
+}
+
+variable "health_check_path" {
+  description = "path used by load balancer to health check application. should return 200."
+  default     = "/"
+}
+
+# Currently not supported by Fargate. Placeholder until it is.
+# https://docs.amazonaws.cn/en_us/AmazonECS/latest/developerguide/specifying-sensitive-data.html
+# variable "secrets" {
+#   type        = "list"
+#   description = "list of stored secrets to inject into the docker container. a list of maps."
+#   default     = []
+# }

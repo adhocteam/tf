@@ -1,0 +1,37 @@
+#!usr/bin/env bash
+set -ex
+
+export SWARM_CLIENT_VERSION=$(curl -s https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/maven-metadata.xml | awk -F'[<|>]' '/<latest>/ {print $3}')
+
+curl --create-dirs -sSLo /usr/share/jenkins/swarm-client.jar \
+    "https://repo.jenkins-ci.org/releases/org/jenkins-ci/plugins/swarm-client/$SWARM_CLIENT_VERSION/swarm-client-$SWARM_CLIENT_VERSION.jar"
+
+echo "${label} worker" > /usr/share/jenkins/labels.txt
+
+chmod 755 /usr/share/jenkins
+
+yum install -y java-1.8.0-openjdk
+
+cat << EOF > /etc/systemd/system/jenkins_worker.service
+
+[Unit]
+Description=Jenkins swarm worker client application
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user
+ExecStart=/usr/bin/java -jar /usr/share/jenkins/swarm-client.jar \
+    -master ${master} \
+    -name "${label}-${count}" \
+    -labelsFile /usr/share/jenkins/labels.txt \
+    -username ${username} \
+    -password ${password} \
+    -executors ${executors}
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable --now jenkins_worker

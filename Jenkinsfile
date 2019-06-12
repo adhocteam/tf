@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'website'
+        label 'general'
     }
 
     stages {
@@ -8,11 +8,11 @@ pipeline {
             agent {
                 docker {
                     image 'hashicorp/terraform:light'
-                    args '-v ${PWD}:/terraform -w /terraform --entrypoint=""'
+                    args '-w $WORKSPACE --entrypoint=""'
                 }
             }
             steps {
-                sh 'terraform fmt -check=true -diff=true'
+                sh 'terraform fmt -check=true -diff=true -recursive'
             }
         }
 
@@ -25,8 +25,8 @@ pipeline {
         stage('Terraform validation') {
             agent {
                 docker {
-                    image 'hashicorp/terraform:light'
-                    args '-v ${PWD}:/terraform -w /terraform --entrypoint=""'
+                    image 'hashicorp/terraform:0.12.1'
+                    args '-w $WORKSPACE --entrypoint=""'
                 }
             }
             steps {

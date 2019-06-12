@@ -1,31 +1,31 @@
 data "aws_vpc" "vpc" {
-  tags {
-    env = "${var.env}"
+  tags = {
+    env = var.env
   }
 }
 
 data "aws_subnet" "application_subnet" {
   count  = 3
-  vpc_id = "${data.aws_vpc.vpc.id}"
+  vpc_id = data.aws_vpc.vpc.id
 
-  tags {
+  tags = {
     name = "app-sub-${count.index}"
-    env  = "${var.env}"
+    env  = var.env
   }
 }
 
 data "aws_subnet" "public_subnet" {
   count  = 3
-  vpc_id = "${data.aws_vpc.vpc.id}"
+  vpc_id = data.aws_vpc.vpc.id
 
-  tags {
+  tags = {
     name = "public-sub-${count.index}"
-    env  = "${var.env}"
+    env  = var.env
   }
 }
 
 data "aws_route53_zone" "external" {
-  name         = "${var.domain_name}"
+  name         = var.domain_name
   private_zone = false
 }
 
@@ -35,21 +35,55 @@ data "aws_route53_zone" "internal" {
 }
 
 data "aws_acm_certificate" "wildcard" {
-  domain      = "adhocteam.us"
+  domain      = var.domain_name
   most_recent = true
 }
 
-# Find the newest Amazon Linux 2 AMI to keep up to date on patches
-data "aws_ami" "amazon_linux_2" {
-  most_recent = true
+data "aws_secretsmanager_secret" "cluster_token" {
+  name = "${var.env}/teleport/cluster_token"
+}
 
-  filter {
-    name   = "owner-alias"
-    values = ["amazon"]
+data "aws_secretsmanager_secret_version" "github_client_id" {
+  secret_id = "${var.env}/jenkins/github_client_id"
+}
+
+data "aws_secretsmanager_secret_version" "github_client_secret" {
+  secret_id = "${var.env}/jenkins/github_client_secret"
+}
+
+data "aws_secretsmanager_secret_version" "github_password" {
+  secret_id = "${var.env}/jenkins/github_password"
+}
+
+data "aws_secretsmanager_secret_version" "slack_token" {
+  secret_id = "${var.env}/jenkins/slack_token"
+}
+
+data "aws_secretsmanager_secret_version" "docker_password" {
+  secret_id = "${var.env}/jenkins/docker_password"
+}
+
+data "aws_kms_alias" "main" {
+  name = "alias/${var.env}-main"
+}
+
+data "aws_security_group" "jumpbox" {
+  vpc_id = data.aws_vpc.vpc.id
+
+  tags = {
+    env  = var.env
+    app  = "utilities"
+    Name = "jumpbox"
   }
+}
+
+data "aws_ami" "base" {
+  most_recent = true
+  owners      = ["self"]
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm*"]
+    values = ["adhoc_base*"]
   }
 }
+

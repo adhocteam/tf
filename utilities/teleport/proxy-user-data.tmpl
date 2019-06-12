@@ -1,30 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-# Download binaries and copy to /usr/local/bin
-pushd $(mktemp -d)
-curl -sfLo teleport.tar.gz https://get.gravitational.com/teleport-${teleport_version}-linux-amd64-bin.tar.gz
-tar xzf teleport.tar.gz
-cp -f teleport/teleport teleport/tctl teleport/tsh /usr/local/bin
-popd
-
-# Create a teleport user that owns an empty /var/lib/teleport
-useradd -r teleport -G adm -s /sbin/nologin -d /var/lib/teleport -m -k /dev/null -c "Teleport SSH Bastion"
-
-# To hold the PID file
-mkdir -p /var/run/teleport
-chown -R teleport:adm /var/run/teleport
-
-echo "Create main teleport config file"
-
-cat << EOF > /etc/teleport.yaml
+cat << EOF > /etc/teleport_proxy.yaml
 teleport:
   nodename: ${nodename}
   data_dir: /var/lib/teleport
   pid_file: /var/run/teleport/teleport.pid
   auth_token: ${cluster_token}
   auth_servers:
-  - ${auth_domain}:3025
+  - auth.teleport.local:3025
   connection_limits:
     max_connections: 100
     max_users: 50
@@ -43,29 +27,12 @@ proxy_service:
   public_addr: ${proxy_domain}
 EOF
 
-echo "Create systemd unit file"
+# Stop the local default services
+systemctl disable --now teleport
+systemctl disable --now docker
 
-cat << EOF > /etc/systemd/system/teleport.service
-[Unit]
-Description=Teleport SSH Service
-After=network.target
-
-[Service]
-User=teleport
-Group=adm
-Type=simple
-Restart=always
-RestartSec=5
-ExecStart=/usr/local/bin/teleport start --config=/etc/teleport.yaml --diag-addr=0.0.0.0:3434 --insecure-no-tls
-ExecReload=/bin/kill -HUP \$MAINPID
-PIDFile=/var/run/teleport/teleport.pid
-LimitNOFILE=65536
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
+chown -R teleport:adm /var/lib/teleport
 # Start daemon and endure through restarts
-systemctl enable --now teleport
+systemctl enable --now teleport_proxy.service
 
 echo "Teleport install complete"

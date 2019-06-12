@@ -9,3 +9,4 @@ variable "subdomain" {
 variable "domain_name" {
   default = ""
 }
+

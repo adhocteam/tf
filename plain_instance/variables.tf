@@ -11,21 +11,32 @@ variable "application_name" {
 }
 
 variable "instance_size" {
-  description = "ec2 instance type to be used for hosting the app"
+  description = "OPTIONAL: ec2 instance type to be used for hosting the app"
   default     = "t3.micro"
 }
 
 variable "instance_count" {
-  description = "number of instances to create"
+  description = "OPTIONAL: number of instances to create"
   default     = "1"
 }
 
 variable "application_port" {
-  description = "port on which the application will be listening."
+  description = "OPTIONAL: port on which the application will be listening."
   default     = "80"
 }
 
 variable "loadbalancer_port" {
-  description = "port on which the load balancer will be listening. it will terminate TLS on this port."
+  description = "OPTIONAL: port on which the load balancer will be listening. it will terminate TLS on this port."
   default     = "443"
 }
+
+variable "key_pair" {
+  description = "OPTIONAL: name of key pair to use with optional SSH jumpbox"
+  default     = "infrastructure"
+}
+
+variable "user_data" {
+  description = "OPTIONAL: user data script to run on initialization"
+  default     = ""
+}
+
