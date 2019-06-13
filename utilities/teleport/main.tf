@@ -6,20 +6,11 @@
 # Public DNS name for client use to connect to proxies
 resource "aws_route53_record" "public" {
   zone_id = data.aws_route53_zone.external.id
-  name    = "teleport.${var.env}"
+  name    = "teleport"
   type    = "CNAME"
   ttl     = 30
 
   records = [aws_elb.proxy.dns_name]
-}
-
-module "cert" {
-  source      = "../../wildcard_cert"
-  env         = var.env
-  root_domain = var.domain_name
-
-  # Can't use aws_route53_record.public.fqdn here to prevent cycle with ELB
-  domain = "teleport.${var.env}.${var.domain_name}"
 }
 
 # Private DNS name inside VPC for auth nodes as light-weight service discovery

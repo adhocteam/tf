@@ -4,8 +4,7 @@
 #######
 
 locals {
-  default_url = "jenkins.${var.env}.${var.domain_name}"
-  url         = coalesce(var.jenkins_url, local.default_url)
+  url = "jenkins.${var.domain_name}"
 }
 
 resource "aws_alb" "jenkins" {
@@ -73,31 +72,17 @@ resource "aws_route53_record" "alb" {
   records = [aws_alb.jenkins.dns_name]
 }
 
-module "cert" {
-  source = "../../wildcard_cert"
-
-  env         = var.env
-  root_domain = var.domain_name
-  domain      = local.default_url
-}
-
 resource "aws_alb_listener" "https" {
   load_balancer_arn = aws_alb.jenkins.arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = module.cert.arn
+  certificate_arn   = data.aws_acm_certificate.wildcard.arn
 
   default_action {
     target_group_arn = aws_alb_target_group.primary.arn
     type             = "forward"
   }
-}
-
-# Also allow it serve direct subdomains like jenkins.domain_name
-resource "aws_alb_listener_certificate" "domain_name" {
-  listener_arn    = aws_alb_listener.https.arn
-  certificate_arn = data.aws_acm_certificate.wildcard.arn
 }
 
 # Security group
@@ -153,7 +138,7 @@ resource "aws_instance" "jenkins_primary" {
   key_name      = "infrastructure"
 
   associate_public_ip_address = false
-  subnet_id                   = element(data.aws_subnet.application_subnet.*.id, 1)
+  subnet_id                   = data.aws_subnet.application_subnet[1].id
   vpc_security_group_ids      = [aws_security_group.jenkins_primary.id]
 
   iam_instance_profile = aws_iam_instance_profile.primary.name
@@ -317,7 +302,7 @@ resource "aws_instance" "jenkins_worker" {
 
   root_block_device {
     volume_type = "gp2"
-    volume_size = 40
+    volume_size = 120
     delete_on_termination = true
   }
 

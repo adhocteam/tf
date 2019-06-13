@@ -31,6 +31,11 @@ data "aws_subnet" "public_subnet" {
   }
 }
 
+data "aws_acm_certificate" "wildcard" {
+  domain      = "${var.domain_name}"
+  most_recent = true
+}
+
 data "aws_route53_zone" "external" {
   name         = var.domain_name
   private_zone = false
