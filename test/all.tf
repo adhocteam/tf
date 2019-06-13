@@ -38,7 +38,7 @@ module "ingress" {
 }
 
 module "static" {
-  source = "../static_site"
+  source = "../cdn_site"
 
   env         = local.env
   domain_name = local.domain_name
@@ -62,18 +62,13 @@ module "fargate" {
   docker_image     = "nginx:latest"
 }
 
-variable "db_password" {
-  description = "Normally this would be left blank"
-  default     = "neverdothis"
-}
-
 module "postgres" {
   source = "../database"
 
   env              = local.env
   application_name = "demo"
   app_sg           = module.demo.app_sg_id
-  password         = "{$var.db_password}"
+  password         = "neverdothis"
 }
 
 module "lambda_cron" {

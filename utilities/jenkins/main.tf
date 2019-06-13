@@ -280,24 +280,24 @@ data "template_file" "jenkins_worker" {
   vars = {
     count = count.index
     master = "http://${aws_route53_record.primary.fqdn}:8080"
-    label = element(split(",", element(var.workers, count.index)), 0)
+    label = var.workers[count.index].label
     username = var.github_user
     password = data.aws_secretsmanager_secret_version.github_password.secret_string
-    executors = element(split(",", element(var.workers, count.index)), 2)
+    executors = var.workers[count.index].executors
   }
 }
 
 resource "aws_instance" "jenkins_worker" {
   count = length(var.workers)
   ami = data.aws_ami.base.id
-  instance_type = element(split(",", element(var.workers, count.index)), 1)
+  instance_type = var.workers[count.index].instance_type
   key_name = "infrastructure"
 
   iam_instance_profile = aws_iam_instance_profile.worker.name
-  user_data = element(data.template_file.jenkins_worker.*.rendered, count.index)
+  user_data = data.template_file.jenkins_worker[count.index].rendered
 
   associate_public_ip_address = false
-  subnet_id = element(data.aws_subnet.application_subnet.*.id, count.index) #distribute workers across AZs
+  subnet_id = data.aws_subnet.application_subnet[count.index].id #distribute workers across AZs
   vpc_security_group_ids = [aws_security_group.jenkins_worker.id]
 
   root_block_device {
@@ -309,9 +309,9 @@ resource "aws_instance" "jenkins_worker" {
   tags = {
     env = var.env
     terraform = "true"
-    Name = "jenkins-${element(split(",", element(var.workers, count.index)), 0)}-${count.index}"
+    Name = "jenkins-${var.workers[count.index].label}-${count.index}"
     app = "jenkins"
-    label = element(split(",", element(var.workers, count.index)), 0)
+    label = var.workers[count.index].label
     role = "worker"
   }
 
@@ -326,11 +326,11 @@ resource "aws_instance" "jenkins_worker" {
 resource "aws_route53_record" "worker" {
   count = length(var.workers)
   zone_id = data.aws_route53_zone.internal.id
-  name = "${element(split(",", element(var.workers, count.index)), 0)}-${count.index}.jenkins"
+  name = "${var.workers[count.index].label}-${count.index}.jenkins"
   type = "CNAME"
   ttl = 30
 
-  records = [element(aws_instance.jenkins_worker.*.private_dns, count.index)]
+  records = [aws_instance.jenkins_worker[count.index].private_dns]
 }
 
 resource "aws_security_group" "jenkins_worker" {
@@ -485,4 +485,3 @@ resource "aws_kms_grant" "worker" {
   grantee_principal = aws_iam_role.worker.arn
   operations        = ["Decrypt"]
 }
-

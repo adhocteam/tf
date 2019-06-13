@@ -15,25 +15,32 @@ variable "jumpbox_enabled" {
 }
 
 variable "jenkins_workers" {
-  description = "A list of strings describing workers. Lists are of the form: label,instance_type,number_of_executors}"
+  type        = list(object({ label = string, instance_type = string, executors = number }))
+  description = "A list of objects describing workers."
 
   default = [
-    "general,t3.medium,6",
-    "general,t3.medium,6",
+    {
+      label         = "general",
+      instance_type = "t3.medium",
+      executors     = 6
+    }
   ]
 }
 
 variable "jenkins_image" {
-  description = "OPTIONAL: the image name for the container to use for the jenkins primary"
-  default     = "adhocteam/jenkins:latest"
+  type        = string
+  description = "OPTIONAL: the tag for adhocteam/jenkins to use for the primary"
+  default     = "latest"
 }
 
 variable "jenkins_github_user" {
+  type        = string
   description = "GitHub account to use for Jenkins admin features (e.g., setting up hooks) and posting messages"
   default     = "jenkins-adhoc-team"
 }
 
 variable "teleport_github_team" {
+  type        = string
   description = "GitHub team who can SSH via Teleport proxy"
   default     = "infrastructure-team"
 }
