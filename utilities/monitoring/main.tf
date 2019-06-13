@@ -17,24 +17,24 @@ resource "aws_security_group" "prometheus" {
   }
 
   ingress {
-      from_port = 9090
-      to_port = 9090
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-      from_port = 3000
-      to_port = 3000
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-      from_port = 9100
-      to_port = 9100
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 9100
+    to_port     = 9100
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -81,7 +81,7 @@ data "aws_ami" "amazon_linux_2" {
 # #                   Group=node_exporter 
 # #                   Type=simple
 # #                   ExecStart=/usr/local/bin/node_exporter
-                
+
 # #                  [Install]
 # #                   WantedBy=multi-user.target" > /etc/systemd/system/node_exporter.service
 # #               sudo systemctl daemon-reload
@@ -102,18 +102,18 @@ data "aws_ami" "amazon_linux_2" {
 # }
 
 resource "aws_instance" "prom" {
-  ami           = "${data.aws_ami.amazon_linux_2.id}"
-  instance_type = "t2.micro"
-  key_name      = "infrastructure"
-  vpc_security_group_ids = [ "${aws_security_group.prometheus.id}" ]
+  ami                    = "${data.aws_ami.amazon_linux_2.id}"
+  instance_type          = "t2.micro"
+  key_name               = "infrastructure"
+  vpc_security_group_ids = ["${aws_security_group.prometheus.id}"]
 
   tags {
-    Name      = "prometheus-monitor"
+    Name = "prometheus-monitor"
   }
 
 
   associate_public_ip_address = false
-  user_data = <<-EOF
+  user_data                   = <<-EOF
               #!/bin/bash
               yum update -y
               yum install -y docker
