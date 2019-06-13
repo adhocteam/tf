@@ -1,14 +1,17 @@
 variable "env" {
+  type        = string
   description = "the name of the environment, e.g. \"testing\". it must be unique in the account."
 }
 
 variable "domain_name" {
+  type        = string
   description = "the external domain name for reaching the public resources. must have a certificate in ACM associated with it."
 }
 
 variable "jumpbox_enabled" {
+  type        = bool
   description = "OPTIONAL: whether or not to enable the jumpbox"
-  default     = "false"
+  default     = false
 }
 
 variable "jenkins_workers" {
@@ -18,11 +21,6 @@ variable "jenkins_workers" {
     "general,t3.medium,6",
     "general,t3.medium,6",
   ]
-}
-
-variable "jenkins_url" {
-  description = "OPTIONAL: the URL at which jenkins will be served. Default is jenkins.{var.env}.{var.domain_name}"
-  default     = ""
 }
 
 variable "jenkins_image" {
