@@ -1,3 +1,11 @@
+#####
+# A shared encryption key for general use in the environment
+#####
+
+terraform {
+  required_version = ">= 0.12"
+}
+
 resource "aws_kms_key" "main" {
   description             = "Primary key for encrypting things in environment"
   deletion_window_in_days = 10

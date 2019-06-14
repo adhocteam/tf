@@ -18,8 +18,8 @@ module "encryptkey" {
 module "wildcard" {
   source = "./wildcard_cert"
 
-  env    = var.env
-  domain = var.domain_name
+  env         = var.env
+  domain_name = var.domain_name
 }
 
 resource "aws_s3_bucket" "lambda_releases" {

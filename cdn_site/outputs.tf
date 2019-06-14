@@ -3,10 +3,10 @@ output "cdn_url" {
 }
 
 output "bucket_url" {
-  value = aws_s3_bucket.site_content_bucket.bucket_domain_name
+  value = aws_s3_bucket.content.bucket_domain_name
 }
 
 output "content_bucket" {
-  value = aws_s3_bucket.site_content_bucket.bucket
+  value = aws_s3_bucket.content.bucket
 }
 
