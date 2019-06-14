@@ -3,15 +3,15 @@
 #######
 
 resource "aws_acm_certificate" "domain" {
-  domain_name               = var.domain
-  subject_alternative_names = ["*.${var.domain}"]
+  domain_name               = var.domain_name
+  subject_alternative_names = ["*.${var.domain_name}"]
 
   validation_method = "DNS"
 
   tags = {
     terraform = "true"
     env       = var.env
-    Name      = "wildcard-${var.domain}"
+    Name      = "wildcard-${var.domain_name}"
   }
 
   lifecycle {
@@ -21,7 +21,7 @@ resource "aws_acm_certificate" "domain" {
 
 resource "aws_acm_certificate_validation" "domain" {
   certificate_arn         = aws_acm_certificate.domain.arn
-  validation_record_fqdns = aws_route53_record.validation.*.fqdn
+  validation_record_fqdns = aws_route53_record.validation[*].fqdn
 }
 
 # Only need to validate the first record because the wildcard entry will use the same DNS record

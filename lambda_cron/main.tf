@@ -31,7 +31,7 @@ resource "aws_lambda_function" "job" {
   }
 
   tags = {
-    terraform = "True"
+    terraform = "true"
     app       = var.job_name
     handler   = local.handler
     type      = "cron"
@@ -47,7 +47,7 @@ resource "aws_security_group" "job" {
 
   tags = {
     env       = var.env
-    terraform = "True"
+    terraform = "true"
     app       = var.job_name
     name      = "cron-${var.job_name}"
   }

@@ -18,9 +18,8 @@ module "encryptkey" {
 module "wildcard" {
   source = "./wildcard_cert"
 
-  env         = var.env
-  root_domain = var.domain_name
-  domain      = var.domain_name
+  env    = var.env
+  domain = var.domain_name
 }
 
 resource "aws_s3_bucket" "lambda_releases" {
@@ -32,10 +31,9 @@ resource "aws_s3_bucket" "lambda_releases" {
   }
 
   tags = {
-    env         = var.env
-    domain_name = var.domain_name
-    terraform   = "True"
-    app         = "lambda-releases"
+    env       = var.env
+    terraform = "true"
+    app       = "lambda-releases"
   }
 }
 

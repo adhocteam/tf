@@ -2,6 +2,18 @@
 # Main infrastructure to host a static website
 ####
 
+terraform {
+  required_version = ">= 0.12"
+}
+
+locals {
+  site_url    = "${var.subdomain}.${var.domain_name}"
+  preview_url = "preview.${local.site_url}"
+
+  # If www then we need CloudFront to serve the apex domain as well
+  aliases = concat([local.site_url], var.aliases, var.subdomain == "www" ? [var.domain_name] : [])
+}
+
 # Setup DNS records for the static site
 
 resource "aws_route53_record" "subdomain" {
@@ -13,7 +25,7 @@ resource "aws_route53_record" "subdomain" {
   records = [aws_cloudfront_distribution.s3_distribution.domain_name]
 }
 
-# # If we're setting, www (e.g., www.example.com) then also direct the apex domain (example.com)
+# # If we're setting www (e.g., www.example.com) then also direct the apex domain (example.com)
 resource "aws_route53_record" "apex_domain" {
   count   = var.subdomain == "www" ? 1 : 0
   zone_id = data.aws_route53_zone.domain.zone_id
@@ -29,29 +41,10 @@ resource "aws_route53_record" "apex_domain" {
 
 # Create bucket to host the content
 
-resource "aws_s3_bucket" "site_content_bucket" {
-  bucket = "${var.subdomain}.${var.domain_name}"
+resource "aws_s3_bucket" "content" {
+  bucket = local.site_url
   acl    = "public-read"
-
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "Stmt1516660482311",
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": [
-        "arn:aws:s3:::${var.subdomain}.${var.domain_name}/*"
-      ]
-    }
-  ]
-}
-POLICY
-
+  policy = templatefile("${path.module}/policy.tmpl", { bucket = local.site_url })
 
   # Serve index.html on errors to support client side routing, e.g. React Router
   website {
@@ -60,9 +53,9 @@ POLICY
   }
 
   tags = {
-    env = var.env
+    env       = var.env
     terraform = "true"
-    name = "${var.subdomain}.${var.domain_name}"
+    name      = local.site_url
   }
 }
 
@@ -70,32 +63,32 @@ POLICY
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
-    domain_name = aws_s3_bucket.site_content_bucket.bucket_domain_name
-    origin_id = "${var.subdomain}-${var.domain_name}"
+    domain_name = aws_s3_bucket.content.bucket_domain_name
+    origin_id   = "${var.subdomain}-${var.domain_name}"
   }
 
-  enabled = true
+  enabled             = true
   default_root_object = "index.html"
 
-  aliases = ["${var.subdomain}.${var.domain_name}"]
+  aliases = local.aliases
 
   # Serve index.html on errors to support client side routing, e.g. React Router
   custom_error_response {
-    error_code = 403
-    response_code = 200
+    error_code         = 403
+    response_code      = 200
     response_page_path = "/index.html"
   }
 
   custom_error_response {
-    error_code = 404
-    response_code = 200
+    error_code         = 404
+    response_code      = 200
     response_page_path = "/index.html"
   }
 
   default_cache_behavior {
-    allowed_methods = ["GET", "HEAD", "OPTIONS"]
-    cached_methods = ["GET", "HEAD"]
-    target_origin_id = "${var.subdomain}-${var.domain_name}"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = local.site_url
 
     # Use gzip compression
     compress = true
@@ -109,14 +102,14 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     }
 
     viewer_protocol_policy = "redirect-to-https"
-    min_ttl = 0
-    default_ttl = 60
-    max_ttl = 60
+    min_ttl                = 0
+    default_ttl            = 60
+    max_ttl                = 60
   }
 
   viewer_certificate {
     acm_certificate_arn = data.aws_acm_certificate.wildcard.arn
-    ssl_support_method = "sni-only"
+    ssl_support_method  = "sni-only"
   }
 
   restrictions {
@@ -126,9 +119,9 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   tags = {
-    env = var.env
+    env       = var.env
     terraform = "true"
-    name = "cdn-${var.subdomain}.${var.domain_name}"
+    name      = "cdn-${local.site_url}"
   }
 }
 
@@ -138,49 +131,39 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 
 resource "aws_route53_record" "preview" {
   zone_id = data.aws_route53_zone.domain.zone_id
-  name = "preview.${var.subdomain}"
-  type = "CNAME"
-  ttl = "300"
+  name    = "preview.${var.subdomain}"
+  type    = "CNAME"
+  ttl     = "300"
 
-  records = [aws_s3_bucket.preview.website_endpoint]
+  records = [aws_s3_bucket.preview.website_domain]
 }
 
 # Create bucket to host the content
 
 resource "aws_s3_bucket" "preview" {
-  bucket = "preview.${var.subdomain}.${var.domain_name}"
-  acl = "public-read"
+  bucket = local.preview_url
+  acl    = "public-read"
+  policy = templatefile("${path.module}/policy.tmpl", { bucket = local.preview_url })
 
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "Stmt1516660482311",
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": [
-        "arn:aws:s3:::preview.${var.subdomain}.${var.domain_name}/*"
-      ]
+  # Serve index.html on errors to support client side routing, e.g. React Router
+  website {
+    index_document = "index.html"
+    error_document = "index.html"
+  }
+
+  tags = {
+    env       = var.env
+    terraform = "true"
+    name      = local.preview_url
+  }
+
+  lifecycle_rule {
+    id      = "expire previews"
+    enabled = true
+
+    expiration {
+      days = 45
     }
-  ]
-}
-POLICY
-
-
-# Serve index.html on errors to support client side routing, e.g. React Router
-website {
-index_document = "index.html"
-error_document = "index.html"
-}
-
-tags = {
-env       = var.env
-terraform = "true"
-name      = "preview.${var.subdomain}.${var.domain_name}"
-}
+  }
 }
 

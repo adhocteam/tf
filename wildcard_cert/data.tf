@@ -3,7 +3,7 @@
 #######
 
 data "aws_route53_zone" "external" {
-  name         = var.root_domain
+  name         = var.domain_name
   private_zone = false
 }
 

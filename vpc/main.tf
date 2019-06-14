@@ -5,6 +5,11 @@
 ###  - Internet Gateways
 ###  - Elastic IPs
 ###  - NAT Instances
+###  - VPC Endpoints
+
+terraform {
+  required_version = ">= 0.12"
+}
 
 ####
 # VPC with internal DNS support
@@ -117,7 +122,7 @@ resource "aws_route_table" "public_igw" {
 
 resource "aws_route_table_association" "public_with_igw" {
   count          = 3
-  subnet_id      = element(aws_subnet.public.*.id, count.index)
+  subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public_igw.id
 }
 
@@ -129,7 +134,8 @@ resource "aws_eip" "nats" {
   count = 3
   vpc   = true
 
-  # Note: EIP may require IGW to exist prior to association. Use depends_on to set an explicit dependency on the IGW.
+  # Note: EIP may require IGW to exist prior to association.
+  # Use depends_on to set an explicit dependency on the IGW.
   # https://www.terraform.io/docs/providers/aws/r/eip.html
   depends_on = [aws_internet_gateway.igw]
 
@@ -142,8 +148,8 @@ resource "aws_eip" "nats" {
 
 resource "aws_nat_gateway" "nats" {
   count         = 3
-  allocation_id = element(aws_eip.nats.*.id, count.index)
-  subnet_id     = element(aws_subnet.public.*.id, count.index)
+  allocation_id = aws_eip.nats[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id
 
   tags = {
     env       = var.env
@@ -158,7 +164,7 @@ resource "aws_route_table" "nats" {
 
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = element(aws_nat_gateway.nats.*.id, count.index)
+    nat_gateway_id = aws_nat_gateway.nats[count.index].id
   }
 
   tags = {
@@ -170,7 +176,21 @@ resource "aws_route_table" "nats" {
 
 resource "aws_route_table_association" "app_with_nat" {
   count          = 3
-  subnet_id      = element(aws_subnet.application.*.id, count.index)
-  route_table_id = element(aws_route_table.nats.*.id, count.index)
+  subnet_id      = aws_subnet.application[count.index].id
+  route_table_id = aws_route_table.nats[count.index].id
+}
+
+######
+# VPC Endpoints
+######
+
+locals {
+  route_tables = concat(aws_route_table.public_igw, aws_route_table.nats)
+}
+
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id          = aws_vpc.primary.id
+  service_name    = "com.amazonaws.${data.aws_region.current.name}.s3"
+  route_table_ids = local.route_tables[*].id
 }
 
