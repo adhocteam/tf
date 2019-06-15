@@ -48,8 +48,7 @@ module "static" {
 module "demo" {
   source = "../plain_instance"
 
-  env              = local.env
-  domain_name      = local.domain_name
+  base             = module.base
   application_name = "demo"
 }
 
@@ -65,10 +64,9 @@ module "fargate" {
 module "postgres" {
   source = "../database"
 
-  env              = local.env
-  application_name = "demo"
-  app_sg           = module.demo.app_sg_id
-  password         = "neverdothis"
+  base        = module.base
+  application = module.demo
+  password    = "neverdothis"
 }
 
 module "lambda_cron" {

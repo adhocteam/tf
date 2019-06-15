@@ -116,20 +116,6 @@ resource "aws_security_group_rule" "lb_egress" {
   security_group_id = aws_security_group.application_alb_sg.id
 }
 
-#######
-### Security group for application
-#######
-
-resource "aws_security_group" "app_sg" {
-  name_prefix = "${var.application_name}-app-"
-  vpc_id      = data.aws_vpc.vpc.id
-
-  tags = {
-    app = var.application_name
-    env = var.env
-  }
-}
-
 // Allow inbound only to our application port
 resource "aws_security_group_rule" "app_ingress" {
   type                     = "ingress"
@@ -137,17 +123,6 @@ resource "aws_security_group_rule" "app_ingress" {
   to_port                  = var.application_port
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.application_alb_sg.id
-
-  security_group_id = aws_security_group.app_sg.id
-}
-
-// Allow all outbound, e.g. third-pary API endpoints, by default
-resource "aws_security_group_rule" "app_egress" {
-  type        = "egress"
-  from_port   = 0
-  to_port     = 0
-  protocol    = "-1"
-  cidr_blocks = ["0.0.0.0/0"]
 
   security_group_id = aws_security_group.app_sg.id
 }

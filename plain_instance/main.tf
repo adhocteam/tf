@@ -1,27 +1,25 @@
-module "base" {
-  source = "../app_base"
-
-  env               = var.env
-  domain_name       = var.domain_name
-  application_name  = var.application_name
-  application_port  = var.application_port
-  loadbalancer_port = var.loadbalancer_port
+terraform {
+  required_version = ">= 0.12"
 }
 
-resource "aws_instance" "application" {
+resource "aws_instance" "box" {
   count         = var.instance_count
-  ami           = data.aws_ami.base.id
+  ami           = var.base.ami.id
   instance_type = var.instance_size
 
   iam_instance_profile = aws_iam_instance_profile.iam.name
-  user_data            = var.user_data
+  user_data            = var.user_data != "" ? var.user_data : null
   key_name             = var.key_pair
 
   associate_public_ip_address = false
 
   #distribute instances across AZs
-  subnet_id              = element(data.aws_subnet.application_subnet.*.id, count.index)
-  vpc_security_group_ids = [module.base.app_sg_id]
+  subnet_id = var.base.vpc.application[count.index].id
+  vpc_security_group_ids = [
+    var.base.security_groups["teleport_nodes"].id,
+    var.base.security_groups["jumpbox_nodes"].id,
+    aws_security_group.app.id
+  ]
 
   lifecycle {
     ignore_changes = [ami]
@@ -32,50 +30,57 @@ resource "aws_instance" "application" {
   }
 
   tags = {
-    Name = "${var.application_name}-${count.index}"
-    app  = var.application_name
-    env  = var.env
+    Name      = "${var.application_name}-${count.index}"
+    app       = var.application_name
+    terraform = "true"
+    env       = var.base.env
   }
 }
 
-resource "aws_alb_target_group_attachment" "application_targets" {
-  count            = var.instance_count
-  target_group_arn = module.base.lb_tg_arn
-  target_id        = element(aws_instance.application.*.private_ip, count.index)
+# resource "aws_alb_target_group_attachment" "application_targets" {
+#   count            = var.instance_count
+#   target_group_arn = module.base.lb_tg_arn
+#   target_id        = element(aws_instance.application.*.private_ip, count.index)
+# }
+
+#######
+# Security group for application
+#######
+
+resource "aws_security_group" "app" {
+  name_prefix = "${var.application_name}-app-"
+  vpc_id      = module.base.vpc.id
+
+  tags = {
+    app       = var.application_name
+    terraform = "true"
+    env       = var.env
+  }
 }
 
-# Add rule to allow SSH proxies to connect
-resource "aws_security_group_rule" "proxy_ssh" {
-  type                     = "ingress"
-  from_port                = 3022
-  to_port                  = 3022
-  protocol                 = "tcp"
-  source_security_group_id = data.aws_security_group.ssh_proxies.id
+# Allow all outbound, e.g. third-pary API endpoints, by default
+resource "aws_security_group_rule" "egress" {
+  type        = "egress"
+  from_port   = 0
+  to_port     = 0
+  protocol    = "-1"
+  cidr_blocks = ["0.0.0.0/0"]
 
-  security_group_id = module.base.app_sg_id
+  security_group_id = aws_security_group.app.id
 }
 
-resource "aws_security_group_rule" "jumpbox" {
-  type                     = "ingress"
-  from_port                = 22
-  to_port                  = 22
-  protocol                 = "tcp"
-  source_security_group_id = data.aws_security_group.jumpbox.id
-
-  security_group_id = module.base.app_sg_id
-}
 
 #####
 # Base IAM instance profile
 #####
 resource "aws_iam_instance_profile" "iam" {
-  name = "${var.env}-plain-instance"
+  name = "${var.base.env}-plain-instance-${var.application_name}"
   role = aws_iam_role.iam.name
 }
 
 # Auth instance profile and roles
 resource "aws_iam_role" "iam" {
-  name = "${var.env}-plain-instance"
+  name = "${var.base.env}-plain-instance-${var.application_name}"
 
   assume_role_policy = <<EOF
 {
@@ -95,12 +100,12 @@ EOF
 # Give it base teleport permissions
 resource "aws_iam_role_policy_attachment" "iam_teleport" {
   role = aws_iam_role.iam.name
-  policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.env}/teleport/${var.env}-instance-teleport-secrets"
+  policy_arn = "arn:aws:iam::${var.base.account.account_id}:policy/${var.base.env}/teleport/${var.base.env}-instance-teleport-secrets"
 }
 
 resource "aws_kms_grant" "main" {
-  name = "${var.env}-${var.application_name}-main"
-  key_id = data.aws_kms_alias.main.target_key_arn
+  name = "${var.base.env}-${var.application_name}-main"
+  key_id = var.base.key.arn
   grantee_principal = aws_iam_role.iam.arn
   operations = ["Decrypt"]
 }

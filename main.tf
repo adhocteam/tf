@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 0.12"
+}
+
 module "vpc" {
   source = "./vpc"
 
@@ -34,18 +38,6 @@ resource "aws_s3_bucket" "lambda_releases" {
     env       = var.env
     terraform = "true"
     app       = "lambda-releases"
-  }
-}
-
-resource "aws_security_group" "jumpbox" {
-  name_prefix = "jumpbox-"
-  vpc_id      = module.vpc.id
-
-  tags = {
-    env       = var.env
-    terraform = "true"
-    app       = "utilities"
-    Name      = "jumpbox"
   }
 }
 

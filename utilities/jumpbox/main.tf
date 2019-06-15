@@ -25,7 +25,7 @@ resource "aws_instance" "jumpbox" {
 
   associate_public_ip_address = true
   subnet_id                   = element(data.aws_subnet.public_subnet.*.id, count.index)
-  vpc_security_group_ids      = [data.aws_security_group.jumpbox.id]
+  vpc_security_group_ids      = [var.base.security_groups["jumpbox"].id]
 
   lifecycle {
     ignore_changes = [ami]
@@ -43,30 +43,6 @@ resource "aws_instance" "jumpbox" {
   }
 }
 
-#######
-# Security group for jumpbox alreeady exists
-# This just adds the configuration
-#######
-
-resource "aws_security_group_rule" "jumpbox_ssh" {
-  type        = "ingress"
-  from_port   = 22
-  to_port     = 22
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
-
-  security_group_id = data.aws_security_group.jumpbox.id
-}
-
-resource "aws_security_group_rule" "jump_into_vpc" {
-  type        = "egress"
-  from_port   = 22
-  to_port     = 22
-  protocol    = "tcp"
-  cidr_blocks = [data.aws_vpc.vpc.cidr_block]
-
-  security_group_id = data.aws_security_group.jumpbox.id
-}
 
 # TODO(bob) If using https://github.com/widdix/aws-ec2-ssh
 # then will need to open this up
