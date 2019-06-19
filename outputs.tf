@@ -49,3 +49,8 @@ output "security_groups" {
     "jumpbox_nodes"    = aws_security_group.jumpbox_nodes
   }
 }
+
+output "lambda_releases" {
+  description = "object for the S3 bucket to hold lambda function release zips"
+  value       = aws_s3_bucket.lambda_releases
+}

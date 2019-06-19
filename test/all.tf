@@ -54,6 +54,14 @@ module "demo" {
   application_name = "demo"
 }
 
+module "postgres" {
+  source = "../database"
+
+  base        = module.base
+  application = module.demo
+  password    = "neverdothis"
+}
+
 # module "fargate" {
 #   source = "../fargate_cluster"
 
@@ -63,32 +71,23 @@ module "demo" {
 #   docker_image     = "nginx:latest"
 # }
 
-module "postgres" {
-  source = "../database"
+module "lambda_cron" {
+  source = "../lambda_cron"
 
-  base        = module.base
-  application = module.demo
-  password    = "neverdothis"
+  base            = module.base
+  job_name        = "crontab"
+  cron_expression = "* * ? * * *"
+
+  env_vars = {
+    "SOMETHING"      = "ANYTHING"
+    "SOMETHING_ELSE" = "NOTHING"
+  }
+
+  secrets = [
+    "arn:aws:secretsmanager:us-east-1:000000000000:secret:${local.env}/lambda/crontab/secret1",
+    "arn:aws:secretsmanager:us-east-1:000000000000:secret:${local.env}/lambda/crontab/secret2",
+  ]
 }
-
-# module "lambda_cron" {
-#   source = "../lambda_cron"
-
-#   env             = local.env
-#   domain_name     = local.domain_name
-#   job_name        = "crontab"
-#   cron_expression = "* * ? * * *"
-
-#   env_vars = {
-#     "SOMETHING"      = "ANYTHING"
-#     "SOMETHING_ELSE" = "NOTHING"
-#   }
-
-#   secrets = [
-#     "arn:aws:secretsmanager:us-east-1:000000000000:secret:${local.env}/lambda/crontab/secret1",
-#     "arn:aws:secretsmanager:us-east-1:000000000000:secret:${local.env}/lambda/crontab/secret2",
-#   ]
-# }
 
 # module "production" {
 #   source = "../"

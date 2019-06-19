@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 0.12"
+}
+
 locals {
   handler = coalesce(var.handler, var.job_name)
 }
@@ -6,7 +10,7 @@ resource "aws_lambda_function" "job" {
   function_name = var.job_name
   description   = "Terraform-managed cron job for ${var.job_name} that invokes ${local.handler}"
 
-  s3_bucket = data.aws_s3_bucket.releases.id
+  s3_bucket = var.base.lambda_releases.id
   s3_key    = "${var.job_name}.zip"
 
   handler = local.handler
@@ -23,10 +27,10 @@ resource "aws_lambda_function" "job" {
   }
 
   // Encrypts any environment variables
-  kms_key_arn = data.aws_kms_alias.main.target_key_arn
+  kms_key_arn = var.base.key.arn
 
   vpc_config {
-    subnet_ids         = data.aws_subnet.application_subnet.*.id
+    subnet_ids         = var.base.vpc.application[*].id
     security_group_ids = [aws_security_group.job.id]
   }
 
@@ -43,10 +47,10 @@ resource "aws_lambda_function" "job" {
 #####
 resource "aws_security_group" "job" {
   name_prefix = "${var.job_name}-"
-  vpc_id      = data.aws_vpc.vpc.id
+  vpc_id      = var.base.vpc.id
 
   tags = {
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
     app       = var.job_name
     name      = "cron-${var.job_name}"
@@ -79,13 +83,13 @@ resource "aws_security_group_rule" "lb_egress" {
 # Cron job setup
 ######
 resource "aws_cloudwatch_event_rule" "crontab" {
-  name                = "crontab-${var.env}-${var.job_name}"
+  name                = "crontab-${var.base.env}-${var.job_name}"
   description         = "Terraform-managed crontab for firing ${var.job_name}"
   schedule_expression = "cron(${var.cron_expression})"
 }
 
 resource "aws_cloudwatch_event_target" "crontab" {
-  target_id = "propman_sync_lambda_target"
+  target_id = "${var.base.env}-${var.job_name}-sync_lambda_target"
   rule      = aws_cloudwatch_event_rule.crontab.name
   arn       = aws_lambda_function.job.arn
 }
@@ -104,7 +108,7 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_crontab" {
 #####
 
 resource "aws_iam_role" "job" {
-  name = "cronjob-${var.env}-${var.job_name}"
+  name = "cronjob-${var.base.env}-${var.job_name}"
 
   assume_role_policy = <<EOF
 {
@@ -148,8 +152,8 @@ data "aws_iam_policy_document" "secrets" {
 }
 
 resource "aws_iam_policy" "secrets" {
-  name = "${var.env}-${var.job_name}-secrets"
-  path = "/${var.env}/${var.job_name}/"
+  name = "${var.base.env}-${var.job_name}-secrets"
+  path = "/${var.base.env}/${var.job_name}/"
   policy = data.aws_iam_policy_document.secrets.json
 }
 
@@ -160,8 +164,8 @@ resource "aws_iam_role_policy_attachment" "secrets" {
 
 # Use of the shared KMS key for secrets decryption
 resource "aws_iam_policy" "shared_key_access" {
-  name = "${var.env}-${var.job_name}-key-access"
-  path = "/${var.env}/${var.job_name}/"
+  name = "${var.base.env}-${var.job_name}-key-access"
+  path = "/${var.base.env}/${var.job_name}/"
   description = "Allows function to use main KMS key for environment"
 
   policy = <<EOF
@@ -171,7 +175,7 @@ resource "aws_iam_policy" "shared_key_access" {
         {
             "Effect": "Allow",
             "Action": "kms:Decrypt",
-            "Resource": "${data.aws_kms_alias.main.target_key_arn}"
+            "Resource": "${var.base.key.arn}"
         }
     ]
 }
@@ -185,8 +189,8 @@ policy_arn = aws_iam_policy.shared_key_access.arn
 }
 
 resource "aws_kms_grant" "primary" {
-name              = "${var.env}-cron-${var.job_name}"
-key_id            = data.aws_kms_alias.main.target_key_arn
+name              = "${var.base.env}-cron-${var.job_name}"
+key_id            = var.base.key.arn
 grantee_principal = aws_iam_role.job.arn
 operations        = ["Decrypt"]
 }
