@@ -35,6 +35,10 @@ output "key" {
   description = "the primary encryption key tied to this environment"
   value       = module.encryptkey
 }
+output "wildcard" {
+  description = "wildcard certificate for the primary domain_name"
+  value       = module.wildcard
+}
 
 output "security_groups" {
   description = "a map of names to security groups that are shared throughout the vpc"
