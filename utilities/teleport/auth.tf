@@ -8,7 +8,7 @@
 #######
 
 resource "aws_lb" "auth" {
-  name_prefix                      = "telep-"
+  name_prefix                      = "tp-aut"
   internal                         = true
   load_balancer_type               = "network"
   subnets                          = var.base.vpc.application[*].id
@@ -280,8 +280,9 @@ resource "aws_s3_bucket" "recordings" {
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
-        kms_master_key_id = var.base.key.arn #TODO(bob) switch to unique, restricted key here?
-        sse_algorithm     = "aws:kms"
+        kms_master_key_id = var.base.key.arn
+        #TODO(bob) switch to unique, restricted key here?
+        sse_algorithm = "aws:kms"
       }
     }
   }
@@ -383,7 +384,7 @@ policy = <<EOF
             "kms:Decrypt",
             "kms:GenerateDataKey"
         ],
-        "Resource": ["${data.aws_kms_key.main.arn}"]
+        "Resource": ["${var.base.key.arn}"]
      }
    ]
  }

@@ -7,17 +7,17 @@ terraform {
 }
 
 locals {
-  site_url    = "${var.subdomain}.${var.domain_name}"
+  site_url    = "${var.subdomain}.${var.base.domain_name}"
   preview_url = "preview.${local.site_url}"
 
   # If www then we need CloudFront to serve the apex domain as well
-  aliases = concat([local.site_url], var.aliases, var.subdomain == "www" ? [var.domain_name] : [])
+  aliases = concat([local.site_url], var.aliases, var.subdomain == "www" ? [var.base.domain_name] : [])
 }
 
 # Setup DNS records for the static site
 
 resource "aws_route53_record" "subdomain" {
-  zone_id = data.aws_route53_zone.domain.zone_id
+  zone_id = var.base.external.zone_id
   name    = var.subdomain
   type    = "CNAME"
   ttl     = "300"
@@ -28,7 +28,7 @@ resource "aws_route53_record" "subdomain" {
 # # If we're setting www (e.g., www.example.com) then also direct the apex domain (example.com)
 resource "aws_route53_record" "apex_domain" {
   count   = var.subdomain == "www" ? 1 : 0
-  zone_id = data.aws_route53_zone.domain.zone_id
+  zone_id = var.base.external.zone_id
   name    = ""
   type    = "A"
 
@@ -53,7 +53,7 @@ resource "aws_s3_bucket" "content" {
   }
 
   tags = {
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
     name      = local.site_url
   }
@@ -64,7 +64,7 @@ resource "aws_s3_bucket" "content" {
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
     domain_name = aws_s3_bucket.content.bucket_domain_name
-    origin_id   = "${var.subdomain}-${var.domain_name}"
+    origin_id   = "${var.subdomain}-${var.base.domain_name}"
   }
 
   enabled             = true
@@ -108,7 +108,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   viewer_certificate {
-    acm_certificate_arn = data.aws_acm_certificate.wildcard.arn
+    acm_certificate_arn = var.base.wildcard.arn
     ssl_support_method  = "sni-only"
   }
 
@@ -119,7 +119,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   tags = {
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
     name      = "cdn-${local.site_url}"
   }
@@ -130,7 +130,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 ####
 
 resource "aws_route53_record" "preview" {
-  zone_id = data.aws_route53_zone.domain.zone_id
+  zone_id = var.base.external.zone_id
   name    = "preview.${var.subdomain}"
   type    = "CNAME"
   ttl     = "300"
@@ -152,7 +152,7 @@ resource "aws_s3_bucket" "preview" {
   }
 
   tags = {
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
     name      = local.preview_url
   }

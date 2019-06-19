@@ -10,7 +10,7 @@
 #######
 
 resource "aws_lb" "nlb" {
-  name_prefix        = "teleport-nlb"
+  name_prefix        = "tp-nlb"
   internal           = false
   load_balancer_type = "network"
   subnets            = var.base.vpc.public[*].id
@@ -159,13 +159,10 @@ resource "aws_alb_target_group_attachment" "all" {
 #######
 # Proxy instances
 #######
-data "template_file" "user_data" {
-  count = var.proxy_count
-}
 
 resource "aws_instance" "proxies" {
   count         = var.proxy_count
-  ami           = data.aws_ami.base.id
+  ami           = var.base.ami.id
   instance_type = "t3.micro"
   key_name      = var.key_pair
 
@@ -200,7 +197,7 @@ resource "aws_instance" "proxies" {
   tags = {
     Name      = "teleport-proxy-${count.index}"
     app       = "teleport"
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
   }
 }
@@ -223,31 +220,31 @@ resource "aws_security_group" "proxies" {
 }
 
 resource "aws_security_group_rule" "proxy_webui" {
-  type                     = "ingress"
-  from_port                = 3080
-  to_port                  = 3080
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.proxy_lb.id
+  type        = "ingress"
+  from_port   = 3080
+  to_port     = 3080
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
 
   security_group_id = aws_security_group.proxies.id
 }
 
 resource "aws_security_group_rule" "proxy_ssh" {
-  type                     = "ingress"
-  from_port                = 3023
-  to_port                  = 3023
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.proxy_lb.id
+  type        = "ingress"
+  from_port   = 3023
+  to_port     = 3023
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
 
   security_group_id = aws_security_group.proxies.id
 }
 
 resource "aws_security_group_rule" "proxy_cluster" {
-  type                     = "ingress"
-  from_port                = 3024
-  to_port                  = 3024
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.proxy_lb.id
+  type        = "ingress"
+  from_port   = 3024
+  to_port     = 3024
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
 
   security_group_id = aws_security_group.proxies.id
 }
@@ -259,17 +256,6 @@ resource "aws_security_group_rule" "proxy_egress" {
   to_port     = 0
   protocol    = "-1"
   cidr_blocks = ["0.0.0.0/0"]
-
-  security_group_id = aws_security_group.proxies.id
-}
-
-# Support for emergency jumpbox
-resource "aws_security_group_rule" "jumpbox_proxy" {
-  type                     = "ingress"
-  from_port                = 22
-  to_port                  = 22
-  protocol                 = "tcp"
-  source_security_group_id = data.aws_security_group.jumpbox.id
 
   security_group_id = aws_security_group.proxies.id
 }

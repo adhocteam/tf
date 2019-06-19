@@ -6,6 +6,10 @@ variable "region" {
   default = "us-east-1"
 }
 
+terraform {
+  required_version = ">= 0.12"
+}
+
 provider "aws" {
   region  = var.region
   version = "~> 2.13.0"
@@ -26,8 +30,7 @@ module "base" {
 module "utilities" {
   source = "../utilities"
 
-  env         = local.env
-  domain_name = local.domain_name
+  base = module.base
 }
 
 # module "ingress" {
@@ -40,9 +43,8 @@ module "utilities" {
 module "static" {
   source = "../cdn_site"
 
-  env         = local.env
-  domain_name = local.domain_name
-  subdomain   = "pizza"
+  base      = module.base
+  subdomain = "pizza"
 }
 
 module "demo" {

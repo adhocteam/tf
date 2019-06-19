@@ -14,7 +14,7 @@ resource "aws_route53_record" "public" {
   type    = "CNAME"
   ttl     = 30
 
-  records = [aws_elb.proxy.dns_name]
+  records = [aws_lb.nlb.dns_name]
 }
 
 # Private DNS name inside VPC for auth nodes as light-weight service discovery
@@ -76,7 +76,7 @@ resource "aws_iam_policy" "teleport_secrets" {
         {
             "Effect": "Allow",
             "Action": "kms:Decrypt",
-            "Resource": "${data.aws_kms_key.main.arn}"
+            "Resource": "${var.base.key.arn}"
         }
     ]
 }

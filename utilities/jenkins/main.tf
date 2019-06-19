@@ -140,7 +140,7 @@ module "primary" {
   base             = var.base
   instance_size    = "t3.small"
   application_name = "jenkins-primary"
-  user_data = templatefile("${path.module}/primay.tmpl", {
+  user_data = templatefile("${path.module}/primary.tmpl", {
     github_client_id     = "${data.aws_secretsmanager_secret_version.github_client_id.secret_string}"
     github_client_secret = "${data.aws_secretsmanager_secret_version.github_client_secret.secret_string}"
     jenkins_url          = "https://${local.url}"
@@ -243,8 +243,6 @@ resource "aws_instance" "jenkins_worker" {
     label     = var.workers[count.index].label
     role      = "worker"
   }
-
-  depends_on = [aws_instance.jenkins_primary]
 
   lifecycle {
     ignore_changes = [ami]

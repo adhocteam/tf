@@ -45,7 +45,7 @@ resource "aws_instance" "box" {
 
 # resource "aws_alb_target_group_attachment" "application_targets" {
 #   count            = var.instance_count
-#   target_group_arn = module.base.lb_tg_arn
+#   target_group_arn = var.base.lb_tg_arn
 #   target_id        = element(aws_instance.application.*.private_ip, count.index)
 # }
 
@@ -55,12 +55,12 @@ resource "aws_instance" "box" {
 
 resource "aws_security_group" "app" {
   name_prefix = "${var.application_name}-app-"
-  vpc_id      = module.base.vpc.id
+  vpc_id      = var.base.vpc.id
 
   tags = {
     app       = var.application_name
     terraform = "true"
-    env       = var.env
+    env       = var.base.env
   }
 }
 
