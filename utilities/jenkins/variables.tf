@@ -1,11 +1,5 @@
-variable "env" {
-  type        = string
-  description = "the name of the environment, e.g. \"testing\". it must be unique in the account."
-}
-
-variable "domain_name" {
-  type        = string
-  description = "the external domain name for reaching the public resources. must have a certificate in ACM associated with it."
+variable "base" {
+  description = "object with the outputs of the base module"
 }
 
 variable "workers" {
@@ -39,7 +33,7 @@ variable "ssh_proxy_sg" {
   default     = ""
 }
 
-variable "jenkins_image" {
+variable "image_tag" {
   type        = string
   description = "OPTIONAL: the image tag for the adhocteam/jenkins container to use for the primary"
   default     = "latest"

@@ -6,6 +6,10 @@
 # Once complete, this should be set back to 0 to remove the jumpbox
 #######
 
+terraform {
+  required_version = ">= 0.12"
+}
+
 #######
 # Jumpbox instances
 #######
@@ -24,7 +28,7 @@ resource "aws_instance" "jumpbox" {
   key_name = var.key_pair
 
   associate_public_ip_address = true
-  subnet_id                   = element(data.aws_subnet.public_subnet.*.id, count.index)
+  subnet_id                   = var.base.public[count.index].id
   vpc_security_group_ids      = [var.base.security_groups["jumpbox"].id]
 
   lifecycle {
@@ -38,7 +42,7 @@ resource "aws_instance" "jumpbox" {
   tags = {
     Name      = "jumpbox"
     app       = "utilities"
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
   }
 }
@@ -62,8 +66,8 @@ resource "aws_instance" "jumpbox" {
 
 resource "aws_route53_record" "jumpbox" {
   count   = local.enabled
-  zone_id = data.aws_route53_zone.external.id
-  name    = "jumpbox.${var.env}"
+  zone_id = var.base.external.id
+  name    = "jumpbox.${var.base.env}"
   type    = "CNAME"
   ttl     = 30
 

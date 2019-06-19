@@ -5,7 +5,7 @@ output "id" {
 
 output "cidr_block" {
   description = "the CIDR block to provisioned in the VPC. it is a /16 block"
-  value       = var.cidr_block
+  value       = var.cidr
 }
 
 output "internal_dns" {

@@ -1,11 +1,5 @@
-variable "env" {
-  type        = string
-  description = "the name of the environment, e.g. \"testing\". it must be unique in the account."
-}
-
-variable "domain_name" {
-  type        = string
-  description = "the external domain name for reaching the public resources. must have a certificate in ACM associated with it."
+variable "base" {
+  description = "an object representing the outputs of the base module from the tf repo"
 }
 
 variable "jumpbox_enabled" {
@@ -16,7 +10,7 @@ variable "jumpbox_enabled" {
 
 variable "jenkins_workers" {
   type        = list(object({ label = string, instance_type = string, executors = number }))
-  description = "A list of objects describing workers."
+  description = "OPTIONAL: A list of objects describing workers."
 
   default = [
     {
@@ -35,13 +29,13 @@ variable "jenkins_image" {
 
 variable "jenkins_github_user" {
   type        = string
-  description = "GitHub account to use for Jenkins admin features (e.g., setting up hooks) and posting messages"
+  description = "OPTIONAL: GitHub account to use for Jenkins admin features (e.g., setting up hooks) and posting messages"
   default     = "jenkins-adhoc-team"
 }
 
 variable "teleport_github_team" {
   type        = string
-  description = "GitHub team who can SSH via Teleport proxy"
+  description = "OPTIONAL: GitHub team who can SSH via Teleport proxy"
   default     = "infrastructure-team"
 }
 

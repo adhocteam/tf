@@ -3,9 +3,13 @@
 # provides SSH bastion services to connect to rest of infrastructure
 #######
 
+terraform {
+  required_version = ">= 0.12"
+}
+
 # Public DNS name for client use to connect to proxies
 resource "aws_route53_record" "public" {
-  zone_id = data.aws_route53_zone.external.id
+  zone_id = var.base.external.id
   name    = "teleport"
   type    = "CNAME"
   ttl     = 30
@@ -16,14 +20,14 @@ resource "aws_route53_record" "public" {
 # Private DNS name inside VPC for auth nodes as light-weight service discovery
 resource "aws_route53_zone" "teleport" {
   name    = "teleport.local"
-  comment = "${var.env} Teleport internal DNS"
+  comment = "${var.base.env} Teleport internal DNS"
 
   vpc {
-    vpc_id = data.aws_vpc.vpc.id
+    vpc_id = var.base.vpc.id
   }
 
   tags = {
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
     Name      = "teleport-dns"
   }
@@ -45,14 +49,14 @@ resource "random_string" "cluster_token" {
 }
 
 resource "aws_secretsmanager_secret_version" "cluster_token" {
-  secret_id     = "${var.env}/teleport/cluster_token"
+  secret_id     = "${var.base.env}/teleport/cluster_token"
   secret_string = random_string.cluster_token.result
 }
 
 ### Shared IAM role for instances running teleport
 resource "aws_iam_policy" "teleport_secrets" {
-  name        = "${var.env}-instance-teleport-secrets"
-  path        = "/${var.env}/teleport/"
+  name        = "${var.base.env}-instance-teleport-secrets"
+  path        = "/${var.base.env}/teleport/"
   description = "Allows nodes to run local teleport daemon"
 
   policy = <<EOF

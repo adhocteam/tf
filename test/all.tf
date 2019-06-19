@@ -30,12 +30,12 @@ module "utilities" {
   domain_name = local.domain_name
 }
 
-module "ingress" {
-  source = "../ingress"
+# module "ingress" {
+#   source = "../ingress"
 
-  env         = local.env
-  domain_name = local.domain_name
-}
+#   env         = local.env
+#   domain_name = local.domain_name
+# }
 
 module "static" {
   source = "../cdn_site"
@@ -46,20 +46,20 @@ module "static" {
 }
 
 module "demo" {
-  source = "../plain_instance"
+  source = "../instance"
 
   base             = module.base
   application_name = "demo"
 }
 
-module "fargate" {
-  source = "../fargate_cluster"
+# module "fargate" {
+#   source = "../fargate_cluster"
 
-  env              = local.env
-  domain_name      = local.domain_name
-  application_name = "web"
-  docker_image     = "nginx:latest"
-}
+#   env              = local.env
+#   domain_name      = local.domain_name
+#   application_name = "web"
+#   docker_image     = "nginx:latest"
+# }
 
 module "postgres" {
   source = "../database"
@@ -69,37 +69,37 @@ module "postgres" {
   password    = "neverdothis"
 }
 
-module "lambda_cron" {
-  source = "../lambda_cron"
+# module "lambda_cron" {
+#   source = "../lambda_cron"
 
-  env             = local.env
-  domain_name     = local.domain_name
-  job_name        = "crontab"
-  cron_expression = "* * ? * * *"
+#   env             = local.env
+#   domain_name     = local.domain_name
+#   job_name        = "crontab"
+#   cron_expression = "* * ? * * *"
 
-  env_vars = {
-    "SOMETHING"      = "ANYTHING"
-    "SOMETHING_ELSE" = "NOTHING"
-  }
+#   env_vars = {
+#     "SOMETHING"      = "ANYTHING"
+#     "SOMETHING_ELSE" = "NOTHING"
+#   }
 
-  secrets = [
-    "arn:aws:secretsmanager:us-east-1:000000000000:secret:${local.env}/lambda/crontab/secret1",
-    "arn:aws:secretsmanager:us-east-1:000000000000:secret:${local.env}/lambda/crontab/secret2",
-  ]
-}
+#   secrets = [
+#     "arn:aws:secretsmanager:us-east-1:000000000000:secret:${local.env}/lambda/crontab/secret1",
+#     "arn:aws:secretsmanager:us-east-1:000000000000:secret:${local.env}/lambda/crontab/secret2",
+#   ]
+# }
 
-module "production" {
-  source = "../"
+# module "production" {
+#   source = "../"
 
-  env         = "prod"
-  domain_name = local.domain_name
-}
+#   env         = "prod"
+#   domain_name = local.domain_name
+# }
 
-module "teleport_subcluster" {
-  source = "../utilities/teleport_subcluster"
+# module "teleport_subcluster" {
+#   source = "../utilities/teleport_subcluster"
 
-  env          = "prod"
-  domain_name  = local.domain_name
-  main_cluster = local.env
-}
+#   env          = "prod"
+#   domain_name  = local.domain_name
+#   main_cluster = local.env
+# }
 

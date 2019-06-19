@@ -7,7 +7,10 @@ output "domain_name" {
   description = "domain name we are using for resources hosted in this environment"
   value       = var.domain_name
 }
-
+output "external" {
+  description = "object of the route53 zone for public DNS"
+  value       = data.aws_route53_zone.external
+}
 output "account" {
   description = "account number of the current targeted AWS account"
   value       = data.aws_caller_identity.current
@@ -16,6 +19,11 @@ output "account" {
 output "ami" {
   description = "custom ami base for the VPC"
   value       = data.aws_ami.base
+}
+
+output "region" {
+  description = "current aws region"
+  value       = data.aws_region.current
 }
 
 output "vpc" {

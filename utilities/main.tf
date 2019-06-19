@@ -3,28 +3,26 @@ terraform {
 }
 
 module "jumpbox" {
-  source      = "./jumpbox"
-  env         = var.env
-  domain_name = var.domain_name
+  source = "./jumpbox"
 
+  base = var.base
   # Turned off by default
   enabled = var.jumpbox_enabled
 }
 
 module "teleport" {
-  source      = "./teleport"
-  env         = var.env
-  domain_name = var.domain_name
-  gh_team     = var.teleport_github_team
+  source = "./teleport"
+
+  base    = var.base
+  gh_team = var.teleport_github_team
 }
 
 module "jenkins" {
-  source        = "./jenkins"
-  env           = var.env
-  domain_name   = var.domain_name
-  ssh_proxy_sg  = module.teleport.security_group
-  workers       = var.jenkins_workers
-  jenkins_image = var.jenkins_image
-  github_user   = var.jenkins_github_user
+  source = "./jenkins"
+
+  base        = var.base
+  workers     = var.jenkins_workers
+  image_tag   = var.jenkins_image
+  github_user = var.jenkins_github_user
 }
 

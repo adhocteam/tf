@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+ docker run -d --restart always \
+    -v jenkins_home:/var/jenkins_home \
+    --name jenkins \
+    -p 8080:8080 \
+    -p 50000:50000 \
+    -e github_client_id="${github_client_id}" \
+    -e github_client_secret="${github_client_secret}" \
+    -e jenkins_url="${jenkins_url}" \
+    -e github_user="${github_user}" \
+    -e github_password="${github_password}" \
+    -e docker_user="${docker_user}" \
+    -e docker_password="${docker_password}" \
+    -e slack_token="${slack_token}" \
+    ${jenkins_image}
+

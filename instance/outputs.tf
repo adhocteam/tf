@@ -13,3 +13,8 @@ output "instance_iam_role" {
   value       = aws_iam_role.iam
 }
 
+output "instances" {
+  description = "List of objects for the instances created"
+  value       = aws_instance.box[*]
+}
+

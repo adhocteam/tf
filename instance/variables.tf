@@ -43,3 +43,8 @@ variable "user_data" {
   default     = ""
 }
 
+variable "volume_size" {
+  type        = number
+  description = "OPTIONAL: Size in GB for the EBS volume"
+  default     = 20
+}

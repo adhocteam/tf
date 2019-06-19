@@ -51,7 +51,6 @@ resource "aws_lb_target_group" "http" {
   }
 }
 
-# TODO
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.nlb.arn
   port              = "443"
