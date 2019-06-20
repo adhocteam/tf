@@ -116,3 +116,37 @@ resource "aws_kms_grant" "main" {
   operations = ["Decrypt"]
 }
 
+
+#####
+# Target group in case it needs to be attached to an LB
+#####
+
+resource "aws_alb_target_group" "application" {
+  # max 6 characters for name prefix
+  name_prefix = "app-lb"
+  port = var.application_port
+  protocol = "HTTP"
+  vpc_id = var.base.vpc.id
+  target_type = "ip" # Must use IP to support fargate
+
+  health_check {
+    interval = 60
+    path = var.health_check_path
+    port = var.application_port
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+  }
+
+  tags = {
+    env = var.base.env
+    terraform = "true"
+    app = var.application_name
+    name = "app-lb-${var.application_name}"
+  }
+}
+
+resource "aws_alb_target_group_attachment" "application" {
+  count = length(aws_instance.box)
+  target_group_arn = aws_alb_target_group.application.arn
+  target_id = aws_instance.box[count.index].private_ip
+}

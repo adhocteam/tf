@@ -20,7 +20,7 @@ locals {
   domain_name = "example.com"
 }
 
-module "base" {
+module "dev" {
   source = "../"
 
   env         = local.env
@@ -30,51 +30,74 @@ module "base" {
 module "utilities" {
   source = "../utilities"
 
-  base = module.base
+  base = module.dev
 }
 
-# module "ingress" {
-#   source = "../ingress"
-
-#   env         = local.env
-#   domain_name = local.domain_name
-# }
 
 module "static" {
   source = "../cdn_site"
 
-  base      = module.base
+  base      = module.dev
   subdomain = "pizza"
 }
 
 module "demo" {
   source = "../instance"
 
-  base             = module.base
+  base             = module.dev
   application_name = "demo"
 }
 
 module "postgres" {
   source = "../database"
 
-  base        = module.base
+  base        = module.dev
   application = module.demo
   password    = "neverdothis"
 }
 
-# module "fargate" {
-#   source = "../fargate_cluster"
+module "fargate" {
+  source = "../fargate_cluster"
 
-#   env              = local.env
-#   domain_name      = local.domain_name
-#   application_name = "web"
-#   docker_image     = "nginx:latest"
-# }
+  base             = module.dev
+  application_name = "web"
+  docker_image     = "nginx:latest"
+  environment_variables = [
+    {
+      "name"  = "DB_USER"
+      "value" = "something"
+    },
+    {
+      "name"  = "ENVIRONMENT"
+      "value" = "development"
+    },
+  ]
+  secrets = [
+    {
+      "name"      = "DB_PASSWORD"
+      "valueFrom" = "arn:aws:secretsmanager:region:${var.base.region}::secret:dev/db_password-v4GYs6"
+    },
+    {
+      "name"      = "API_KEY"
+      "valueFrom" = "arn:aws:secretsmanager:region:${var.base.region}::secret:dev/api_key-v4GYs7"
+    },
+  ]
+}
+
+module "ingress" {
+  source = "../ingress"
+
+  base = module.dev
+  applications = [
+    module.demo
+  ]
+}
 
 module "lambda_cron" {
+
   source = "../lambda_cron"
 
-  base            = module.base
+  base            = module.dev
   job_name        = "crontab"
   cron_expression = "* * ? * * *"
 
@@ -89,12 +112,20 @@ module "lambda_cron" {
   ]
 }
 
-# module "production" {
-#   source = "../"
+module "production" {
+  source = "../"
 
-#   env         = "prod"
-#   domain_name = local.domain_name
-# }
+  env         = "prod"
+  domain_name = local.domain_name
+}
+
+module "nginx_ingress" {
+  source = "../ingress"
+
+  base         = module.production
+  nginx        = true
+  applications = []
+}
 
 # module "teleport_subcluster" {
 #   source = "../utilities/teleport_subcluster"

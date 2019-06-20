@@ -25,10 +25,10 @@ variable "application_port" {
   default     = 80
 }
 
-variable "loadbalancer_port" {
-  type        = number
-  description = "OPTIONAL: port on which the load balancer will be listening. it will terminate TLS on this port."
-  default     = 443
+variable "health_check_path" {
+  type        = string
+  description = "OPTIONAL: path used by load balancer to health check application. should return 200."
+  default     = "/"
 }
 
 variable "key_pair" {

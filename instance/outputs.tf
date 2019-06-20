@@ -13,8 +13,7 @@ output "instance_iam_role" {
   value       = aws_iam_role.iam
 }
 
-output "instances" {
-  description = "List of objects for the instances created"
-  value       = aws_instance.box[*]
+output "target_group" {
+  description = "Load balancer target group pointing at all of the instances"
+  value       = aws_lb_target_group.application
 }
-

@@ -1,9 +1,15 @@
-variable "env" {
-  description = "the name of the environment, e.g. \"testing\". it must be unique in the account."
+variable "base" {
+  description = "object describing the base module for this ingress"
 }
 
-variable "domain_name" {
-  description = "the external domain name for reaching the public resources. must have a certificate in ACM associated with it."
+variable "applications" {
+  description = "list of objects for modules containing applications to be routed through the ingress"
+}
+
+variable "nginx" {
+  type        = bool
+  description = "OPTIONAL: whether to deploy an nginx proxy in front of the ALB"
+  default     = false
 }
 
 variable "other_accounts" {
