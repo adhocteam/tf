@@ -24,7 +24,6 @@ module "jenkins" {
   domain_name   = var.domain_name
   ssh_proxy_sg  = module.teleport.security_group
   workers       = var.jenkins_workers
-  jenkins_url   = var.jenkins_url
   jenkins_image = var.jenkins_image
   github_user   = var.jenkins_github_user
 }
