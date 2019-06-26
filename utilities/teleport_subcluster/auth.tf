@@ -72,7 +72,7 @@ data "template_file" "auth_user_data" {
     cluster_name             = var.env
     main_cluster             = var.main_cluster
     main_cluster_token       = data.aws_secretsmanager_secret_version.main_cluster_token.secret_string
-    main_cluster_url         = "teleport.${var.main_cluster}.${var.domain_name}"
+    main_cluster_url         = "teleport.${var.domain_name}"
   }
 }
 

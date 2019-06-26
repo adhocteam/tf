@@ -36,7 +36,7 @@ resource "aws_elb" "proxy" {
     instance_protocol  = "tcp"
     lb_port            = 443
     lb_protocol        = "ssl"
-    ssl_certificate_id = module.cert.arn
+    ssl_certificate_id = data.aws_acm_certificate.wildcard.arn
   }
 
   listener {
@@ -44,7 +44,7 @@ resource "aws_elb" "proxy" {
     instance_protocol  = "tcp"
     lb_port            = 3080
     lb_protocol        = "ssl"
-    ssl_certificate_id = module.cert.arn
+    ssl_certificate_id = data.aws_acm_certificate.wildcard.arn
   }
 
   health_check {
