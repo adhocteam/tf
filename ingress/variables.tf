@@ -3,6 +3,7 @@ variable "base" {
 }
 
 variable "applications" {
+  type = list(object(name = string, security_group=object(any), target_group = object(any)))
   description = "list of objects for modules containing applications to be routed through the ingress"
 }
 

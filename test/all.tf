@@ -89,7 +89,8 @@ module "ingress" {
 
   base = module.dev
   applications = [
-    module.demo
+    module.demo,
+    module.fargate
   ]
 }
 
