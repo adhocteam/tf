@@ -15,3 +15,7 @@ data "aws_ami" "base" {
     values = ["adhoc_base*"]
   }
 }
+
+data "aws_secretsmanager_secret" "cluster_token" {
+  name = "${var.env}/teleport/cluster_token"
+}

@@ -35,6 +35,12 @@ output "key" {
   description = "the primary encryption key tied to this environment"
   value       = module.encryptkey
 }
+
+output "ssh_key" {
+  description = "default ssh key pair to use for jumpbox and application instances"
+  value       = var.ssh_key
+}
+
 output "wildcard" {
   description = "wildcard certificate for the primary domain_name"
   value       = module.wildcard

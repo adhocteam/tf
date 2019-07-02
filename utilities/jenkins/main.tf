@@ -312,45 +312,8 @@ EOF
 }
 
 # Give it base teleport permissions
-resource "aws_iam_role_policy_attachment" "worker_teleport" {
+resource "aws_iam_role_policy_attachment" "iam_teleport" {
   role = aws_iam_role.worker.name
-  policy_arn = aws_iam_policy.teleport_secrets.arn
+  policy_arn = "arn:aws:iam::${var.base.account.account_id}:policy/${var.base.env}/teleport/${var.base.env}-instance-teleport-secrets"
 }
 
-### Shared IAM role for teleport
-resource "aws_iam_policy" "teleport_secrets" {
-  name = "jenkins-teleport-secrets"
-  path = "/${var.base.env}/jenkins/"
-  description = "Allows nodes to run local teleport daemon"
-
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect" : "Allow",
-            "Action" : "ec2:DescribeTags",
-            "Resource" : "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "secretsmanager:GetSecretValue",
-            "Resource": "${data.aws_secretsmanager_secret.cluster_token.arn}"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "kms:Decrypt",
-            "Resource": "${var.base.key.arn}"
-        }
-    ]
-}
-EOF
-
-}
-
-resource "aws_kms_grant" "worker" {
-  name              = "jenkins-worker-main"
-  key_id            = var.base.key.arn
-  grantee_principal = aws_iam_role.worker.arn
-  operations        = ["Decrypt"]
-}

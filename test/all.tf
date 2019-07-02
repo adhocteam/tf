@@ -75,13 +75,20 @@ module "fargate" {
   secrets = [
     {
       "name"      = "DB_PASSWORD"
-      "valueFrom" = "arn:aws:secretsmanager:region:${var.base.region}::secret:dev/db_password-v4GYs6"
+      "valueFrom" = "arn:aws:secretsmanager:region:${var.region}::secret:dev/db_password-v4GYs6"
     },
     {
       "name"      = "API_KEY"
-      "valueFrom" = "arn:aws:secretsmanager:region:${var.base.region}::secret:dev/api_key-v4GYs7"
+      "valueFrom" = "arn:aws:secretsmanager:region:${var.region}::secret:dev/api_key-v4GYs7"
     },
   ]
+}
+
+module "demo_asg" {
+  source = "../autoscaling"
+
+  base             = module.dev
+  application_name = "asg"
 }
 
 module "ingress" {
@@ -90,7 +97,8 @@ module "ingress" {
   base = module.dev
   applications = [
     module.demo,
-    module.fargate
+    module.fargate,
+    module.demo_asg
   ]
 }
 

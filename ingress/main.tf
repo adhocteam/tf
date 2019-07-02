@@ -7,17 +7,17 @@ terraform {
 }
 
 locals {
-  ingress_dns_name = var.nginx ? aws_lb.nlb.dns_name : aws_alb.ingress.dns_name
+  cname_count = var.nginx ? 1 : 0
 }
 
 resource "aws_route53_record" "external" {
-  count   = length(var.applications)
+  count   = local.cname_count * length(var.applications)
   zone_id = var.base.external.id
   name    = var.applications[count.index].name
   type    = "CNAME"
   ttl     = 30
 
-  records = [local.ingress_dns_name]
+  records = [aws_alb.ingress.dns_name]
 }
 
 #######
@@ -30,7 +30,7 @@ resource "aws_route53_record" "alb_cname" {
   type    = "CNAME"
   ttl     = 30
 
-  records = [aws_alb.application_alb.dns_name]
+  records = [aws_alb.ingress.dns_name]
 }
 
 resource "aws_alb" "ingress" {
@@ -89,18 +89,22 @@ resource "aws_alb_listener" "applications" {
 }
 
 # Set forwarding to each application
+locals {
+  application_target_groups = flatten([for a in var.applications : [for arn in a.target_group[*].arn : { arn : arn, name : a.name }]])
+}
+
 resource "aws_lb_listener_rule" "applications" {
-  count        = length(var.applications)
+  count        = length(local.application_target_groups)
   listener_arn = aws_alb_listener.applications.arn
 
   action {
     type             = "forward"
-    target_group_arn = var.application[count.index].target_group.arn
+    target_group_arn = local.application_target_groups[count.index].arn
   }
 
   condition {
     field  = "host-header"
-    values = ["${var.applications[count.index].name}.${var.base.domain_name}"]
+    values = ["${local.application_target_groups[count.index].name}.${var.base.domain_name}"]
   }
 }
 
@@ -118,7 +122,7 @@ resource "aws_security_group" "alb" {
 }
 
 locals {
-  alb_ingress_ports = [80, 200, 443]
+  alb_ingress_ports = [80, 443]
 }
 
 // Allow inbound only to our listening port
@@ -130,8 +134,8 @@ resource "aws_security_group_rule" "lb_ingress" {
   to_port   = local.alb_ingress_ports[count.index]
   protocol  = "tcp"
 
-  source_security_group_id = var.nginx ? aws_security_group.nginx.id : null
-  cidr_blocks              = var.nginx ? null : ["0.0.0.0/0"]
+  # If fronted by nginx, only accept traffic from inside the VPC
+  cidr_blocks = var.nginx ? ["${var.base.vpc.cidr_block}/0"] : ["0.0.0.0/0"]
 
   security_group_id = aws_security_group.alb.id
 }

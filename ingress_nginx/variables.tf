@@ -9,6 +9,13 @@ variable "applications" {
 
 variable "nginx" {
   type        = bool
-  description = "OPTIONAL: whether or not there is an nginx proxy in front of the ALB"
+  description = "OPTIONAL: whether to deploy an nginx proxy in front of the ALB"
   default     = false
 }
+
+variable "other_accounts" {
+  type        = list(string)
+  description = "OPTIONAL: Additional accounts to give access to the docker repository housing ingress images"
+  default     = []
+}
+

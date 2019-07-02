@@ -8,6 +8,11 @@ output "cidr_block" {
   value       = var.cidr
 }
 
+output "availability_zones" {
+  description = "the three availability zones in which this VPC has subnets"
+  value       = slice(data.aws_availability_zones.available.names, 0, 2)
+}
+
 output "internal_dns" {
   description = "the internal dns zone for the vpc"
   value       = aws_route53_zone.internal

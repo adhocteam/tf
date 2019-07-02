@@ -168,7 +168,7 @@ resource "aws_instance" "proxies" {
 
   user_data = templatefile("${path.module}/proxy-user-data.tmpl", {
     nodename      = "teleport-proxy-${count.index}"
-    cluster_token = random_string.cluster_token.result
+    cluster_token = data.aws_secretsmanager_secret_version.cluster_token.secret_string
     proxy_domain  = aws_route53_record.public.fqdn
   })
 

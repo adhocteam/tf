@@ -7,16 +7,27 @@ variable "application_name" {
   description = "name of the application to be hosted. will be used as the subdomain if exposed via ingress"
 }
 
+variable "ami" {
+  description = "OPTIONAL: object describing the AMI to use for the autoscaling group. defaults to base ami"
+  default     = ""
+}
+
 variable "instance_size" {
   type        = string
   description = "OPTIONAL: ec2 instance type to be used for hosting the app"
-  default     = "t3.micro"
+  default     = "t3.medium"
 }
 
-variable "instance_count" {
+variable "desired_count" {
   type        = number
-  description = "OPTIONAL: number of instances to create"
-  default     = 1
+  description = "OPTIONAL: target number of copies to run before autoscaling kicks in."
+  default     = 2
+}
+
+variable "max_count" {
+  type        = number
+  description = "OPTIONAL: maximum number of copies that autoscaling will spin up"
+  default     = 16
 }
 
 variable "application_ports" {
@@ -40,5 +51,5 @@ variable "user_data" {
 variable "volume_size" {
   type        = number
   description = "OPTIONAL: Size in GB for the EBS volume"
-  default     = 20
+  default     = 80
 }

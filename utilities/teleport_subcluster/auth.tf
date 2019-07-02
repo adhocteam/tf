@@ -64,7 +64,7 @@ data "template_file" "auth_user_data" {
 
   vars = {
     nodename                 = "teleport-auth-${count.index}"
-    cluster_token            = random_string.cluster_token.result
+    cluster_token            = data.aws_secretsmanager_secret_version.cluster_token.secret_string
     region                   = data.aws_region.current.name
     dynamo_table_name        = aws_dynamodb_table.teleport_state.name
     dynamo_events_table_name = aws_dynamodb_table.teleport_events.name

@@ -12,12 +12,6 @@ variable "docker_image" {
   description = "Images in the Docker Hub registry are available by default. You can also specify other repositories with either repository-url/image:tag or repository-url/image@digest"
 }
 
-variable "ecs_task_definition_arn" {
-  type        = string
-  description = "OPIONAL: The ARN of an ecs_task_definition to use instead of using the boilerplate one created using the variable values"
-  default     = ""
-}
-
 variable "container_size" {
   type        = string
   description = "OPTIONAL: Roughly tracks t2/t3 sizing for cpu and memory. Valid values: nano, micro, small, medium, large, xlarge"
@@ -49,10 +43,13 @@ variable "max_count" {
   default     = 16
 }
 
-variable "application_port" {
-  type        = number
-  description = "OPTIONAL: port on which the application will be listening."
-  default     = 80
+# For now only first port will be operational until this is released:
+# https://github.com/aws/containers-roadmap/issues/12
+# https://github.com/aws/containers-roadmap/issues/104
+variable "application_ports" {
+  type        = list(number)
+  description = "OPTIONAL: port on which the application will be listening. The first port listed will be used for the health check"
+  default     = [80]
 }
 
 variable "health_check_path" {

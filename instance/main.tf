@@ -9,7 +9,7 @@ resource "aws_instance" "box" {
 
   iam_instance_profile = aws_iam_instance_profile.iam.name
   user_data            = var.user_data != "" ? var.user_data : null
-  key_name             = var.key_pair
+  key_name             = var.base.ssh_key
 
   associate_public_ip_address = false
 
@@ -42,12 +42,6 @@ resource "aws_instance" "box" {
     env       = var.base.env
   }
 }
-
-# resource "aws_alb_target_group_attachment" "application_targets" {
-#   count            = var.instance_count
-#   target_group_arn = var.base.lb_tg_arn
-#   target_id        = element(aws_instance.application.*.private_ip, count.index)
-# }
 
 #######
 # Security group for application
@@ -109,22 +103,15 @@ resource "aws_iam_role_policy_attachment" "iam_teleport" {
   policy_arn = "arn:aws:iam::${var.base.account.account_id}:policy/${var.base.env}/teleport/${var.base.env}-instance-teleport-secrets"
 }
 
-resource "aws_kms_grant" "main" {
-  name = "${var.base.env}-${var.application_name}-main"
-  key_id = var.base.key.arn
-  grantee_principal = aws_iam_role.iam.arn
-  operations = ["Decrypt"]
-}
-
-
 #####
 # Target group in case it needs to be attached to an LB
 #####
 
 resource "aws_alb_target_group" "application" {
+  count = length(var.application_ports)
   # max 6 characters for name prefix
   name_prefix = "app-lb"
-  port = var.application_port
+  port = var.application_ports[count.index]
   protocol = "HTTP"
   vpc_id = var.base.vpc.id
   target_type = "ip" # Must use IP to support fargate
@@ -132,7 +119,7 @@ resource "aws_alb_target_group" "application" {
   health_check {
     interval = 60
     path = var.health_check_path
-    port = var.application_port
+    port = var.application_ports[0]
     healthy_threshold = 2
     unhealthy_threshold = 2
   }
@@ -141,12 +128,16 @@ resource "aws_alb_target_group" "application" {
     env = var.base.env
     terraform = "true"
     app = var.application_name
-    name = "app-lb-${var.application_name}"
+    name = "app-lb-${var.application_name}-${var.application_ports[count.index]}"
   }
 }
 
+locals {
+  attachments = setproduct(aws_alb_target_group.application[*].arn, aws_instance.box[*].private_ip)
+}
+
 resource "aws_alb_target_group_attachment" "application" {
-  count = length(aws_instance.box)
-  target_group_arn = aws_alb_target_group.application.arn
-  target_id = aws_instance.box[count.index].private_ip
+  count = length(local.attachments)
+  target_group_arn = local.attachments[count.index][0]
+  target_id = local.attachments[count.index][1]
 }

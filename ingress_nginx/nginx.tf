@@ -1,116 +1,15 @@
 #######
 # Nginx Reverse Proxy to send data to our backends
-# Controlled by var.nginx on if these are used or not
 #######
-
-#######
-# Network load balancer that receives traffic from the internet
-# Terminates our TLS for HTTPS traffic
-#######
-locals {
-  enabled = var.nginx ? 1 : 0
-}
-
-resource "aws_lb" "nlb" {
-  count              = local.enabled
-  name_prefix        = "in-nlb"
-  internal           = false
-  load_balancer_type = "network"
-  subnets            = var.base.vpc.public[*]
-
-  enable_cross_zone_load_balancing = true
-
-  tags = {
-    env       = var.base.env
-    terraform = "true"
-    app       = "ingress"
-    Name      = "ingress-nlb"
-  }
-}
-
-resource "aws_lb_listener" "http" {
-  count             = local.enabled
-  load_balancer_arn = aws_lb.nlb.arn
-  port              = "80"
-  protocol          = "TCP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.http.arn
-  }
-}
-
-resource "aws_lb_target_group" "http" {
-  count       = local.enabled
-  name_prefix = "inhttp"
-  port        = "80"
-  protocol    = "TCP"
-  vpc_id      = var.base.vpc.id
-
-  target_type = "ip"
-
-  health_check {
-    protocol = "TCP"
-    port     = 200
-  }
-
-  tags = {
-    env       = var.base.env
-    terraform = "true"
-    app       = "ingress"
-    Name      = "ingress-nlb-http"
-  }
-}
-
-resource "aws_lb_listener" "https" {
-  count             = local.enabled
-  load_balancer_arn = aws_lb.nlb.arn
-  port              = "443"
-  protocol          = "TLS"
-
-  ssl_policy      = "ELBSecurityPolicy-FS-2018-06"
-  certificate_arn = var.base.wildcard.arn
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.https.arn
-  }
-}
-
-resource "aws_lb_target_group" "https" {
-  count       = local.enabled
-  name_prefix = "in-tls"
-  port        = "443"
-  protocol    = "TLS"
-  vpc_id      = var.base.vpc.id
-
-  # Use IP to support Fargate clusters
-  target_type = "ip"
-
-  # Enable proxy protocol to get original source IP
-  proxy_protocol_v2 = true
-
-  health_check {
-    protocol = "TCP"
-    port     = 200
-  }
-
-  tags = {
-    env       = var.base.env
-    terraform = "true"
-    app       = "ingress"
-    Name      = "ingress-nlb-https"
-  }
-}
-
 
 # Create ECR repo for docker image and provide cross account access if needed
 resource "aws_ecr_repository" "nginx" {
-  name = "ingress-${var.base.env}"
+  count = local.enabled
+  name  = "ingress-${var.base.env}"
 }
 
 resource "aws_ecr_repository_policy" "cross_account_access" {
-  count      = length(var.other_accounts)
+  count      = length(local.enabled * var.other_accounts)
   repository = aws_ecr_repository.nginx.name
 
   policy = local.cross_account_policy
@@ -131,22 +30,19 @@ data "aws_iam_policy_document" "cross_account_assume_role" {
 }
 
 resource "aws_iam_role" "cross_account_assume_role" {
+  count              = local.enabled
   name               = "ingress-cross-account-${var.base.env}"
   assume_role_policy = data.aws_iam_policy_document.cross_account_assume_role.json
 }
 
 resource "aws_iam_role_policy_attachment" "cross_account_assume_role" {
+  count      = local.enabled
   role       = aws_iam_role.cross_account_assume_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 }
 
-module "nginx" {
-  source = "../fargate_cluster"
-
-  base             = var.base
-  application_name = "nginx_ingress"
-  docker_image     = "${aws_ecr_repository.nginx.repository_url}:latest"
-}
+# Create an auto-scaling group for nginx because fargate does not yet support multiple target groups
+docker_image = "${aws_ecr_repository.nginx.repository_url}:latest"
 #,, Create the hosts for nginx
 resource "aws_instance" "nginx" {
   count         = 1
@@ -172,18 +68,6 @@ resource "aws_instance" "nginx" {
   #EOF
 }
 
-# Security group for nginx
-resource "aws_security_group" "nginx" {
-  name_prefix = "ingress-nginx-"
-  vpc_id      = var.base.vpc.id
-
-  tags = {
-    env       = var.base.env
-    terraform = "true"
-    app       = "ingress-nginx"
-    Name      = "ingress-nginx"
-  }
-}
 
 #TODO(bob) this may be able to be restricted to our private CIDR b/c we use proxy_protocol
 resource "aws_security_group_rule" "nginx_http" {

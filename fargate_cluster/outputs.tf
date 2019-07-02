@@ -15,6 +15,6 @@ output "ecs_execution_iam_role" {
 
 output "target_group" {
   description = "Load balancer target group pointing at all of the instances"
-  value       = aws_lb_target_group.application
+  value       = aws_alb_target_group.application
 }
 

@@ -25,8 +25,8 @@ data "aws_kms_key" "main" {
   key_id = "alias/${var.env}-main"
 }
 
-data "aws_secretsmanager_secret" "cluster_token" {
-  name = "${var.env}/teleport/cluster_token"
+data "aws_secretsmanager_secret_version" "cluster_token" {
+  secret_id = "${var.env}/teleport/cluster_token"
 }
 
 data "aws_secretsmanager_secret_version" "main_cluster_token" {
