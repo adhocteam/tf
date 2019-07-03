@@ -55,6 +55,14 @@ module "postgres" {
   password    = "neverdothis"
 }
 
+module "console" {
+  source = "../command_console"
+
+  base            = module.dev
+  fargate_cluster = module.fargate
+  database        = module.postgres
+}
+
 module "fargate" {
   source = "../fargate_cluster"
 
@@ -82,14 +90,6 @@ module "fargate" {
     },
   ]
 }
-
-module "console" {
-  source = "../command_console"
-
-  base            = module.dev
-  fargate_cluster = module.fargate
-}
-
 
 module "ingress" {
   source = "../ingress"

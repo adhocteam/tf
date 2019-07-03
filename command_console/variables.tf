@@ -6,6 +6,11 @@ variable "fargate_cluster" {
   description = "object representing the fargate cluster that we want to create a command console version of"
 }
 
+variable "database" {
+  description = "OPTIONAL: object representing the database that the console needs to connect to"
+  default     = {}
+}
+
 variable "environment_variables" {
   type        = map
   description = "OPTIONAL: map of environment variables to set by default when running the docker image"

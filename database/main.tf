@@ -11,7 +11,7 @@ resource "aws_db_subnet_group" "db_subnet_group" {
   subnet_ids = var.base.vpc.data[*].id
 }
 
-resource "aws_security_group" "db_sg" {
+resource "aws_security_group" "database" {
   name        = "${var.base.env}-${var.application.name}-db-sg"
   description = "SG for database servers"
   vpc_id      = var.base.vpc.id
@@ -24,7 +24,7 @@ resource "aws_security_group_rule" "ingress" {
   protocol                 = "tcp"
   source_security_group_id = var.application.security_group.id
 
-  security_group_id = aws_security_group.db_sg.id
+  security_group_id = aws_security_group.database.id
 }
 
 resource "aws_security_group_rule" "egress" {
@@ -34,7 +34,7 @@ resource "aws_security_group_rule" "egress" {
   protocol                 = "tcp"
   source_security_group_id = var.application.security_group.id
 
-  security_group_id = aws_security_group.db_sg.id
+  security_group_id = aws_security_group.database.id
 }
 
 ####
@@ -48,7 +48,7 @@ resource "aws_db_instance" "primary" {
   password = var.password
 
   db_subnet_group_name   = aws_db_subnet_group.db_subnet_group.id
-  vpc_security_group_ids = [aws_security_group.db_sg.id]
+  vpc_security_group_ids = [aws_security_group.database.id]
   publicly_accessible    = false
   multi_az               = true
 
