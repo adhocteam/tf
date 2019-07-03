@@ -25,7 +25,7 @@ resource "aws_instance" "jumpbox" {
   instance_type = "t3.nano"
 
   # TODO(bob) use https://github.com/widdix/aws-ec2-ssh to control access here?
-  key_name = var.key_pair
+  key_name = var.base.ssh_key
 
   associate_public_ip_address = true
   subnet_id                   = var.base.public[count.index].id

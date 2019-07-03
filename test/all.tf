@@ -143,11 +143,10 @@ module "nginx_ingress" {
   applications = []
 }
 
-# module "teleport_subcluster" {
-#   source = "../utilities/teleport_subcluster"
+module "teleport_subcluster" {
+  source = "../utilities/teleport_subcluster"
 
-#   env          = "prod"
-#   domain_name  = local.domain_name
-#   main_cluster = local.env
-# }
+  base         = module.production
+  main_cluster = local.env
+}
 

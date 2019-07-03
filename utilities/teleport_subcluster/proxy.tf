@@ -7,30 +7,32 @@
 #######
 # Proxy instances
 #######
-data "template_file" "user_data" {
-  count    = var.proxy_count
-  template = file("${path.module}/proxy-user-data.tmpl")
-
-  vars = {
-    nodename      = "teleport-proxy-${count.index}"
-    cluster_token = data.aws_secretsmanager_secret_version.cluster_token.secret_string
-  }
-}
-
 resource "aws_instance" "proxies" {
   count         = var.proxy_count
-  ami           = data.aws_ami.base.id
+  ami           = var.base.ami.id
   instance_type = "t3.micro"
-  key_name      = var.key_pair
+  key_name      = var.base.ssh_key
 
-  user_data = element(data.template_file.user_data.*.rendered, count.index)
+  user_data = templatefile("${path.module}/proxy-user-data.tmpl", {
+    nodename      = "teleport-proxy-${count.index}"
+    cluster_token = data.aws_secretsmanager_secret_version.cluster_token.secret_string
+  })
 
   associate_public_ip_address = false
-  subnet_id                   = element(data.aws_subnet.application_subnet.*.id, count.index) #distribute instances across AZs
-  vpc_security_group_ids      = [aws_security_group.proxies.id]
+  subnet_id                   = element(var.base.vpc.application[*].id, count.index)
+  vpc_security_group_ids = [
+    var.base.security_groups["jumpbox_nodes"].id,
+    aws_security_group.proxies.id
+  ]
 
   lifecycle {
     ignore_changes = [ami]
+  }
+
+  root_block_device {
+    volume_type           = "gp2"
+    volume_size           = 20
+    delete_on_termination = true
   }
 
   credit_specification {
@@ -40,7 +42,7 @@ resource "aws_instance" "proxies" {
   tags = {
     Name      = "teleport-proxy-${count.index}"
     app       = "teleport"
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
   }
 }
@@ -51,10 +53,10 @@ resource "aws_instance" "proxies" {
 
 resource "aws_security_group" "proxies" {
   name_prefix = "teleport-proxies-"
-  vpc_id      = data.aws_vpc.vpc.id
+  vpc_id      = var.base.vpc.id
 
   tags = {
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
     app       = "teleport"
     Name      = "teleport-proxies"
@@ -72,15 +74,3 @@ resource "aws_security_group_rule" "proxy_egress" {
 
   security_group_id = aws_security_group.proxies.id
 }
-
-# Support for emergency jumpbox
-resource "aws_security_group_rule" "jumpbox_proxy" {
-  type                     = "ingress"
-  from_port                = 22
-  to_port                  = 22
-  protocol                 = "tcp"
-  source_security_group_id = data.aws_security_group.jumpbox.id
-
-  security_group_id = aws_security_group.proxies.id
-}
-

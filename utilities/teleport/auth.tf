@@ -62,7 +62,7 @@ resource "aws_instance" "auths" {
   count         = var.auth_count
   ami           = var.base.ami.id
   instance_type = "t3.nano"
-  key_name      = var.key_pair
+  key_name      = var.base.ssh_key
 
   iam_instance_profile = aws_iam_instance_profile.auth.name
   user_data = templatefile("${path.module}/auth-user-data.tmpl", {
@@ -80,7 +80,7 @@ resource "aws_instance" "auths" {
   })
 
   associate_public_ip_address = false
-  subnet_id                   = var.base.vpc.application[count.index].id
+  subnet_id                   = element(var.base.vpc.application[*].id, count.index)
   vpc_security_group_ids = [
     var.base.security_groups["jumpbox_nodes"].id,
     aws_security_group.auths.id

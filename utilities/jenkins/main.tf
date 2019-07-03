@@ -208,7 +208,7 @@ resource "aws_instance" "jenkins_worker" {
   count         = length(var.workers)
   ami           = var.base.ami.id
   instance_type = var.workers[count.index].instance_type
-  key_name      = "infrastructure"
+  key_name      = var.base.ssh_key
 
   iam_instance_profile = aws_iam_instance_profile.worker.name
 

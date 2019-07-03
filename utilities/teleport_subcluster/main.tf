@@ -7,17 +7,21 @@
 # environments where you do not want to have a public endpoint open.
 #######
 
+terraform {
+  required_version = ">= 0.12"
+}
+
 # Private DNS name inside VPC for auth nodes as light-weight service discovery
 resource "aws_route53_zone" "teleport" {
   name    = "teleport.local"
-  comment = "${var.env} Teleport internal DNS"
+  comment = "${var.base.env} Teleport internal DNS"
 
   vpc {
-    vpc_id = data.aws_vpc.vpc.id
+    vpc_id = var.base.vpc.id
   }
 
   tags = {
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
     Name      = "teleport-dns"
   }

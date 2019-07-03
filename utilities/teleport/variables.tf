@@ -14,12 +14,6 @@ variable "auth_count" {
   default     = 1
 }
 
-variable "key_pair" {
-  type        = string
-  description = "OPTIONAL: the name of the key pair that provides access to the nodes if jumpbox is used"
-  default     = "infrastructure"
-}
-
 variable "gh_team" {
   type        = string
   description = "OPTIONAL: the Github team to provide access to via Teleport"

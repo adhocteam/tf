@@ -164,7 +164,7 @@ resource "aws_instance" "proxies" {
   count         = var.proxy_count
   ami           = var.base.ami.id
   instance_type = "t3.micro"
-  key_name      = var.key_pair
+  key_name      = var.base.ssh_key
 
   user_data = templatefile("${path.module}/proxy-user-data.tmpl", {
     nodename      = "teleport-proxy-${count.index}"
@@ -173,8 +173,8 @@ resource "aws_instance" "proxies" {
   })
 
   associate_public_ip_address = false
-  #TODO(bob) need to use element here to wrap around on count!
-  subnet_id = var.base.vpc.application[count.index].id
+
+  subnet_id = element(var.base.vpc.application[*].id, count.index)
   vpc_security_group_ids = [
     var.base.security_groups["jumpbox_nodes"].id,
     aws_security_group.proxies.id
