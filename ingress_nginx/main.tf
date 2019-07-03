@@ -9,8 +9,8 @@ terraform {
 module "alb" {
   source = "../ingress"
 
-  base         = base
-  applications = applications
+  base         = var.base
+  applications = var.applications
   nginx        = true
 }
 
@@ -22,7 +22,7 @@ resource "aws_route53_record" "external" {
   type    = "CNAME"
   ttl     = 30
 
-  records = [aws_alb.ingress.dns_name]
+  records = [aws_lb.nlb.dns_name]
 }
 
 
@@ -48,41 +48,17 @@ resource "aws_lb" "nlb" {
 }
 
 resource "aws_lb_listener" "http" {
-  count             = local.enabled
   load_balancer_arn = aws_lb.nlb.arn
   port              = "80"
   protocol          = "TCP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.http.arn
-  }
-}
-
-resource "aws_lb_target_group" "http" {
-  count       = local.enabled
-  name_prefix = "inhttp"
-  port        = "80"
-  protocol    = "TCP"
-  vpc_id      = var.base.vpc.id
-
-  target_type = "ip"
-
-  health_check {
-    protocol = "TCP"
-    port     = 200
-  }
-
-  tags = {
-    env       = var.base.env
-    terraform = "true"
-    app       = "ingress"
-    Name      = "ingress-nlb-http"
+    target_group_arn = local.target_groups["80"].arn
   }
 }
 
 resource "aws_lb_listener" "https" {
-  count             = local.enabled
   load_balancer_arn = aws_lb.nlb.arn
   port              = "443"
   protocol          = "TLS"
@@ -92,32 +68,6 @@ resource "aws_lb_listener" "https" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.https.arn
-  }
-}
-
-resource "aws_lb_target_group" "https" {
-  count       = local.enabled
-  name_prefix = "in-tls"
-  port        = "443"
-  protocol    = "TLS"
-  vpc_id      = var.base.vpc.id
-
-  # Use IP to support Fargate clusters
-  target_type = "ip"
-
-  # Enable proxy protocol to get original source IP
-  proxy_protocol_v2 = true
-
-  health_check {
-    protocol = "TCP"
-    port     = 200
-  }
-
-  tags = {
-    env       = var.base.env
-    terraform = "true"
-    app       = "ingress"
-    Name      = "ingress-nlb-https"
+    target_group_arn = local.target_groups["443"].arn
   }
 }

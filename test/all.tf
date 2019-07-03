@@ -33,7 +33,6 @@ module "utilities" {
   base = module.dev
 }
 
-
 module "static" {
   source = "../cdn_site"
 
@@ -91,12 +90,6 @@ module "console" {
   fargate_cluster = module.fargate
 }
 
-module "demo_asg" {
-  source = "../autoscaling"
-
-  base             = module.dev
-  application_name = "asg"
-}
 
 module "ingress" {
   source = "../ingress"
@@ -105,7 +98,6 @@ module "ingress" {
   applications = [
     module.demo,
     module.fargate,
-    module.demo_asg
   ]
 }
 
@@ -135,12 +127,18 @@ module "production" {
   domain_name = local.domain_name
 }
 
-module "nginx_ingress" {
-  source = "../ingress"
+module "demo_asg" {
+  source = "../autoscaling"
+
+  base             = module.production
+  application_name = "asg"
+}
+
+module "ingress_nginx" {
+  source = "../ingress_nginx"
 
   base         = module.production
-  nginx        = true
-  applications = []
+  applications = [module.demo_asg]
 }
 
 module "teleport_subcluster" {
