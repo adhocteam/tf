@@ -1,19 +1,19 @@
-variable "env" {
-  description = "the name of the environment, e.g. \"testing\". it must be unique in the account."
+variable "base" {
+  description = "an object representing the outputs of the base module from the tf repo"
 }
 
-variable "instance_size" {
-  description = "OPTIONAL: ec2 instance type to be used for hosting the app"
-  default     = "t3.micro"
+variable "fargate_cluster" {
+  description = "object representing the fargate cluster that we want to create a command console version of"
 }
 
-variable "key_pair" {
-  description = "OPTIONAL: name of key pair to use with optional SSH jumpbox"
-  default     = "infrastructure"
+variable "environment_variables" {
+  type        = map
+  description = "OPTIONAL: map of environment variables to set by default when running the docker image"
+  default     = {}
 }
 
-variable "user_data" {
-  description = "OPTIONAL: user data script to run on initialization"
-  default     = ""
+variable "default_command" {
+  type        = string
+  description = "OPTIONAL: Default command to execute when running inside the docker container. Defaults to running a shell"
+  default     = "/bin/sh"
 }
-

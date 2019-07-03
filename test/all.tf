@@ -84,6 +84,13 @@ module "fargate" {
   ]
 }
 
+module "console" {
+  source = "../command_console"
+
+  base            = module.dev
+  fargate_cluster = module.fargate
+}
+
 module "demo_asg" {
   source = "../autoscaling"
 

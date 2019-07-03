@@ -18,3 +18,7 @@ output "target_group" {
   value       = aws_alb_target_group.application
 }
 
+output "docker_image" {
+  description = "the docker image running in the fargate cluster"
+  value       = "var.docker_image"
+}
