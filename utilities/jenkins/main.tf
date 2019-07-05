@@ -252,7 +252,7 @@ resource "aws_instance" "jenkins_worker" {
 # Internal DNS references to each worker node
 resource "aws_route53_record" "worker" {
   count   = length(var.workers)
-  zone_id = var.base.vpc.internal.id
+  zone_id = var.base.vpc.internal_dns.zone_id
   name    = "${var.workers[count.index].label}-${count.index}.jenkins"
   type    = "CNAME"
   ttl     = 30
