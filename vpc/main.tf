@@ -185,7 +185,7 @@ resource "aws_route_table_association" "app_with_nat" {
 ######
 
 locals {
-  route_tables = concat(aws_route_table.public_igw, aws_route_table.nats)
+  route_tables = concat([aws_route_table.public_igw], aws_route_table.nats)
 }
 
 resource "aws_vpc_endpoint" "s3" {
