@@ -151,7 +151,39 @@ resource "aws_iam_role" "ecs_execution" {
 resource "aws_iam_role_policy" "ecs_execution" {
   name   = "${var.base.env}-${var.application_name}-ecs_execution"
   role   = aws_iam_role.ecs_execution.id
-  policy = local.iam_role_policy
+  policy = data.aws_iam_policy_document.ecs_execution.json
+}
+
+
+locals {
+  secret_arns = [for s in var.secrets : s["valueFrom"]]
+}
+
+data "aws_iam_policy_document" "ecs_execution" {
+  statement {
+    actions = [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchGetImage",
+      "ecs:StartTelemetrySession",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = [
+      "*",
+    ]
+  }
+
+  statement {
+    actions   = ["kms:Decrypt"]
+    resources = [var.base.key.arn]
+  }
+
+  statement {
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = local.secret_arns
+  }
 }
 
 ######
@@ -325,39 +357,4 @@ locals {
 }
 EOF
 
-  secret_arns = jsonencode([for s in var.secrets : s["valueFrom"]])
-  iam_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ecr:GetAuthorizationToken",
-        "ecr:BatchCheckLayerAvailability",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:BatchGetImage",
-        "ecs:StartTelemetrySession",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "secretsmanager:GetSecretValue",
-      ],
-      "Resource": ${local.secret_arns}
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "kms:Decrypt"
-      ],
-      "Resource": ${var.base.key.arn}
-    }
-  ]
-}
-EOF
 }
