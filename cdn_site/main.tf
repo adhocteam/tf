@@ -63,7 +63,7 @@ resource "aws_s3_bucket" "content" {
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
-    domain_name = aws_s3_bucket.content.bucket_domain_name
+    domain_name = aws_s3_bucket.content.bucket_regional_domain_name
     origin_id   = "${var.subdomain}-${var.base.domain_name}"
   }
 
