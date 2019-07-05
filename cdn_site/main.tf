@@ -118,6 +118,8 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     }
   }
 
+  depends_on = [aws_s3_bucket.content]
+
   tags = {
     env       = var.base.env
     terraform = "true"

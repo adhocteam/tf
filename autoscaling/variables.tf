@@ -8,8 +8,9 @@ variable "application_name" {
 }
 
 variable "ami" {
+  type = object
   description = "OPTIONAL: object describing the AMI to use for the autoscaling group. defaults to base ami"
-  default     = ""
+  default     = {}
 }
 
 variable "instance_size" {

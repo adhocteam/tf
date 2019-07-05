@@ -3,7 +3,7 @@ terraform {
 }
 
 locals {
-  ami = var.ami == "" ? var.base.ami : var.ami
+  ami = length(var.ami) == 0 ? var.base.ami : var.ami
 }
 
 #####
