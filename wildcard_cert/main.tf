@@ -30,7 +30,6 @@ resource "aws_acm_certificate_validation" "domain" {
 
 # Only need to validate the first record because the wildcard entry will use the same DNS record
 resource "aws_route53_record" "validation" {
-  count   = "2"
   name    = aws_acm_certificate.domain.domain_validation_options[0]["resource_record_name"]
   type    = aws_acm_certificate.domain.domain_validation_options[0]["resource_record_type"]
   zone_id = data.aws_route53_zone.external.id
