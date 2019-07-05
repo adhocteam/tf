@@ -17,7 +17,7 @@ module "console" {
 }
 
 resource "aws_iam_role_policy_attachment" "console_ecr" {
-  role       = "${module.console.instance_iam_role}"
+  role       = module.console.instance_iam_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 }
 

@@ -38,7 +38,7 @@ resource "aws_alb" "ingress" {
   name_prefix     = "in-alb"
   internal        = ! var.nginx
   security_groups = [aws_security_group.alb.id]
-  subnets         = var.base.vpc.public[*]
+  subnets         = var.base.vpc.public[*].id
 
   ip_address_type = "ipv4"
 

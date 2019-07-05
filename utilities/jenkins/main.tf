@@ -155,7 +155,7 @@ module "primary" {
 
 # Convenient internal DNS name for other items in VPC to use if needed
 resource "aws_route53_record" "primary" {
-  zone_id = var.base.vpc.internal.id
+  zone_id = var.base.vpc.internal.zone_id
   name    = "primary.jenkins"
   type    = "CNAME"
   ttl     = 30
