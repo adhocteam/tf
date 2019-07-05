@@ -137,7 +137,7 @@ resource "aws_db_parameter_group" "postgres" {
 ####
 
 resource "aws_route53_record" "rds_cname" {
-  zone_id = var.base.internal_dns.zone_id
+  zone_id = var.base.vpc.internal_dns.zone_id
   name    = "${var.application.name}-db-primary"
   type    = "CNAME"
   ttl     = 30

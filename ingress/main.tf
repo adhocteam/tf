@@ -25,7 +25,7 @@ resource "aws_route53_record" "external" {
 #######
 
 resource "aws_route53_record" "alb_cname" {
-  zone_id = var.base.vpc.internal.id
+  zone_id = var.base.vpc.internal_dns.zone_id
   name    = "ingress-alb"
   type    = "CNAME"
   ttl     = 30
