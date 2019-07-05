@@ -2,10 +2,6 @@ terraform {
   required_version = ">= 0.12"
 }
 
-# TODO(bob) May need a call to create a service linked role first:
-# aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com
-# seems to be one-time only thing so maybe bootbox?
-
 resource "aws_ecs_cluster" "app" {
   name = var.application_name
 }
@@ -329,7 +325,7 @@ locals {
 }
 EOF
 
-  secret_arns = [for s in var.secrets : s["valueFrom"]]
+  secret_arns = jsonencode([for s in var.secrets : s["valueFrom"]])
   iam_role_policy = <<EOF
 {
   "Version": "2012-10-17",

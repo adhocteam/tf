@@ -5,7 +5,7 @@ variable "env" {
 
 variable "domain_name" {
   type        = string
-  description = "the external domain name for reaching the public resources. must have a certificate in ACM associated with it."
+  description = "the external domain name for reaching the public resources."
 }
 
 variable "cidr" {
