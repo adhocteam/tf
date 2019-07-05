@@ -92,7 +92,8 @@ resource "aws_ecs_service" "application" {
   # }
 
   depends_on = [
-    aws_iam_role_policy.ecs_execution
+    aws_iam_role_policy.ecs_execution,
+    aws_alb_target_group.application
   ]
 
   lifecycle {
