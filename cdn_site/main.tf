@@ -88,7 +88,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = local.site_url
+    target_origin_id = "${var.subdomain}-${var.base.domain_name}"
 
     # Use gzip compression
     compress = true
@@ -117,8 +117,6 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
       restriction_type = "none"
     }
   }
-
-  depends_on = [aws_s3_bucket.content]
 
   tags = {
     env       = var.base.env
