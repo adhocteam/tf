@@ -14,21 +14,20 @@ resource "aws_ecr_repository" "nginx" {
 #####
 
 locals {
-  ports         = [200, 443, 80]
-  target_groups = zipmap(local.ports, module.nginx.target_group)
+  ports = [200, 443, 80]
 }
 
 module "nginx" {
   source = "../autoscaling"
 
-  base             = var.base
-  application_name = "ingress_nginx"
-  # application_ports = local.ports
-
-  # user_data = templatefile("${path.module}/user_data.tmpl", {
-  #   nginx_image = "${aws_ecr_repository.nginx.repository_url}:latest"
-  #   ports       = local.ports
-  # })
+  base              = var.base
+  application_name  = "ingress_nginx"
+  application_ports = local.ports
+  target_group_arns = [aws_lb_target_group.http.arn, aws_lb_target_group.https.arn]
+  user_data = templatefile("${path.module}/user_data.tmpl", {
+    nginx_image = "${aws_ecr_repository.nginx.repository_url}:latest"
+    ports       = local.ports
+  })
 }
 
 #TODO(bob) this may be able to be restricted to our private CIDR b/c we use proxy_protocol

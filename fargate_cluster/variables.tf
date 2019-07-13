@@ -43,6 +43,11 @@ variable "max_count" {
   default     = 16
 }
 
+variable "ingress" {
+  description = "OPTIONAL: an object describing an ingress for exposing the service publicly. will only expose the first application port"
+  default     = {}
+}
+
 # For now only first port will be operational until this is released:
 # https://github.com/aws/containers-roadmap/issues/12
 # https://github.com/aws/containers-roadmap/issues/104

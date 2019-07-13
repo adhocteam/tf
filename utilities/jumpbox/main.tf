@@ -28,7 +28,7 @@ resource "aws_instance" "jumpbox" {
   key_name = var.base.ssh_key
 
   associate_public_ip_address = true
-  subnet_id                   = var.base.public[count.index].id
+  subnet_id                   = var.base.vpc.public[count.index].id
   vpc_security_group_ids      = [var.base.security_groups["jumpbox"].id]
 
   lifecycle {

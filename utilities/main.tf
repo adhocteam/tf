@@ -21,6 +21,7 @@ module "jenkins" {
   source = "./jenkins"
 
   base        = var.base
+  ingress     = var.ingress
   workers     = var.jenkins_workers
   image_tag   = var.jenkins_image
   github_user = var.jenkins_github_user

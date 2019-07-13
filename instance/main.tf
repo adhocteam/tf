@@ -13,8 +13,8 @@ resource "aws_instance" "box" {
 
   associate_public_ip_address = false
 
-  #distribute instances across AZs
-  subnet_id = var.base.vpc.application[count.index].id
+  #distribute instances across AZs, use element for wrap around support
+  subnet_id = element(var.base.vpc.application[*].id, count.index)
   vpc_security_group_ids = [
     var.base.security_groups["teleport_nodes"].id,
     var.base.security_groups["jumpbox_nodes"].id,
@@ -103,41 +103,3 @@ resource "aws_iam_role_policy_attachment" "iam_teleport" {
   policy_arn = "arn:aws:iam::${var.base.account.account_id}:policy/${var.base.env}/teleport/${var.base.env}-instance-teleport-secrets"
 }
 
-#####
-# Target group in case it needs to be attached to an LB
-#####
-
-resource "aws_alb_target_group" "application" {
-  count = length(var.application_ports)
-  # max 6 characters for name prefix
-  name_prefix = "app-lb"
-  port = var.application_ports[count.index]
-  protocol = "HTTP"
-  vpc_id = var.base.vpc.id
-  target_type = "ip" # Must use IP to support fargate
-
-  health_check {
-    interval = 60
-    path = var.health_check_path
-    port = var.application_ports[0]
-    healthy_threshold = 2
-    unhealthy_threshold = 2
-  }
-
-  tags = {
-    env = var.base.env
-    terraform = "true"
-    app = var.application_name
-    name = "app-lb-${var.application_name}-${var.application_ports[count.index]}"
-  }
-}
-
-locals {
-  attachments = setproduct(aws_alb_target_group.application[*].arn, aws_instance.box[*].private_ip)
-}
-
-resource "aws_alb_target_group_attachment" "application" {
-  count = length(local.attachments)
-  target_group_arn = local.attachments[count.index][0]
-  target_id = local.attachments[count.index][1]
-}

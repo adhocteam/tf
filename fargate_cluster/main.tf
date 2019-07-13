@@ -29,38 +29,9 @@ resource "aws_ecs_task_definition" "app" {
   memory                   = local.memory_size
 }
 
-#####
-# Target group to be attached to an LB
-#####
-
-resource "aws_alb_target_group" "application" {
-  count = length(var.application_ports)
-  # max 6 characters for name prefix
-  name_prefix = "app-lb"
-  port        = var.application_ports[count.index]
-  protocol    = "HTTP"
-  vpc_id      = var.base.vpc.id
-  target_type = "ip" # Must use IP to support fargate
-
-  health_check {
-    interval            = 60
-    path                = var.health_check_path
-    port                = var.application_ports[0]
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-  }
-
-  tags = {
-    env       = var.base.env
-    terraform = "true"
-    app       = var.application_name
-    name      = "app-lb-${var.application_name}-${var.application_ports[count.index]}"
-  }
-}
-
-locals {
-  target_to_ports = zipmap([for t in aws_alb_target_group.application : t.arn], var.application_ports)
-}
+# locals {
+#   target_to_ports = zipmap([for t in aws_alb_target_group.application : t.arn], var.application_ports)
+# }
 
 resource "aws_ecs_service" "application" {
   name            = var.application_name
@@ -75,9 +46,9 @@ resource "aws_ecs_service" "application" {
   }
 
   load_balancer {
-    target_group_arn = keys(local.target_to_ports)[0]
+    target_group_arn = aws_alb_target_group.application[0].arn
     container_name   = var.application_name
-    container_port   = values(local.target_to_ports)[0]
+    container_port   = var.application_ports[0]
   }
 
 
@@ -100,7 +71,6 @@ resource "aws_ecs_service" "application" {
     ignore_changes = [desired_count]
   }
 }
-
 
 #######
 # Security group for application

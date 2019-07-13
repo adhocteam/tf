@@ -30,6 +30,17 @@ variable "max_count" {
   default     = 16
 }
 
+variable "ingress" {
+  description = "OPTIONAL: an object describing an ingress for exposing the service publicly. will only expose the first application port"
+  default     = {}
+}
+
+variable "target_group_arns" {
+  type        = list(string)
+  description = "OPTIONAL: list of ARNs for target groups for the autoscaling group to attach to"
+  default     = []
+}
+
 variable "application_ports" {
   type        = list(number)
   description = "OPTIONAL: ports on which the application will be listening. the first listed port will be used for health checks"

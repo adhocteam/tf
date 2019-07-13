@@ -9,22 +9,9 @@ terraform {
 module "alb" {
   source = "../ingress"
 
-  base         = var.base
-  applications = var.applications
-  nginx        = true
+  base  = var.base
+  nginx = true
 }
-
-
-resource "aws_route53_record" "external" {
-  count   = length(var.applications)
-  zone_id = var.base.external.id
-  name    = var.applications[count.index].name
-  type    = "CNAME"
-  ttl     = 30
-
-  records = [aws_lb.nlb.dns_name]
-}
-
 
 #######
 # Network load balancer that receives traffic from the internet
@@ -54,7 +41,31 @@ resource "aws_lb_listener" "http" {
 
   default_action {
     type             = "forward"
-    target_group_arn = local.target_groups["80"].arn
+    target_group_arn = aws_lb_target_group.http.arn
+  }
+}
+
+resource "aws_lb_target_group" "http" {
+  # max 6 characters for name prefix
+  name_prefix = "ingres"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = var.base.vpc.id
+  target_type = "ip" # Must use IP to support fargate
+
+  health_check {
+    interval            = 60
+    path                = "/"
+    port                = 200
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  tags = {
+    env       = var.base.env
+    terraform = "true"
+    app       = "ingress-nginx"
+    name      = "ingress-nginx-http"
   }
 }
 
@@ -68,6 +79,30 @@ resource "aws_lb_listener" "https" {
 
   default_action {
     type             = "forward"
-    target_group_arn = local.target_groups["443"].arn
+    target_group_arn = aws_lb_target_group.https.arn
+  }
+}
+
+resource "aws_lb_target_group" "https" {
+  # max 6 characters for name prefix
+  name_prefix = "ingres"
+  port        = 443
+  protocol    = "TLS"
+  vpc_id      = var.base.vpc.id
+  target_type = "ip" # Must use IP to support fargate
+
+  health_check {
+    interval            = 60
+    path                = "/"
+    port                = 200
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  tags = {
+    env       = var.base.env
+    terraform = "true"
+    app       = "ingress-nginx"
+    name      = "ingress-nginx-https"
   }
 }

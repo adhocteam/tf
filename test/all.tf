@@ -27,6 +27,12 @@ module "dev" {
   domain_name = local.domain_name
 }
 
+module "ingress" {
+  source = "../ingress"
+
+  base = module.dev
+}
+
 module "utilities" {
   source = "../utilities"
 
@@ -44,6 +50,7 @@ module "demo" {
   source = "../instance"
 
   base             = module.dev
+  ingress          = module.ingress
   application_name = "demo"
 }
 
@@ -55,19 +62,12 @@ module "postgres" {
   password    = "neverdothis"
 }
 
-module "console" {
-  source = "../command_console"
-
-  base            = module.dev
-  fargate_cluster = module.fargate
-  database        = module.postgres
-}
-
 module "fargate" {
   source = "../fargate_cluster"
 
   base             = module.dev
   application_name = "web"
+  ingress          = module.ingress
   docker_image     = "nginx:latest"
   environment_variables = [
     {
@@ -91,15 +91,14 @@ module "fargate" {
   ]
 }
 
-module "ingress" {
-  source = "../ingress"
+module "console" {
+  source = "../command_console"
 
-  base = module.dev
-  applications = [
-    module.demo,
-    module.fargate,
-  ]
+  base            = module.dev
+  fargate_cluster = module.fargate
+  database        = module.postgres
 }
+
 
 module "lambda_cron" {
 
@@ -127,19 +126,20 @@ module "production" {
   domain_name = local.domain_name
 }
 
+module "ingress_nginx" {
+  source = "../ingress_nginx"
+
+  base = module.production
+}
+
 module "demo_asg" {
   source = "../autoscaling"
 
   base             = module.production
+  ingress          = module.ingress_nginx
   application_name = "asg"
 }
 
-module "ingress_nginx" {
-  source = "../ingress_nginx"
-
-  base         = module.production
-  applications = [module.demo_asg]
-}
 
 module "teleport_subcluster" {
   source = "../utilities/teleport_subcluster"

@@ -6,20 +6,6 @@ terraform {
   required_version = ">= 0.12"
 }
 
-locals {
-  cname_count = var.nginx ? 1 : 0
-}
-
-resource "aws_route53_record" "external" {
-  count   = local.cname_count * length(var.applications)
-  zone_id = var.base.external.id
-  name    = var.applications[count.index].name
-  type    = "CNAME"
-  ttl     = 30
-
-  records = [aws_alb.ingress.dns_name]
-}
-
 #######
 # ALB in front of HTTP services
 #######
@@ -85,26 +71,6 @@ resource "aws_alb_listener" "applications" {
       host        = "${var.base.domain_name}"
       status_code = "HTTP_301"
     }
-  }
-}
-
-# Set forwarding to each application
-locals {
-  application_target_groups = flatten([for a in var.applications : [for arn in a.target_group[*].arn : { arn : arn, name : a.name }]])
-}
-
-resource "aws_lb_listener_rule" "applications" {
-  count        = length(local.application_target_groups)
-  listener_arn = aws_alb_listener.applications.arn
-
-  action {
-    type             = "forward"
-    target_group_arn = local.application_target_groups[count.index].arn
-  }
-
-  condition {
-    field  = "host-header"
-    values = ["${local.application_target_groups[count.index].name}.${var.base.domain_name}"]
   }
 }
 

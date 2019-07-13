@@ -2,6 +2,7 @@ output "name" {
   description = "name of the application this hosts"
   value       = var.application_name
 }
+
 output "instances" {
   description = "a list of objects describing the created instances"
   value       = aws_instance.box
@@ -15,9 +16,4 @@ output "security_group" {
 output "instance_iam_role" {
   description = "IAM role name for attaching additional policies to the instance with aws_iam_role_policy_attachment"
   value       = aws_iam_role.iam
-}
-
-output "target_group" {
-  description = "Load balancer target group pointing at all of the instances"
-  value       = aws_alb_target_group.application
 }

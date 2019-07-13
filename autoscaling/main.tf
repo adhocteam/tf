@@ -19,7 +19,7 @@ resource "aws_autoscaling_group" "application" {
   desired_capacity = var.desired_count
   force_delete     = false
 
-  target_group_arns         = aws_alb_target_group.application[*].arn
+  target_group_arns         = coalescelist(var.target_group_arns, aws_alb_target_group.application[*].arn)
   health_check_grace_period = 300
   health_check_type         = "ELB"
   wait_for_elb_capacity     = var.desired_count
@@ -198,33 +198,4 @@ EOF
 resource "aws_iam_role_policy_attachment" "iam_teleport" {
   role = aws_iam_role.iam.name
   policy_arn = "arn:aws:iam::${var.base.account.account_id}:policy/${var.base.env}/teleport/${var.base.env}-instance-teleport-secrets"
-}
-
-#####
-# Target group in case it needs to be attached to an LB
-#####
-
-resource "aws_alb_target_group" "application" {
-  count = length(var.application_ports)
-  # max 6 characters for name prefix
-  name_prefix = "app-lb"
-  port = var.application_ports[count.index]
-  protocol = "HTTP"
-  vpc_id = var.base.vpc.id
-  target_type = "ip" # Must use IP to support fargate
-
-  health_check {
-    interval = 60
-    path = var.health_check_path
-    port = var.application_ports[0]
-    healthy_threshold = 2
-    unhealthy_threshold = 2
-  }
-
-  tags = {
-    env = var.base.env
-    terraform = "true"
-    app = var.application_name
-    name = "app-lb-${var.application_name}-${var.application_ports[count.index]}"
-  }
 }
