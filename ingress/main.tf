@@ -22,7 +22,7 @@ resource "aws_route53_record" "alb_cname" {
 resource "aws_alb" "ingress" {
   # max 6 characters for name prefix
   name_prefix     = "in-alb"
-  internal        = ! var.nginx
+  internal        = var.nginx ? true : false
   security_groups = [aws_security_group.alb.id]
   subnets         = var.base.vpc.public[*].id
 
