@@ -36,7 +36,8 @@ module "ingress" {
 module "utilities" {
   source = "../utilities"
 
-  base = module.dev
+  base    = module.dev
+  ingress = module.ingress
 }
 
 module "static" {
