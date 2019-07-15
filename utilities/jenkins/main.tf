@@ -16,10 +16,12 @@ locals {
 module "primary" {
   source = "../../instance"
 
-  base             = var.base
-  instance_size    = "t3.small"
-  application_name = "jenkins"
-  ingress          = var.ingress
+  base              = var.base
+  instance_size     = "t3.small"
+  application_name  = "jenkins"
+  ingress           = var.ingress
+  application_port  = 8080
+  health_check_path = "/login"
   user_data = templatefile("${path.module}/primary.tmpl", {
     github_client_id     = "${data.aws_secretsmanager_secret_version.github_client_id.secret_string}"
     github_client_secret = "${data.aws_secretsmanager_secret_version.github_client_secret.secret_string}"

@@ -30,6 +30,7 @@ resource "aws_alb_target_group" "application" {
     port                = var.application_ports[0]
     healthy_threshold   = 2
     unhealthy_threshold = 2
+    matcher             = "200-308"
   }
 
   tags = {
