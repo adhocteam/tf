@@ -27,7 +27,7 @@ sudo useradd -d "/var/lib/teleport/" -g "adm" -k "/dev/null" -m -r -s "/sbin/nol
 sudo passwd -l teleport
 
 # Download info on the teleport release we are targeting
-TELEPORT_VERSION="v3.1.7"
+TELEPORT_VERSION="v4.0.2"
 TELEPORT_INFO=$(curl -sSf https://dashboard.gravitational.com/webapi/releases-oss?product=teleport | jq ".items | map(select(.version == \"${TELEPORT_VERSION}\")) | .[].downloads | map(select(.name == \"teleport-${TELEPORT_VERSION}-linux-amd64-bin.tar.gz\")) | .[]")
 
 # Install teleport binaries

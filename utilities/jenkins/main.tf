@@ -55,6 +55,16 @@ resource "aws_security_group_rule" "worker_to_primary_jnlp" {
   security_group_id = module.primary.security_group.id
 }
 
+resource "aws_security_group_rule" "worker_to_primary_web" {
+  type                     = "ingress"
+  from_port                = 8080
+  to_port                  = 8080
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.worker.id
+
+  security_group_id = module.primary.security_group.id
+}
+
 #######
 ### Jenkins workers who actually execute the work
 #######
