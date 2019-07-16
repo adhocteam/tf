@@ -1,12 +1,8 @@
 #####
 # Target group in case it needs to be attached to an LB
 #####
-locals {
-  ingress_enabled = length(var.ingress) > 0 ? 1 : 0
-}
-
 resource "aws_route53_record" "external" {
-  count   = local.ingress_enabled
+  count   = length(var.ingress) > 0 ? 1 : 0
   zone_id = var.base.external.id
   name    = var.application_name
   type    = "CNAME"
@@ -16,7 +12,7 @@ resource "aws_route53_record" "external" {
 }
 
 resource "aws_alb_target_group" "application" {
-  count = local.ingress_enabled
+  count = length(var.ingress) > 0 ? 1 : 0
   # max 6 characters for name prefix
   name_prefix = "app-lb"
   port        = var.application_ports[0]
@@ -42,13 +38,13 @@ resource "aws_alb_target_group" "application" {
 }
 
 resource "aws_alb_target_group_attachment" "application" {
-  count            = local.ingress_enabled * length(aws_instance.box)
+  count            = (length(var.ingress) > 0 ? 1 : 0) * length(aws_instance.box)
   target_group_arn = aws_alb_target_group.application[0].arn
   target_id        = aws_instance.box[count.index].private_ip
 }
 
 resource "aws_alb_listener_rule" "applications" {
-  count        = local.ingress_enabled
+  count        = length(var.ingress) > 0 ? 1 : 0
   listener_arn = var.ingress.listener.arn
 
   action {
@@ -64,7 +60,7 @@ resource "aws_alb_listener_rule" "applications" {
 
 # Allow ingress to talk to our primary port
 resource "aws_security_group_rule" "ingress" {
-  count                    = local.ingress_enabled
+  count                    = length(var.ingress) > 0 ? 1 : 0
   type                     = "ingress"
   from_port                = var.application_ports[0]
   to_port                  = var.application_ports[0]
