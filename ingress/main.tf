@@ -6,12 +6,23 @@ terraform {
   required_version = ">= 0.12"
 }
 
+resource "aws_route53_record" "ingress" {
+  count   = var.public ? 1 : 0
+  zone_id = var.external_dns.id
+  name    = "ingress"
+  type    = "CNAME"
+  ttl     = 30
+
+  records = [aws_alb.ingress.dns_name]
+}
+
+
 #######
 # ALB in front of HTTP services
 #######
 
 resource "aws_route53_record" "alb_cname" {
-  zone_id = var.base.vpc.internal_dns.zone_id
+  zone_id = var.vpc.internal_dns.zone_id
   name    = "ingress-alb"
   type    = "CNAME"
   ttl     = 30
@@ -22,14 +33,14 @@ resource "aws_route53_record" "alb_cname" {
 resource "aws_alb" "ingress" {
   # max 6 characters for name prefix
   name_prefix     = "in-alb"
-  internal        = var.nginx ? true : false
+  internal        = ! var.public
   security_groups = [aws_security_group.alb.id]
-  subnets         = var.base.vpc.public[*].id
+  subnets         = var.public ? var.vpc.public[*].id : var.vpc.application[*].id
 
   ip_address_type = "ipv4"
 
   tags = {
-    env       = var.base.env
+    env       = var.env
     terraform = "true"
     app       = "ingress"
     name      = "alb-ingress"
@@ -59,7 +70,7 @@ resource "aws_alb_listener" "applications" {
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-FS-2018-06"
-  certificate_arn   = var.base.wildcard.arn
+  certificate_arn   = var.wildcard.arn
 
   # If no matches for applications, send to apex domain as fallback
   default_action {
@@ -68,7 +79,7 @@ resource "aws_alb_listener" "applications" {
     redirect {
       port        = "443"
       protocol    = "HTTPS"
-      host        = "${var.base.domain_name}"
+      host        = "${var.domain_name}"
       status_code = "HTTP_301"
     }
   }
@@ -77,10 +88,10 @@ resource "aws_alb_listener" "applications" {
 # Security Group: world -> alb
 resource "aws_security_group" "alb" {
   name_prefix = "app-alb-"
-  vpc_id      = var.base.vpc.id
+  vpc_id      = var.vpc.id
 
   tags = {
-    env       = var.base.env
+    env       = var.env
     terraform = "true"
     app       = "ingress"
     name      = "world->alb-ingress"
@@ -101,7 +112,7 @@ resource "aws_security_group_rule" "lb_ingress" {
   protocol  = "tcp"
 
   # If fronted by nginx, only accept traffic from inside the VPC
-  cidr_blocks = var.nginx ? ["${var.base.vpc.cidr_block}/0"] : ["0.0.0.0/0"]
+  cidr_blocks = var.public ? ["0.0.0.0/0"] : ["${var.vpc.cidr_block}/0"]
 
   security_group_id = aws_security_group.alb.id
 }

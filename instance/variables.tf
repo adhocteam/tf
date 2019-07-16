@@ -19,9 +19,10 @@ variable "instance_count" {
   default     = 1
 }
 
-variable "ingress" {
-  description = "OPTIONAL: an object describing an ingress for exposing the service publicly. will only expose the first application port"
-  default     = {}
+variable "public" {
+  type        = bool
+  description = "OPTIONAL: whether or not to expose the application publicly"
+  default     = true
 }
 
 variable "application_ports" {

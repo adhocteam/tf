@@ -6,11 +6,13 @@ terraform {
   required_version = ">= 0.12"
 }
 
-module "alb" {
-  source = "../ingress"
+resource "aws_route53_record" "ingress" {
+  zone_id = var.base.external.id
+  name    = "ingress"
+  type    = "CNAME"
+  ttl     = 30
 
-  base  = var.base
-  nginx = true
+  records = [aws_lb.nlb.dns_name]
 }
 
 #######

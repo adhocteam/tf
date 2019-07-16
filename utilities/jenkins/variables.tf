@@ -2,10 +2,6 @@ variable "base" {
   description = "object with the outputs of the base module"
 }
 
-variable "ingress" {
-  description = "object describing an ingress to expose Jenkins publicly"
-}
-
 variable "workers" {
   type        = list(object({ label = string, instance_type = string, executors = number }))
   description = "OPTIONAL: A list of objects describing workers."

@@ -19,7 +19,6 @@ module "primary" {
   base              = var.base
   instance_size     = "t3.small"
   application_name  = "jenkins"
-  ingress           = var.ingress
   application_ports = [8080]
   health_check_path = "/login"
   user_data = templatefile("${path.module}/primary.tmpl", {

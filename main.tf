@@ -26,6 +26,17 @@ module "wildcard" {
   domain_name = var.domain_name
 }
 
+module "ingress" {
+  source = "./ingress"
+
+  env          = var.env
+  domain_name  = var.domain_name
+  public       = var.public_ingress
+  external_dns = data.aws_route53_zone.external
+  vpc          = module.vpc
+  wildcard     = module.wildcard
+}
+
 #####
 # Singleton resources referenced by child modules
 ####

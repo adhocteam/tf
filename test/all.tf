@@ -27,17 +27,10 @@ module "dev" {
   domain_name = local.domain_name
 }
 
-module "ingress" {
-  source = "../ingress"
-
-  base = module.dev
-}
-
 module "utilities" {
   source = "../utilities"
 
-  base    = module.dev
-  ingress = module.ingress
+  base = module.dev
 }
 
 module "static" {
@@ -51,7 +44,6 @@ module "demo" {
   source = "../instance"
 
   base             = module.dev
-  ingress          = module.ingress
   application_name = "demo"
 }
 
@@ -68,7 +60,6 @@ module "fargate" {
 
   base             = module.dev
   application_name = "web"
-  ingress          = module.ingress
   docker_image     = "nginx:latest"
   environment_variables = [
     {
@@ -137,7 +128,6 @@ module "demo_asg" {
   source = "../autoscaling"
 
   base             = module.production
-  ingress          = module.ingress_nginx
   application_name = "asg"
 }
 

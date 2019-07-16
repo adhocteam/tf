@@ -2,10 +2,6 @@ variable "base" {
   description = "an object representing the outputs of the base module from the tf repo"
 }
 
-variable "ingress" {
-  description = "An object describing an ingress for exposing Jenkins publicly"
-}
-
 variable "jumpbox_enabled" {
   type        = bool
   description = "OPTIONAL: whether or not to enable the jumpbox"

@@ -46,6 +46,11 @@ output "wildcard" {
   value       = module.wildcard
 }
 
+output "ingress" {
+  description = "an ALB for applications to connect to in order to receive public traffic"
+  value       = module.ingress
+}
+
 output "security_groups" {
   description = "a map of names to security groups that are shared throughout the vpc"
   value = {

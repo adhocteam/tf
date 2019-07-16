@@ -2,7 +2,7 @@
 # Target group in case it needs to be attached to an LB
 #####
 locals {
-  ingress_enabled = length(var.ingress) > 0 ? 1 : 0
+  ingress_enabled = var.public ? 1 : 0
 }
 
 resource "aws_route53_record" "external" {
@@ -12,7 +12,7 @@ resource "aws_route53_record" "external" {
   type    = "CNAME"
   ttl     = 30
 
-  records = [var.ingress.dns_record]
+  records = ["ingress.${var.base.domain_name}"]
 }
 
 resource "aws_alb_target_group" "application" {
@@ -43,7 +43,7 @@ resource "aws_alb_target_group" "application" {
 
 resource "aws_alb_listener_rule" "applications" {
   count        = local.ingress_enabled
-  listener_arn = var.ingress.listener.arn
+  listener_arn = var.base.ingress.listener.arn
 
   action {
     type             = "forward"
@@ -63,7 +63,7 @@ resource "aws_security_group_rule" "ingress" {
   from_port                = var.application_ports[0]
   to_port                  = var.application_ports[0]
   protocol                 = "tcp"
-  source_security_group_id = var.ingress.security_group.id
+  source_security_group_id = var.base.ingress.security_group.id
 
   security_group_id = aws_security_group.app.id
 }
