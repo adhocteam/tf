@@ -68,6 +68,8 @@ resource "aws_lb_target_group" "https" {
     port     = 3080
   }
 
+  depends_on = [aws_lb.nlb]
+
   tags = {
     env       = var.base.env
     terraform = "true"
@@ -102,6 +104,8 @@ resource "aws_lb_target_group" "proxy" {
     port     = 3023
   }
 
+  depends_on = [aws_lb.nlb]
+
   tags = {
     env       = var.base.env
     terraform = "true"
@@ -135,6 +139,8 @@ resource "aws_lb_target_group" "tunnel" {
     protocol = "TCP"
     port     = 3024
   }
+
+  depends_on = [aws_lb.nlb]
 
   tags = {
     env       = var.base.env
@@ -181,7 +187,8 @@ resource "aws_instance" "proxies" {
   ]
 
   lifecycle {
-    ignore_changes = [ami]
+    ignore_changes        = [ami]
+    create_before_destroy = true
   }
 
   root_block_device {
