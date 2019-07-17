@@ -57,7 +57,7 @@ resource "aws_lb_listener" "https_native" {
 resource "aws_lb_target_group" "https" {
   name_prefix = "in-tls"
   port        = 3080
-  protocol    = "TLS"
+  protocol    = "TCP"
   vpc_id      = var.base.vpc.id
 
   # Use IP to support Fargate clusters
