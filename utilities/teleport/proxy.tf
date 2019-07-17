@@ -40,7 +40,7 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-resource "aws_lb_listener" "https" {
+resource "aws_lb_listener" "https_native" {
   load_balancer_arn = aws_lb.nlb.arn
   port              = 3080
   protocol          = "TLS"
