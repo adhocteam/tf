@@ -69,7 +69,7 @@ resource "aws_instance" "jenkins_worker" {
 
   user_data = templatefile("${path.module}/worker.tmpl", {
     count     = count.index
-    master    = "http://primary.jenkins.${var.vpc.internal_dns.name}:8080"
+    master    = "http://primary.jenkins.${var.base.vpc.internal_dns.name}:8080"
     label     = var.workers[count.index].label
     username  = var.github_user
     password  = data.aws_secretsmanager_secret_version.github_password.secret_string

@@ -50,7 +50,7 @@ resource "aws_route53_record" "box" {
   type    = "CNAME"
   ttl     = 30
 
-  records = module.primary.instances[*].private_dns
+  records = aws_instance.box[*].private_dns
 }
 
 #######
