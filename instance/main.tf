@@ -22,7 +22,8 @@ resource "aws_instance" "box" {
   ]
 
   lifecycle {
-    ignore_changes = [ami]
+    ignore_changes        = [ami]
+    create_before_destroy = true
   }
 
   credit_specification {
