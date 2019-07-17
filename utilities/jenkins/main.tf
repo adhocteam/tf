@@ -18,7 +18,7 @@ module "primary" {
 
   base              = var.base
   instance_size     = "t3.small"
-  application_name  = "jenkins"
+  application_name  = "primary.jenkins"
   application_ports = [8080]
   health_check_path = "/login"
   user_data = templatefile("${path.module}/primary.tmpl", {
@@ -32,16 +32,6 @@ module "primary" {
     slack_token          = "${data.aws_secretsmanager_secret_version.slack_token.secret_string}"
     jenkins_image        = "adhocteam/jenkins:${var.image_tag}"
   })
-}
-
-# Convenient internal DNS name for other items in VPC to use if needed
-resource "aws_route53_record" "primary" {
-  zone_id = var.base.vpc.internal_dns.zone_id
-  name    = "primary.jenkins"
-  type    = "CNAME"
-  ttl     = 30
-
-  records = [module.primary.instances[0].private_dns]
 }
 
 resource "aws_security_group_rule" "worker_to_primary_jnlp" {
@@ -79,7 +69,7 @@ resource "aws_instance" "jenkins_worker" {
 
   user_data = templatefile("${path.module}/worker.tmpl", {
     count     = count.index
-    master    = "http://${aws_route53_record.primary.fqdn}:8080"
+    master    = "http://primary.jenkins.${var.vpc.internal_dns.name}:8080"
     label     = var.workers[count.index].label
     username  = var.github_user
     password  = data.aws_secretsmanager_secret_version.github_password.secret_string

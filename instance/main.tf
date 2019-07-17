@@ -43,6 +43,16 @@ resource "aws_instance" "box" {
   }
 }
 
+# Convenient internal DNS name for other items in VPC to use if needed
+resource "aws_route53_record" "box" {
+  zone_id = var.base.vpc.internal_dns.zone_id
+  name    = var.application_name
+  type    = "CNAME"
+  ttl     = 30
+
+  records = module.primary.instances[*].private_dns
+}
+
 #######
 # Security group for application
 #######
