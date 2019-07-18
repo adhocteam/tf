@@ -1,5 +1,21 @@
-variable "vpc" {
-  description = "object describing the vpc module"
+variable "vpc_id" {
+  type        = string
+  description = "id of the vpc into which to create the ingress"
+}
+
+variable "cidr" {
+  type        = string
+  description = "OPTIONAL: the CIDR block to provision for the VPC. it should be a /16 block"
+  default     = "10.1.0.0/16"
+}
+
+variable "subnet_ids" {
+  type        = object({ application = list(string), public = list(string) })
+  description = "object containing two lists of subnet ids"
+}
+
+variable "internal_dns" {
+  description = "object describing an Route53 zone for internal DNS entries"
 }
 
 variable "env" {
@@ -16,8 +32,9 @@ variable "external_dns" {
   description = "object describing an Route53 zone for external DNS entries"
 }
 
-variable "wildcard" {
-  description = "object describing a wildcard ACM certificate"
+variable "wildcard_arn" {
+  type        = string
+  description = "ARN of a wildcard ACM certificate"
 }
 
 variable "public" {

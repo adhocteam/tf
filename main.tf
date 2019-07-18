@@ -29,12 +29,18 @@ module "wildcard" {
 module "ingress" {
   source = "./ingress"
 
-  env          = var.env
-  domain_name  = var.domain_name
-  public       = var.public_ingress
+  env         = var.env
+  domain_name = var.domain_name
+  public      = var.public_ingress
+  cidr_block  = var.cidr_block
+  vpc_id      = module.vpc.id
+  subnet_ids = {
+    application = module.vpc.application[*].id
+    public      = module.vpc.public[*].id
+  }
+  internal_dns = module.vpc.internal_dns
   external_dns = data.aws_route53_zone.external
-  vpc          = module.vpc
-  wildcard     = module.wildcard
+  wildcard_arn = module.wildcard.arn
 }
 
 #####

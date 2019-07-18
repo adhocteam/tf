@@ -22,7 +22,7 @@ resource "aws_route53_record" "ingress" {
 #######
 
 resource "aws_route53_record" "alb_cname" {
-  zone_id = var.vpc.internal_dns.zone_id
+  zone_id = var.internal_dns.zone_id
   name    = "ingress-alb"
   type    = "CNAME"
   ttl     = 30
@@ -35,7 +35,7 @@ resource "aws_alb" "ingress" {
   name_prefix     = "in-alb"
   internal        = ! var.public
   security_groups = [aws_security_group.alb.id]
-  subnets         = var.public ? var.vpc.public[*].id : var.vpc.application[*].id
+  subnets         = var.public ? var.subnet_ids.public : var.subnet_ids.application
 
   ip_address_type = "ipv4"
 
@@ -70,7 +70,7 @@ resource "aws_alb_listener" "applications" {
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-FS-2018-06"
-  certificate_arn   = var.wildcard.arn
+  certificate_arn   = var.wildcard_arn
 
   # If no matches for applications, send to apex domain as fallback
   default_action {
@@ -80,7 +80,7 @@ resource "aws_alb_listener" "applications" {
       port        = "443"
       protocol    = "HTTPS"
       host        = "${var.domain_name}"
-      status_code = "HTTP_301"
+      status_code = "HTTP_302"
     }
   }
 }
@@ -88,7 +88,7 @@ resource "aws_alb_listener" "applications" {
 # Security Group: world -> alb
 resource "aws_security_group" "alb" {
   name_prefix = "app-alb-"
-  vpc_id      = var.vpc.id
+  vpc_id      = var.vpc_id
 
   tags = {
     env       = var.env
@@ -112,7 +112,7 @@ resource "aws_security_group_rule" "lb_ingress" {
   protocol  = "tcp"
 
   # If fronted by nginx, only accept traffic from inside the VPC
-  cidr_blocks = var.public ? ["0.0.0.0/0"] : ["${var.vpc.cidr_block}/0"]
+  cidr_blocks = var.public ? ["0.0.0.0/0"] : ["${var.cidr_block}/0"]
 
   security_group_id = aws_security_group.alb.id
 }
