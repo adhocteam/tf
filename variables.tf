@@ -8,7 +8,7 @@ variable "domain_name" {
   description = "the external domain name for reaching the public resources."
 }
 
-variable "cidr" {
+variable "cidr_block" {
   type        = string
   description = "OPTIONAL: the CIDR block to provision for the VPC. it should be a /16 block"
   default     = "10.1.0.0/16"

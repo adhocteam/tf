@@ -6,7 +6,7 @@ module "vpc" {
   source = "./vpc"
 
   env  = var.env
-  cidr = var.cidr
+  cidr = var.cidr_block
 }
 
 #####
