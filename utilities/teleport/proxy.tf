@@ -99,9 +99,10 @@ resource "aws_lb_target_group" "proxy" {
   # Use IP to support Fargate clusters
   target_type = "ip"
 
+  # Health check only on web port to prevent logs filling with connection resets
   health_check {
     protocol = "TCP"
-    port     = 3023
+    port     = 3080
   }
 
   depends_on = [aws_lb.nlb]
@@ -135,9 +136,10 @@ resource "aws_lb_target_group" "tunnel" {
   # Use IP to support Fargate clusters
   target_type = "ip"
 
+  # Health check only on web port to prevent logs filling with connection resets
   health_check {
     protocol = "TCP"
-    port     = 3024
+    port     = 3080
   }
 
   depends_on = [aws_lb.nlb]
@@ -150,16 +152,22 @@ resource "aws_lb_target_group" "tunnel" {
   }
 }
 
-locals {
-  attachments = setproduct(
-    [aws_lb_target_group.https.arn, aws_lb_target_group.proxy.arn, aws_lb_target_group.tunnel.arn],
-  aws_instance.proxies[*].private_ip)
+resource "aws_alb_target_group_attachment" "https" {
+  count            = length(aws_instance.proxies[*].private_ip)
+  target_group_arn = aws_lb_target_group.https.arn
+  target_id        = aws_instance.proxies[count.index].private_ip
 }
 
-resource "aws_alb_target_group_attachment" "all" {
-  count            = length(local.attachments)
-  target_group_arn = local.attachments[count.index][0]
-  target_id        = local.attachments[count.index][1]
+resource "aws_alb_target_group_attachment" "proxy" {
+  count            = length(aws_instance.proxies[*].private_ip)
+  target_group_arn = aws_lb_target_group.proxy.arn
+  target_id        = aws_instance.proxies[count.index].private_ip
+}
+
+resource "aws_alb_target_group_attachment" "tunnel" {
+  count            = length(aws_instance.proxies[*].private_ip)
+  target_group_arn = aws_lb_target_group.tunnel.arn
+  target_id        = aws_instance.proxies[count.index].private_ip
 }
 
 #######
