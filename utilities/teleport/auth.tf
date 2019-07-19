@@ -164,12 +164,13 @@ resource "aws_security_group_rule" "auth_egress" {
 # and only auth servers need access to the tables
 # all other components are stateless.
 resource "aws_dynamodb_table" "teleport_state" {
-  name           = "${var.base.env}-teleport-state"
-  read_capacity  = 5
-  write_capacity = 5
-  hash_key       = "HashKey"
-  range_key      = "FullPath"
-  stream_enabled = true
+  name             = "${var.base.env}-teleport-state"
+  read_capacity    = 5
+  write_capacity   = 5
+  hash_key         = "HashKey"
+  range_key        = "FullPath"
+  stream_enabled   = true
+  stream_view_type = "NEW_IMAGE"
 
   server_side_encryption {
     enabled = true
