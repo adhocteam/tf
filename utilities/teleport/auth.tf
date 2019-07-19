@@ -169,6 +169,7 @@ resource "aws_dynamodb_table" "teleport_state" {
   write_capacity = 5
   hash_key       = "HashKey"
   range_key      = "FullPath"
+  stream_enabled = true
 
   server_side_encryption {
     enabled = true
