@@ -62,17 +62,6 @@ resource "aws_s3_bucket" "lambda_releases" {
   }
 }
 
-# A create a random cluster token at creation time. No rotation as of now.
-resource "random_string" "cluster_token" {
-  length  = 32
-  special = false
-}
-
-resource "aws_secretsmanager_secret_version" "cluster_token" {
-  secret_id     = "${var.env}/teleport/cluster_token"
-  secret_string = random_string.cluster_token.result
-}
-
 ### Shared IAM role for instances running teleport
 resource "aws_iam_policy" "teleport_secrets" {
   name        = "${var.env}-instance-teleport-secrets"
