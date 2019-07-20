@@ -55,6 +55,6 @@ sudo cp /tmp/files/teleport/*.service /etc/systemd/system
 sudo chmod 0644 /etc/systemd/system/teleport*
 
 echo "--- Turn on systemd services"
-sudo systemctl enable --now docker
-sudo systemctl enable --now yum-cron
-sudo systemctl enable --now teleport
+sudo systemctl enable docker
+sudo systemctl enable yum-cron
+sudo systemctl enable teleport
