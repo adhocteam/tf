@@ -15,6 +15,35 @@ resource "aws_security_group" "teleport_proxies" {
   }
 }
 
+resource "aws_security_group_rule" "proxy_webui" {
+  type        = "ingress"
+  from_port   = 3080
+  to_port     = 3080
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = aws_security_group.teleport_proxies.id
+}
+
+resource "aws_security_group_rule" "proxy_ssh" {
+  type        = "ingress"
+  from_port   = 3023
+  to_port     = 3023
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = aws_security_group.teleport_proxies.id
+}
+
+resource "aws_security_group_rule" "proxy_cluster" {
+  type        = "ingress"
+  from_port   = 3024
+  to_port     = 3024
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = aws_security_group.teleport_proxies.id
+}
 # Must allow talking to the world to call out to AWS APIs
 resource "aws_security_group_rule" "proxy_egress" {
   type        = "egress"
