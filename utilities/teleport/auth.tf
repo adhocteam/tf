@@ -339,7 +339,13 @@ resource "aws_iam_role_policy" "auth_dynamo" {
             "Effect": "Allow",
             "Action": "dynamodb:*",
             "Resource": "${aws_dynamodb_table.teleport_state.arn}"
-        },
+        },  
+        {
+            "Sid": "AllActionsOnTeleportDBStreams",
+            "Effect": "Allow",
+            "Action": "dynamodb:*",
+            "Resource": "${aws_dynamodb_table.teleport_state.arn}/*"
+        },  
         {
             "Sid": "AllActionsOnTeleportEventsDB",
             "Effect": "Allow",
