@@ -22,7 +22,7 @@ resource "aws_alb_target_group" "application" {
   port        = var.application_ports[0]
   protocol    = "HTTP"
   vpc_id      = var.base.vpc.id
-  target_type = "ip" # Must use IP to support fargate
+  target_type = "instance" # Must use instance for ASGs
 
   health_check {
     interval            = 60
