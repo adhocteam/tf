@@ -96,15 +96,6 @@ resource "aws_launch_template" "application" {
     cpu_credits = "unlimited"
   }
 
-  block_device_mappings {
-    device_name = "/dev/sdf"
-    ebs {
-      volume_type           = "gp2"
-      volume_size           = var.volume_size
-      delete_on_termination = true
-    }
-  }
-
   monitoring {
     enabled = true
   }

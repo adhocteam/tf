@@ -60,9 +60,3 @@ variable "user_data" {
   description = "OPTIONAL: user data script to run on initialization"
   default     = ""
 }
-
-variable "volume_size" {
-  type        = number
-  description = "OPTIONAL: Size in GB for the EBS volume"
-  default     = 80
-}
