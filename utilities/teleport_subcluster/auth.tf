@@ -8,7 +8,7 @@
 #######
 
 resource "aws_lb" "auth" {
-  name_prefix                      = "telep-"
+  name_prefix                      = "tp-aut"
   internal                         = true
   load_balancer_type               = "network"
   subnets                          = var.base.vpc.application[*].id
@@ -86,7 +86,8 @@ resource "aws_instance" "auths" {
   ]
 
   lifecycle {
-    ignore_changes = [ami]
+    ignore_changes        = [ami]
+    create_before_destroy = true
   }
 
   credit_specification {
@@ -162,11 +163,13 @@ resource "aws_security_group_rule" "auth_egress" {
 // and only auth servers need access to the tables
 // all other components are stateless.
 resource "aws_dynamodb_table" "teleport_state" {
-  name           = "${var.base.env}-teleport-state"
-  read_capacity  = 5
-  write_capacity = 5
-  hash_key       = "HashKey"
-  range_key      = "FullPath"
+  name             = "${var.base.env}-teleport-state"
+  read_capacity    = 5
+  write_capacity   = 5
+  hash_key         = "HashKey"
+  range_key        = "FullPath"
+  stream_enabled   = true
+  stream_view_type = "NEW_IMAGE"
 
   server_side_encryption {
     enabled = true
@@ -334,6 +337,12 @@ resource "aws_iam_role_policy" "auth_dynamo" {
             "Effect": "Allow",
             "Action": "dynamodb:*",
             "Resource": "${aws_dynamodb_table.teleport_state.arn}"
+        },
+        {
+              "Sid": "AllActionsOnTeleportDBStreams",
+              "Effect": "Allow",
+              "Action": "dynamodb:*",
+              "Resource": "${aws_dynamodb_table.teleport_state.arn}/*"
         },
         {
             "Sid": "AllActionsOnTeleportEventsDB",

@@ -22,11 +22,12 @@ resource "aws_instance" "proxies" {
   subnet_id                   = element(var.base.vpc.application[*].id, count.index)
   vpc_security_group_ids = [
     var.base.security_groups["jumpbox_nodes"].id,
-    aws_security_group.proxies.id
+    var.base.security_groups["teleport_proxies"].id,
   ]
 
   lifecycle {
-    ignore_changes = [ami]
+    ignore_changes        = [ami]
+    create_before_destroy = true
   }
 
   root_block_device {
@@ -45,32 +46,4 @@ resource "aws_instance" "proxies" {
     env       = var.base.env
     terraform = "true"
   }
-}
-
-#######
-### Security group for proxy instances
-#######
-
-resource "aws_security_group" "proxies" {
-  name_prefix = "teleport-proxies-"
-  vpc_id      = var.base.vpc.id
-
-  tags = {
-    env       = var.base.env
-    terraform = "true"
-    app       = "teleport"
-    Name      = "teleport-proxies"
-  }
-}
-
-# Must allow talking to the world to call out to AWS APIs
-# and main cluster
-resource "aws_security_group_rule" "proxy_egress" {
-  type        = "egress"
-  from_port   = 0
-  to_port     = 0
-  protocol    = "-1"
-  cidr_blocks = ["0.0.0.0/0"]
-
-  security_group_id = aws_security_group.proxies.id
 }
