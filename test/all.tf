@@ -114,8 +114,10 @@ module "lambda_cron" {
 module "production" {
   source = "../"
 
-  env         = "prod"
-  domain_name = local.domain_name
+  env            = "prod"
+  domain_name    = local.domain_name
+  public_ingress = false
+  primary        = false
 }
 
 module "ingress_nginx" {

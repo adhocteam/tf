@@ -24,6 +24,7 @@ module "wildcard" {
 
   env         = var.env
   domain_name = var.domain_name
+  primary     = var.primary
 }
 
 module "ingress" {

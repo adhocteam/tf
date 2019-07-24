@@ -7,6 +7,7 @@ terraform {
 }
 
 resource "aws_acm_certificate" "domain" {
+  count                     = var.primary ? 1 : 0
   domain_name               = var.domain_name
   subject_alternative_names = ["*.${var.domain_name}"]
 
@@ -24,16 +25,18 @@ resource "aws_acm_certificate" "domain" {
 }
 
 resource "aws_acm_certificate_validation" "domain" {
-  certificate_arn         = aws_acm_certificate.domain.arn
+  count                   = var.primary ? 1 : 0
+  certificate_arn         = aws_acm_certificate.domain[0].arn
   validation_record_fqdns = aws_route53_record.validation[*].fqdn
 }
 
 # Only need to validate the first record because the wildcard entry will use the same DNS record
 resource "aws_route53_record" "validation" {
-  name    = aws_acm_certificate.domain.domain_validation_options[0]["resource_record_name"]
-  type    = aws_acm_certificate.domain.domain_validation_options[0]["resource_record_type"]
+  count   = var.primary ? 1 : 0
+  name    = aws_acm_certificate.domain[0].domain_validation_options[0]["resource_record_name"]
+  type    = aws_acm_certificate.domain[0].domain_validation_options[0]["resource_record_type"]
   zone_id = data.aws_route53_zone.external.id
-  records = [aws_acm_certificate.domain.domain_validation_options[0]["resource_record_value"]]
+  records = [aws_acm_certificate.domain[0].domain_validation_options[0]["resource_record_value"]]
   ttl     = 60
 }
 

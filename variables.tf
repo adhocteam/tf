@@ -31,3 +31,9 @@ variable "public_ingress" {
   description = "OPTIONAL: whether or not to expose the ingress publicly. If not, must provide a reverse proxy to it."
   default     = true
 }
+
+variable "primary" {
+  type        = bool
+  description = "OPTIONAL: whether or not this is the primary environment (e.g., the first created). normally this will be the dev environment"
+  default     = true
+}

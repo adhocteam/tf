@@ -9,7 +9,7 @@ terraform {
 resource "aws_route53_record" "ingress" {
   count   = var.public ? 1 : 0
   zone_id = var.external_dns.id
-  name    = "ingress"
+  name    = "ingress-${var.env}"
   type    = "CNAME"
   ttl     = 30
 

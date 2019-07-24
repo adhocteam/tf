@@ -12,7 +12,7 @@ resource "aws_route53_record" "external" {
   type    = "CNAME"
   ttl     = 30
 
-  records = ["ingress.${var.base.domain_name}"]
+  records = ["ingress-${var.base.env}.${var.base.domain_name}"]
 }
 
 resource "aws_alb_target_group" "application" {
