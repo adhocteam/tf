@@ -3,7 +3,7 @@ terraform {
 }
 
 locals {
-  ami = length(var.ami) == 0 ? var.base.ami : var.ami
+  ami_id = length(var.ami_id) == 0 ? var.base.ami.id : var.ami_id
 }
 
 #####
@@ -87,7 +87,7 @@ resource "aws_autoscaling_policy" "memory" {
 resource "aws_launch_template" "application" {
   name_prefix                          = "${var.base.env}-${var.application_name}-"
   disable_api_termination              = false
-  image_id                             = local.ami.id
+  image_id                             = local.ami_id
   instance_initiated_shutdown_behavior = "terminate"
   instance_type                        = var.instance_size
   ebs_optimized                        = true

@@ -7,9 +7,10 @@ variable "application_name" {
   description = "name of the application to be hosted. will be used as the subdomain if exposed via ingress"
 }
 
-variable "ami" {
-  description = "OPTIONAL: object describing the AMI to use for the autoscaling group. defaults to base ami"
-  default     = {}
+variable "ami_id" {
+  type        = string
+  description = "OPTIONAL: ID of the AMI to use for the autoscaling group. defaults to base ami"
+  default     = ""
 }
 
 variable "instance_size" {
