@@ -110,6 +110,7 @@ resource "aws_launch_template" "application" {
   }
 
   block_device_mappings {
+    device_name = "/dev/sdf"
     ebs {
       volume_type           = "gp2"
       volume_size           = var.volume_size
