@@ -103,7 +103,7 @@ resource "aws_launch_template" "application" {
     name = aws_iam_instance_profile.iam.name
   }
 
-  user_data = var.user_data != "" ? var.user_data : null
+  user_data = var.user_data != "" ? base64encode(var.user_data) : null
 
   credit_specification {
     cpu_credits = "unlimited"
