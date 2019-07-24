@@ -70,20 +70,6 @@ resource "aws_autoscaling_policy" "cpu" {
   }
 }
 
-resource "aws_autoscaling_policy" "memory" {
-  name                   = "${var.base.env}-${var.application_name}-memory-policy"
-  autoscaling_group_name = aws_autoscaling_group.application.name
-  policy_type            = "TargetTrackingScaling"
-
-  target_tracking_configuration {
-    predefined_metric_specification {
-      predefined_metric_type = "ASGAverageMemoryUtilization"
-    }
-
-    target_value = 60
-  }
-}
-
 resource "aws_launch_template" "application" {
   name_prefix                          = "${var.base.env}-${var.application_name}-"
   disable_api_termination              = false
