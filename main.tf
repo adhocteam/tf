@@ -2,6 +2,10 @@ terraform {
   required_version = ">= 0.12"
 }
 
+resource "aws_ebs_encryption_by_default" "on" {
+  enabled = true
+}
+
 module "vpc" {
   source = "./vpc"
 
