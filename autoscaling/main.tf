@@ -46,7 +46,7 @@ resource "aws_autoscaling_group" "application" {
     propagate_at_launch = true
   }
   tag {
-    key                 = "environment"
+    key                 = "env"
     value               = var.base.env
     propagate_at_launch = true
   }
@@ -98,17 +98,6 @@ resource "aws_launch_template" "application" {
 
   monitoring {
     enabled = true
-  }
-
-  tag_specifications {
-    resource_type = "instance"
-
-    tags = {
-      Name        = "${var.base.env}-${var.application_name}-"
-      "terraform" = "true"
-      "env"       = var.base.env
-      "app"       = var.application_name
-    }
   }
 
   tags = {
