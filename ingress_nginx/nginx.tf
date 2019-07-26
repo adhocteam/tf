@@ -29,6 +29,7 @@ module "nginx" {
   ami_id            = data.aws_ami.nginx.id
   application_name  = "ingress_nginx"
   application_ports = local.ports
+  public            = false
   target_group_arns = [aws_lb_target_group.http.arn, aws_lb_target_group.https.arn]
 }
 
