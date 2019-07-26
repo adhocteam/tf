@@ -60,6 +60,11 @@ resource "aws_lb_target_group" "http" {
     port     = 200
   }
 
+  stickiness {
+    enabled = false
+    type    = "lb_cookie"
+  }
+
   depends_on = [aws_lb.nlb]
 
   tags = {
