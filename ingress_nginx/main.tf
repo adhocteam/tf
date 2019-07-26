@@ -92,6 +92,9 @@ resource "aws_lb_target_group" "https" {
   vpc_id      = var.base.vpc.id
   target_type = "instance" # Must use IP to support fargate
 
+  # Enable proxy protocol to get original source IP
+  proxy_protocol_v2 = true
+
   health_check {
     protocol = "TCP"
     port     = 200
