@@ -24,7 +24,7 @@ resource "aws_lb" "nlb" {
   name_prefix        = "in-nlb"
   internal           = false
   load_balancer_type = "network"
-  subnets            = var.base.vpc.public[*]
+  subnets            = var.base.vpc.public[*].id
 
   enable_cross_zone_load_balancing = true
 
