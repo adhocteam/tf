@@ -2,16 +2,21 @@
 # Nginx Reverse Proxy to send data to our backends
 #######
 
-# Create ECR repo for docker image and provide cross account access if needed
-resource "aws_ecr_repository" "nginx" {
-  name = "ingress-${var.base.env}"
-}
-
 #####
 # Create auto-scaling group for nginx proxies
 #
 # We cannot use fargate until it supports multiple inbound ports
 #####
+
+data "aws_ami" "nginx" {
+  most_recent = true
+  owners      = ["self"]
+
+  filter {
+    name   = "name"
+    values = ["ingress_${var.base.env}*"]
+  }
+}
 
 locals {
   ports = [200, 443, 80]
@@ -21,13 +26,10 @@ module "nginx" {
   source = "../autoscaling"
 
   base              = var.base
+  ami_id            = data.aws_ami.nginx.id
   application_name  = "ingress_nginx"
   application_ports = local.ports
   target_group_arns = [aws_lb_target_group.http.arn, aws_lb_target_group.https.arn]
-  user_data = templatefile("${path.module}/user_data.tmpl", {
-    nginx_image = "${aws_ecr_repository.nginx.repository_url}:latest"
-    ports       = local.ports
-  })
 }
 
 #TODO(bob) this may be able to be restricted to our private CIDR b/c we use proxy_protocol
@@ -40,10 +42,4 @@ resource "aws_security_group_rule" "nginx" {
   cidr_blocks = ["0.0.0.0/0"]
 
   security_group_id = module.nginx.security_group.id
-}
-
-# TODO(bob) restrict this to just the one image
-resource "aws_iam_role_policy_attachment" "nginx" {
-  role       = module.nginx.instance_iam_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }

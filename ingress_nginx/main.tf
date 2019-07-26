@@ -8,7 +8,7 @@ terraform {
 
 resource "aws_route53_record" "ingress" {
   zone_id = var.base.external.id
-  name    = "ingress"
+  name    = "ingress-${var.base.env}"
   type    = "CNAME"
   ttl     = 30
 
