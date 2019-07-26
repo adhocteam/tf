@@ -51,17 +51,16 @@ resource "aws_lb_target_group" "http" {
   # max 6 characters for name prefix
   name_prefix = "ingres"
   port        = 80
-  protocol    = "HTTP"
+  protocol    = "TCP"
   vpc_id      = var.base.vpc.id
-  target_type = "ip" # Must use IP to support fargate
+  target_type = "instance" # Must use IP to support fargate if required
 
   health_check {
-    interval            = 60
-    path                = "/"
-    port                = 200
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
+    protocol = "TCP"
+    port     = 200
   }
+
+  depends_on = [aws_lb.nlb]
 
   tags = {
     env       = var.base.env
@@ -91,15 +90,14 @@ resource "aws_lb_target_group" "https" {
   port        = 443
   protocol    = "TLS"
   vpc_id      = var.base.vpc.id
-  target_type = "ip" # Must use IP to support fargate
+  target_type = "instance" # Must use IP to support fargate
 
   health_check {
-    interval            = 60
-    path                = "/"
-    port                = 200
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
+    protocol = "TCP"
+    port     = 200
   }
+
+  depends_on = [aws_lb.nlb]
 
   tags = {
     env       = var.base.env
