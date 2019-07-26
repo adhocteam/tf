@@ -15,7 +15,7 @@ resource "aws_autoscaling_group" "application" {
   vpc_zone_identifier = var.base.vpc.application[*].id
 
   max_size         = var.max_count
-  min_size         = 0
+  min_size         = 1
   desired_capacity = var.desired_count
   force_delete     = false
 
