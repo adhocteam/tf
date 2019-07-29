@@ -47,8 +47,8 @@ sudo chmod 0755 /usr/local/bin/teleport-secrets
 
 echo "--- Configure teleport"
 # Install teleport configuration
-sudo cp /tmp/files/teleport/teleport.yaml /etc
-sudo chmod 0644 /etc/teleport.yaml
+sudo cp /tmp/files/teleport/teleport.yaml.tmpl /etc
+sudo chmod 0644 /etc/teleport.yaml.tmpl
 
 # Install teleport systemd units
 sudo cp /tmp/files/teleport/*.service /etc/systemd/system
@@ -58,3 +58,6 @@ echo "--- Turn on systemd services"
 sudo systemctl enable docker
 sudo systemctl enable yum-cron
 sudo systemctl enable teleport
+
+echo "--- Turn off systemd services"
+sudo systemctl disable --now amazon-ssm-agent

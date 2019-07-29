@@ -30,6 +30,8 @@ resource "aws_instance" "proxies" {
     create_before_destroy = true
   }
 
+  depends_on = [aws_instance.auths]
+
   root_block_device {
     volume_type           = "gp2"
     volume_size           = 20

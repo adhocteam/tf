@@ -205,6 +205,8 @@ resource "aws_instance" "proxies" {
     delete_on_termination = true
   }
 
+  depends_on = [aws_instance.auths]
+
   credit_specification {
     cpu_credits = "unlimited"
   }
