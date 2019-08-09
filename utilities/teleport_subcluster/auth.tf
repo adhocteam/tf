@@ -364,10 +364,10 @@ EOF
 
 // S3 for publishing session recordings to S3 encrypted bucket
 resource "aws_iam_role_policy" "auth_s3" {
-name = "${var.base.env}-teleport-auth-s3"
-role = aws_iam_role.auth.id
+  name = "${var.base.env}-teleport-auth-s3"
+  role = aws_iam_role.auth.id
 
-policy = <<EOF
+  policy = <<EOF
 {
    "Version": "2012-10-17",
    "Statement": [

@@ -132,12 +132,12 @@ EOF
 # The helper uses the main shared key, provide your own by attaching to the output
 # role if you have a more restricted key used in Secrets Manager
 resource "aws_iam_role_policy_attachment" "basic_exec_role" {
-  role = aws_iam_role.job.name
+  role       = aws_iam_role.job.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 resource "aws_iam_role_policy_attachment" "vpc_access" {
-  role = aws_iam_role.job.name
+  role       = aws_iam_role.job.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
@@ -152,20 +152,20 @@ data "aws_iam_policy_document" "secrets" {
 }
 
 resource "aws_iam_policy" "secrets" {
-  name = "${var.base.env}-${var.job_name}-secrets"
-  path = "/${var.base.env}/${var.job_name}/"
+  name   = "${var.base.env}-${var.job_name}-secrets"
+  path   = "/${var.base.env}/${var.job_name}/"
   policy = data.aws_iam_policy_document.secrets.json
 }
 
 resource "aws_iam_role_policy_attachment" "secrets" {
-  role = aws_iam_role.job.name
+  role       = aws_iam_role.job.name
   policy_arn = aws_iam_policy.secrets.arn
 }
 
 # Use of the shared KMS key for secrets decryption
 resource "aws_iam_policy" "shared_key_access" {
-  name = "${var.base.env}-${var.job_name}-key-access"
-  path = "/${var.base.env}/${var.job_name}/"
+  name        = "${var.base.env}-${var.job_name}-key-access"
+  path        = "/${var.base.env}/${var.job_name}/"
   description = "Allows function to use main KMS key for environment"
 
   policy = <<EOF
@@ -184,14 +184,14 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "shared_key_access" {
-role       = aws_iam_role.job.name
-policy_arn = aws_iam_policy.shared_key_access.arn
+  role       = aws_iam_role.job.name
+  policy_arn = aws_iam_policy.shared_key_access.arn
 }
 
 resource "aws_kms_grant" "primary" {
-name              = "${var.base.env}-cron-${var.job_name}"
-key_id            = var.base.key.arn
-grantee_principal = aws_iam_role.job.arn
-operations        = ["Decrypt"]
+  name              = "${var.base.env}-cron-${var.job_name}"
+  key_id            = var.base.key.arn
+  grantee_principal = aws_iam_role.job.arn
+  operations        = ["Decrypt"]
 }
 

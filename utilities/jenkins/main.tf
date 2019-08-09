@@ -168,7 +168,7 @@ EOF
 
 # Give it base teleport permissions
 resource "aws_iam_role_policy_attachment" "iam_teleport" {
-  role = aws_iam_role.worker.name
+  role       = aws_iam_role.worker.name
   policy_arn = "arn:aws:iam::${var.base.account.account_id}:policy/${var.base.env}/teleport/${var.base.env}-instance-teleport-secrets"
 }
 
