@@ -187,11 +187,3 @@ resource "aws_iam_role_policy_attachment" "shared_key_access" {
   role       = aws_iam_role.job.name
   policy_arn = aws_iam_policy.shared_key_access.arn
 }
-
-resource "aws_kms_grant" "primary" {
-  name              = "${var.base.env}-cron-${var.job_name}"
-  key_id            = var.base.key.arn
-  grantee_principal = aws_iam_role.job.arn
-  operations        = ["Decrypt"]
-}
-
