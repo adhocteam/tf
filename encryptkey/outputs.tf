@@ -1,4 +1,4 @@
-output "key_arn" {
+output "arn" {
   value = aws_kms_key.main.arn
 }
 

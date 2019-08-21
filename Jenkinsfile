@@ -7,7 +7,7 @@ pipeline {
         stage('Terraform fmt') {
             agent {
                 docker {
-                    image 'hashicorp/terraform:light'
+                    image 'hashicorp/terraform:0.12.6'
                     args '-w $WORKSPACE --entrypoint=""'
                 }
             }
@@ -25,7 +25,7 @@ pipeline {
         stage('Terraform validation') {
             agent {
                 docker {
-                    image 'hashicorp/terraform:0.12.1'
+                    image 'hashicorp/terraform:0.12.6'
                     args '-w $WORKSPACE --entrypoint=""'
                 }
             }

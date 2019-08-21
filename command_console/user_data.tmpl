@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+cat << 'DONE' > /home/ec2-user/console
+#!/usr/bin/env bash
+set -euo pipefail
+
+command="${command}"
+if [ $# -gt 0 ]; then
+    echo "Running alternate command: $@"
+    command="$@"
+fi
+
+eval $(aws ecr get-login --region=us-east-1 --no-include-email)
+
+docker pull ${docker_image}
+
+docker run -it --rm  \
+  --entrypoint "" \
+%{ for name, value in environment_variables ~}
+  -e ${name}="${value}"
+%{ endfor ~}
+  ${docker_image} \
+  $command
+DONE
+
+chown ec2-user:ec2-user /home/ec2-user/console
+chmod +x /home/ec2-user/console

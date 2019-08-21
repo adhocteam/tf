@@ -5,160 +5,207 @@
 #######
 
 #######
-# Load balancer for web traffic
+# Network load balancer that receives traffic from the internet
+# Terminates our TLS for HTTPS traffic
 #######
 
-resource "aws_elb" "proxy" {
-  name_prefix     = "telep-"
-  internal        = false
-  security_groups = [aws_security_group.proxy_lb.id]
-  subnets         = data.aws_subnet.public_subnet.*.id
+resource "aws_lb" "nlb" {
+  name_prefix        = "tp-nlb"
+  internal           = false
+  load_balancer_type = "network"
+  subnets            = var.base.vpc.public[*].id
 
-  # Allow connections to idle for an hour
-  idle_timeout = 3600
+  enable_cross_zone_load_balancing = true
 
-  listener {
-    instance_port     = 3023
-    instance_protocol = "tcp"
-    lb_port           = 3023
-    lb_protocol       = "tcp"
+  tags = {
+    env       = var.base.env
+    terraform = "true"
+    app       = "teleport"
+    Name      = "teleport-proxy-nlb"
   }
+}
 
-  listener {
-    instance_port     = 3024
-    instance_protocol = "tcp"
-    lb_port           = 3024
-    lb_protocol       = "tcp"
-  }
+# HTTPS ports
+resource "aws_lb_listener" "https" {
+  load_balancer_arn = aws_lb.nlb.arn
+  port              = 443
+  protocol          = "TLS"
 
-  listener {
-    instance_port      = 3080
-    instance_protocol  = "tcp"
-    lb_port            = 443
-    lb_protocol        = "ssl"
-    ssl_certificate_id = data.aws_acm_certificate.wildcard.arn
-  }
+  ssl_policy      = "ELBSecurityPolicy-FS-2018-06"
+  certificate_arn = var.base.wildcard.arn
 
-  listener {
-    instance_port      = 3080
-    instance_protocol  = "tcp"
-    lb_port            = 3080
-    lb_protocol        = "ssl"
-    ssl_certificate_id = data.aws_acm_certificate.wildcard.arn
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.https.arn
   }
+}
+
+resource "aws_lb_listener" "https_native" {
+  load_balancer_arn = aws_lb.nlb.arn
+  port              = 3080
+  protocol          = "TLS"
+
+  ssl_policy      = "ELBSecurityPolicy-FS-2018-06"
+  certificate_arn = var.base.wildcard.arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.https.arn
+  }
+}
+
+resource "aws_lb_target_group" "https" {
+  name_prefix = "in-tls"
+  port        = 3080
+  protocol    = "TCP"
+  vpc_id      = var.base.vpc.id
+
+  # Use IP to support Fargate clusters
+  target_type = "ip"
 
   health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 3
-    target              = "HTTP:3080/v1/webapi/ping"
-    interval            = 30
+    protocol = "TCP"
+    port     = 3080
   }
+
+  depends_on = [aws_lb.nlb]
 
   tags = {
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
     app       = "teleport"
-    name      = "elb-teleport-proxy"
+    Name      = "teleport-proxy-https"
   }
 }
 
-######
-# Security groups for Load Balancer
-#######
+# SSH inbound proxy
+resource "aws_lb_listener" "proxy" {
+  load_balancer_arn = aws_lb.nlb.arn
+  port              = 3023
+  protocol          = "TCP"
 
-# Security Group: world -> proxy
-resource "aws_security_group" "proxy_lb" {
-  name_prefix = "teleport-proxy-lb-"
-  vpc_id      = data.aws_vpc.vpc.id
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.proxy.arn
+  }
+}
+
+resource "aws_lb_target_group" "proxy" {
+  name_prefix = "in-tls"
+  port        = 3023
+  protocol    = "TCP"
+  vpc_id      = var.base.vpc.id
+
+  # Use IP to support Fargate clusters
+  target_type = "ip"
+
+  # Health check only on web port to prevent logs filling with connection resets
+  health_check {
+    protocol = "TCP"
+    port     = 3080
+  }
+
+  depends_on = [aws_lb.nlb]
 
   tags = {
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
     app       = "teleport"
-    Name      = "world->teleport-proxy"
+    Name      = "teleport-proxy-inbound-proxy"
   }
 }
 
-resource "aws_security_group_rule" "lb_webui_ingress" {
-  type        = "ingress"
-  from_port   = 443
-  to_port     = 443
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
+# SSH outbound reverse tunnel proxy
+resource "aws_lb_listener" "tunnel" {
+  load_balancer_arn = aws_lb.nlb.arn
+  port              = 3024
+  protocol          = "TCP"
 
-  security_group_id = aws_security_group.proxy_lb.id
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tunnel.arn
+  }
 }
 
-resource "aws_security_group_rule" "lb_client_ingress" {
-  type        = "ingress"
-  from_port   = 3080
-  to_port     = 3080
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
+resource "aws_lb_target_group" "tunnel" {
+  name_prefix = "in-tls"
+  port        = 3024
+  protocol    = "TCP"
+  vpc_id      = var.base.vpc.id
 
-  security_group_id = aws_security_group.proxy_lb.id
+  # Use IP to support Fargate clusters
+  target_type = "ip"
+
+  # Health check only on web port to prevent logs filling with connection resets
+  health_check {
+    protocol = "TCP"
+    port     = 3080
+  }
+
+  depends_on = [aws_lb.nlb]
+
+  tags = {
+    env       = var.base.env
+    terraform = "true"
+    app       = "teleport"
+    Name      = "teleport-proxy-reverse-tunnel"
+  }
 }
 
-resource "aws_security_group_rule" "lb_ssh_ingress" {
-  type        = "ingress"
-  from_port   = 3023
-  to_port     = 3023
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
-
-  security_group_id = aws_security_group.proxy_lb.id
+resource "aws_lb_target_group_attachment" "https" {
+  count            = length(aws_instance.proxies[*].private_ip)
+  target_group_arn = aws_lb_target_group.https.arn
+  target_id        = aws_instance.proxies[count.index].private_ip
 }
 
-resource "aws_security_group_rule" "lb_cluster_ingress" {
-  type        = "ingress"
-  from_port   = 3024
-  to_port     = 3024
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
-
-  security_group_id = aws_security_group.proxy_lb.id
+resource "aws_lb_target_group_attachment" "proxy" {
+  count            = length(aws_instance.proxies[*].private_ip)
+  target_group_arn = aws_lb_target_group.proxy.arn
+  target_id        = aws_instance.proxies[count.index].private_ip
 }
 
-resource "aws_security_group_rule" "lb_egress" {
-  type        = "egress"
-  from_port   = 0
-  to_port     = 0
-  protocol    = "-1"
-  cidr_blocks = ["0.0.0.0/0"]
-
-  security_group_id = aws_security_group.proxy_lb.id
+resource "aws_lb_target_group_attachment" "tunnel" {
+  count            = length(aws_instance.proxies[*].private_ip)
+  target_group_arn = aws_lb_target_group.tunnel.arn
+  target_id        = aws_instance.proxies[count.index].private_ip
 }
 
 #######
 # Proxy instances
 #######
-data "template_file" "user_data" {
-  count    = var.proxy_count
-  template = file("${path.module}/proxy-user-data.tmpl")
-
-  vars = {
-    nodename      = "teleport-proxy-${count.index}"
-    cluster_token = random_string.cluster_token.result
-    proxy_domain  = aws_route53_record.public.fqdn
-  }
-}
 
 resource "aws_instance" "proxies" {
   count         = var.proxy_count
-  ami           = data.aws_ami.base.id
+  ami           = var.base.ami.id
   instance_type = "t3.micro"
-  key_name      = var.key_pair
+  key_name      = var.base.ssh_key
 
-  user_data = element(data.template_file.user_data.*.rendered, count.index)
+  user_data = templatefile("${path.module}/proxy-user-data.tmpl", {
+    nodename      = "teleport-proxy-${count.index}"
+    cluster_token = data.aws_secretsmanager_secret_version.cluster_token.secret_string
+    proxy_domain  = aws_route53_record.public.fqdn
+  })
 
   associate_public_ip_address = false
-  subnet_id                   = element(data.aws_subnet.application_subnet.*.id, count.index) #distribute instances across AZs
-  vpc_security_group_ids      = [aws_security_group.proxies.id]
+
+  subnet_id = element(var.base.vpc.application[*].id, count.index)
+  vpc_security_group_ids = [
+    var.base.security_groups["jumpbox_nodes"].id,
+    var.base.security_groups["teleport_proxies"].id,
+  ]
 
   lifecycle {
-    ignore_changes = [ami]
+    ignore_changes        = [ami]
+    create_before_destroy = true
   }
+
+  root_block_device {
+    volume_type           = "gp2"
+    volume_size           = 20
+    delete_on_termination = true
+  }
+
+  depends_on = [aws_instance.auths]
 
   credit_specification {
     cpu_credits = "unlimited"
@@ -167,84 +214,7 @@ resource "aws_instance" "proxies" {
   tags = {
     Name      = "teleport-proxy-${count.index}"
     app       = "teleport"
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
   }
 }
-
-# Add to target group to attach to LB
-
-resource "aws_elb_attachment" "proxy_ssh" {
-  count    = var.proxy_count
-  elb      = aws_elb.proxy.id
-  instance = element(aws_instance.proxies.*.id, count.index)
-}
-
-#######
-### Security group for proxy instances
-#######
-
-resource "aws_security_group" "proxies" {
-  name_prefix = "teleport-proxies-"
-  vpc_id      = data.aws_vpc.vpc.id
-
-  tags = {
-    env       = var.env
-    terraform = "true"
-    app       = "teleport"
-    Name      = "teleport-proxies"
-  }
-}
-
-resource "aws_security_group_rule" "proxy_webui" {
-  type                     = "ingress"
-  from_port                = 3080
-  to_port                  = 3080
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.proxy_lb.id
-
-  security_group_id = aws_security_group.proxies.id
-}
-
-resource "aws_security_group_rule" "proxy_ssh" {
-  type                     = "ingress"
-  from_port                = 3023
-  to_port                  = 3023
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.proxy_lb.id
-
-  security_group_id = aws_security_group.proxies.id
-}
-
-resource "aws_security_group_rule" "proxy_cluster" {
-  type                     = "ingress"
-  from_port                = 3024
-  to_port                  = 3024
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.proxy_lb.id
-
-  security_group_id = aws_security_group.proxies.id
-}
-
-# Must allow talking to the world to call out to AWS APIs
-resource "aws_security_group_rule" "proxy_egress" {
-  type        = "egress"
-  from_port   = 0
-  to_port     = 0
-  protocol    = "-1"
-  cidr_blocks = ["0.0.0.0/0"]
-
-  security_group_id = aws_security_group.proxies.id
-}
-
-# Support for emergency jumpbox
-resource "aws_security_group_rule" "jumpbox_proxy" {
-  type                     = "ingress"
-  from_port                = 22
-  to_port                  = 22
-  protocol                 = "tcp"
-  source_security_group_id = data.aws_security_group.jumpbox.id
-
-  security_group_id = aws_security_group.proxies.id
-}
-

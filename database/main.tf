@@ -1,37 +1,40 @@
+terraform {
+  required_version = ">= 0.12"
+}
+
 ####
 # Setup database specific networking
 ####
 
 resource "aws_db_subnet_group" "db_subnet_group" {
-  name       = "${var.env}-${var.application_name}-rds-subnet-group"
-  subnet_ids = data.aws_subnet.data_subnet.*.id
+  name       = "${var.base.env}-${var.application.name}-rds-subnet-group"
+  subnet_ids = var.base.vpc.data[*].id
 }
 
-resource "aws_security_group" "db_sg" {
-  name        = "${var.env}-${var.application_name}-db-sg"
+resource "aws_security_group" "database" {
+  name        = "${var.base.env}-${var.application.name}-db-sg"
   description = "SG for database servers"
-  vpc_id      = data.aws_vpc.vpc.id
+  vpc_id      = var.base.vpc.id
 }
 
-resource "aws_security_group_rule" "app_ingress" {
+resource "aws_security_group_rule" "ingress" {
   type                     = "ingress"
   from_port                = 5432
   to_port                  = 5432
   protocol                 = "tcp"
-  source_security_group_id = var.app_sg
+  source_security_group_id = var.application.security_group.id
 
-  security_group_id = aws_security_group.db_sg.id
+  security_group_id = aws_security_group.database.id
 }
 
-# TODO(bob) confirm this can be locked to egress 5432 only
 resource "aws_security_group_rule" "egress" {
-  type        = "egress"
-  from_port   = 0
-  to_port     = 0
-  protocol    = "-1"
-  cidr_blocks = ["0.0.0.0/0"]
+  type                     = "egress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = var.application.security_group.id
 
-  security_group_id = aws_security_group.db_sg.id
+  security_group_id = aws_security_group.database.id
 }
 
 ####
@@ -39,26 +42,26 @@ resource "aws_security_group_rule" "egress" {
 ####
 
 resource "aws_db_instance" "primary" {
-  identifier_prefix = "${var.env}-${var.application_name}-"
+  identifier_prefix = "${var.base.env}-${var.application.name}-"
 
   username = var.user
   password = var.password
 
   db_subnet_group_name   = aws_db_subnet_group.db_subnet_group.id
-  vpc_security_group_ids = [aws_security_group.db_sg.id]
+  vpc_security_group_ids = [aws_security_group.database.id]
   publicly_accessible    = false
   multi_az               = true
 
-  instance_class = "db.t2.small"
+  instance_class = var.instance_class
   engine         = "postgres"
   engine_version = "10.5"
   port           = 5432
 
   storage_type        = "gp2"
   skip_final_snapshot = true
-  allocated_storage   = 30
+  allocated_storage   = 120
   storage_encrypted   = true
-  kms_key_id          = data.aws_kms_key.main.arn
+  kms_key_id          = var.base.key.arn
 
   parameter_group_name            = aws_db_parameter_group.postgres.id
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
@@ -76,16 +79,16 @@ resource "aws_db_instance" "primary" {
   }
 
   tags = {
-    env       = var.env
-    app       = var.application_name
+    env       = var.base.env
+    app       = var.application.name
     terraform = "true"
-    name      = "${var.env}-db"
+    name      = "${var.base.env}-db"
   }
 }
 
 # Enable query logging
 resource "aws_db_parameter_group" "postgres" {
-  name_prefix = "${var.env}-${var.application_name}-"
+  name_prefix = "${var.base.env}-${var.application.name}-"
   family      = "postgres10"
 
   parameter {
@@ -134,8 +137,8 @@ resource "aws_db_parameter_group" "postgres" {
 ####
 
 resource "aws_route53_record" "rds_cname" {
-  zone_id = data.aws_route53_zone.internal.id
-  name    = "${var.application_name}-db-primary"
+  zone_id = var.base.vpc.internal_dns.zone_id
+  name    = "${var.application.name}-db-primary"
   type    = "CNAME"
   ttl     = 30
 
@@ -146,7 +149,7 @@ resource "aws_route53_record" "rds_cname" {
 # Create an IAM role to allow enhanced monitoring
 ##################################################
 resource "aws_iam_role" "monitoring" {
-  name = "${var.env}-${var.application_name}-rds-monitoring-role"
+  name = "${var.base.env}-${var.application.name}-rds-monitoring-role"
 
   assume_role_policy = <<EOF
 {
@@ -164,7 +167,7 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "monitoring" {
-  role = aws_iam_role.monitoring.name
+  role       = aws_iam_role.monitoring.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 

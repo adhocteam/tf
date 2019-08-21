@@ -63,7 +63,7 @@ spec:
 EOF
 
 # Sleep to allow time for the authentication service to start up and then retry a few times
-sleep 60
-for i in {1..5}; do sudo -u teleport /usr/local/bin/tctl create /var/lib/teleport/cluster.yaml && break || sleep 60; done
+sleep 120
+for i in {1..15}; do sudo -u teleport /usr/local/bin/tctl create /var/lib/teleport/cluster.yaml && break || sleep 60; done
 
 echo "Teleport install complete"

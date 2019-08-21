@@ -27,7 +27,7 @@ sudo useradd -d "/var/lib/teleport/" -g "adm" -k "/dev/null" -m -r -s "/sbin/nol
 sudo passwd -l teleport
 
 # Download info on the teleport release we are targeting
-TELEPORT_VERSION="v4.0.1"
+TELEPORT_VERSION="v4.0.2"
 TELEPORT_INFO=$(curl -sSf https://dashboard.gravitational.com/webapi/releases-oss?product=teleport | jq ".items | map(select(.version == \"${TELEPORT_VERSION}\")) | .[].downloads | map(select(.name == \"teleport-${TELEPORT_VERSION}-linux-amd64-bin.tar.gz\")) | .[]")
 
 # Install teleport binaries
@@ -47,14 +47,17 @@ sudo chmod 0755 /usr/local/bin/teleport-secrets
 
 echo "--- Configure teleport"
 # Install teleport configuration
-sudo cp /tmp/files/teleport/teleport.yaml /etc
-sudo chmod 0644 /etc/teleport.yaml
+sudo cp /tmp/files/teleport/teleport.yaml.tmpl /etc
+sudo chmod 0644 /etc/teleport.yaml.tmpl
 
 # Install teleport systemd units
 sudo cp /tmp/files/teleport/*.service /etc/systemd/system
 sudo chmod 0644 /etc/systemd/system/teleport*
 
 echo "--- Turn on systemd services"
-sudo systemctl enable --now docker
-sudo systemctl enable --now yum-cron
-sudo systemctl enable --now teleport
+sudo systemctl enable docker
+sudo systemctl enable yum-cron
+sudo systemctl enable teleport
+
+echo "--- Turn off systemd services"
+sudo systemctl disable --now amazon-ssm-agent

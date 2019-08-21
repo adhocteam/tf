@@ -1,5 +1,5 @@
 
-### Key feature comparision to prior Ad Hoc work
+### Key feature comparison to prior Ad Hoc work
 
 
 | Feature                          | Foundation | Soapbox Platform | ACO API | QPP Foundational | USCIS RFDS RFI |

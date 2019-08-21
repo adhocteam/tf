@@ -1,18 +1,39 @@
 variable "env" {
+  type        = string
   description = "the name of the environment, e.g. \"testing\". it must be unique in the account."
 }
 
 variable "domain_name" {
-  description = "the external domain name for reaching the public resources. must have a certificate in ACM associated with it."
+  type        = string
+  description = "the external domain name for reaching the public resources."
 }
 
-variable "cidr" {
-  description = "the CIDR block to provision for the VPC. it should be a /16 block"
+variable "cidr_block" {
+  type        = string
+  description = "OPTIONAL: the CIDR block to provision for the VPC. it should be a /16 block"
   default     = "10.1.0.0/16"
 }
 
 variable "region" {
-  description = "the preferred AWS region for resources."
+  type        = string
+  description = "OPTIONAL: the preferred AWS region for resources."
   default     = "us-east-1"
 }
 
+variable "ssh_key" {
+  type        = string
+  description = "OPTIONAL: the name of an AWS key pair to use for jumpbox and instance access"
+  default     = "infrastructure"
+}
+
+variable "public_ingress" {
+  type        = bool
+  description = "OPTIONAL: whether or not to expose the ingress publicly. If not, must provide a reverse proxy to it."
+  default     = true
+}
+
+variable "primary" {
+  type        = bool
+  description = "OPTIONAL: whether or not this is the primary environment (e.g., the first created). normally this will be the dev environment"
+  default     = true
+}
