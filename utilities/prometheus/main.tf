@@ -2,42 +2,40 @@ terraform {
   required_version = ">= 0.12"
 }
 
-locals {
-  ami_id = length(var.ami_id) == 0 ? var.base.ami.id : var.ami_id
-}
-
 #####
-# Autoscaling configuration
+# Provides a single prometheus instance to scrape. Prometheus is stateful
+# and holds the data on disk, so we don't want it to autoscale. The ASG 
+# is used to boot up a new copy automatically on failure.
 #####
 
-resource "aws_autoscaling_group" "application" {
-  name_prefix         = "${aws_launch_template.application.id}-${aws_launch_template.application.latest_version}"
+resource "aws_autoscaling_group" "prometheus" {
+  name_prefix         = "${var.base.env}-prometheus-"
   vpc_zone_identifier = var.base.vpc.application[*].id
 
-  max_size         = var.max_count
+  max_size         = 1
   min_size         = 1
-  desired_capacity = var.desired_count
+  desired_capacity = 1
   force_delete     = false
 
-  target_group_arns         = coalescelist(var.target_group_arns, aws_alb_target_group.application[*].arn)
+  target_group_arns         = aws_alb_target_group.application[*].arn
   health_check_grace_period = 300
   health_check_type         = "ELB"
-  wait_for_elb_capacity     = var.desired_count
+  wait_for_elb_capacity     = 1
   wait_for_capacity_timeout = "600s"
 
   lifecycle {
-    ignore_changes        = [desired_capacity]
+    ignore_changes        = [desired_capacity, ami]
     create_before_destroy = true
   }
 
   launch_template {
-    id      = aws_launch_template.application.id
+    id      = aws_launch_template.prometheus.id
     version = "$Latest"
   }
 
   tag {
     key                 = "Name"
-    value               = "${var.base.env}-${var.application_name}"
+    value               = "${var.base.env}-prometheus"
     propagate_at_launch = true
   }
   tag {
@@ -54,20 +52,6 @@ resource "aws_autoscaling_group" "application" {
     key                 = "app"
     value               = var.application_name
     propagate_at_launch = true
-  }
-}
-
-resource "aws_autoscaling_policy" "cpu" {
-  name                   = "${var.base.env}-${var.application_name}-cpu-policy"
-  autoscaling_group_name = aws_autoscaling_group.application.name
-  policy_type            = "TargetTrackingScaling"
-
-  target_tracking_configuration {
-    predefined_metric_specification {
-      predefined_metric_type = "ASGAverageCPUUtilization"
-    }
-
-    target_value = 60
   }
 }
 
@@ -166,4 +150,25 @@ resource "aws_iam_role" "iam" {
 resource "aws_iam_role_policy_attachment" "iam_teleport" {
   role       = aws_iam_role.iam.name
   policy_arn = "arn:aws:iam::${var.base.account.account_id}:policy/${var.base.env}/teleport/${var.base.env}-instance-teleport-secrets"
+}
+module "prometheus" {
+  source = "../../autoscaling"
+
+  base              = var.base
+  application_name  = "prometheus"
+  application_ports = [9090]
+  public            = false
+  max_count         = 1
+  desired_count     = 1
+  user_data         = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y docker
+              systemctl enable --now docker
+              docker run -d -p 9090:9090 jskeets/custom-prom
+              curl -L -O https://grafanarel.s3.amazonaws.com/builds/grafana-2.5.0.linux-x64.tar.gz
+              tar zxf grafana-2.5.0.linux-x64.tar.gz
+              cd grafana-2.5.0/
+              ./bin/grafana-server web
+              EOF
 }
