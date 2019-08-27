@@ -1,9 +1,10 @@
 [
   {
-    "cpu": 1024,
+    "cpu": ${cpu_size},
     "essential": true,
     "image": "${image}",
     "environment": ${environment_variables},
+    "secrets": ${secrets},
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
@@ -12,16 +13,10 @@
         "awslogs-stream-prefix": "${awslogs-stream-prefix}"
       }
     },
-    "memory": 2048,
+    "memory": ${memory_size},
     "mountPoints": [],
     "name": "${name}",
-    "portMappings": [
-      {
-        "containerPort": ${port},
-        "hostPort": ${port},
-        "protocol": "tcp"
-      }
-    ],
+    "portMappings": ${portMappings}, 
     "volumesFrom": []
   }
 ]

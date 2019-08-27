@@ -6,6 +6,10 @@
 # Once complete, this should be set back to 0 to remove the jumpbox
 #######
 
+terraform {
+  required_version = ">= 0.12"
+}
+
 #######
 # Jumpbox instances
 #######
@@ -21,11 +25,11 @@ resource "aws_instance" "jumpbox" {
   instance_type = "t3.nano"
 
   # TODO(bob) use https://github.com/widdix/aws-ec2-ssh to control access here?
-  key_name = var.key_pair
+  key_name = var.base.ssh_key
 
   associate_public_ip_address = true
-  subnet_id                   = element(data.aws_subnet.public_subnet.*.id, count.index)
-  vpc_security_group_ids      = [data.aws_security_group.jumpbox.id]
+  subnet_id                   = var.base.vpc.public[count.index].id
+  vpc_security_group_ids      = [var.base.security_groups["jumpbox"].id]
 
   lifecycle {
     ignore_changes = [ami]
@@ -38,35 +42,11 @@ resource "aws_instance" "jumpbox" {
   tags = {
     Name      = "jumpbox"
     app       = "utilities"
-    env       = var.env
+    env       = var.base.env
     terraform = "true"
   }
 }
 
-#######
-# Security group for jumpbox alreeady exists
-# This just adds the configuration
-#######
-
-resource "aws_security_group_rule" "jumpbox_ssh" {
-  type        = "ingress"
-  from_port   = 22
-  to_port     = 22
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
-
-  security_group_id = data.aws_security_group.jumpbox.id
-}
-
-resource "aws_security_group_rule" "jump_into_vpc" {
-  type        = "egress"
-  from_port   = 22
-  to_port     = 22
-  protocol    = "tcp"
-  cidr_blocks = [data.aws_vpc.vpc.cidr_block]
-
-  security_group_id = data.aws_security_group.jumpbox.id
-}
 
 # TODO(bob) If using https://github.com/widdix/aws-ec2-ssh
 # then will need to open this up
@@ -86,8 +66,8 @@ resource "aws_security_group_rule" "jump_into_vpc" {
 
 resource "aws_route53_record" "jumpbox" {
   count   = local.enabled
-  zone_id = data.aws_route53_zone.external.id
-  name    = "jumpbox.${var.env}"
+  zone_id = var.base.external.id
+  name    = "jumpbox.${var.base.env}"
   type    = "CNAME"
   ttl     = 30
 

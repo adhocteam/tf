@@ -1,3 +1,11 @@
+#####
+# A shared encryption key for general use in the environment
+#####
+
+terraform {
+  required_version = ">= 0.12"
+}
+
 resource "aws_kms_key" "main" {
   description             = "Primary key for encrypting things in environment"
   deletion_window_in_days = 10
@@ -80,14 +88,14 @@ POLICY
 
 
   tags = {
-    env = var.env
+    env       = var.env
     terraform = "true"
-    name = "${var.env}-key-main"
+    name      = "${var.env}-key-main"
   }
 }
 
 resource "aws_kms_alias" "main" {
-  name = "alias/${var.env}-main"
+  name          = "alias/${var.env}-main"
   target_key_id = aws_kms_key.main.key_id
 }
 

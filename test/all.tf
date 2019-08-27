@@ -6,9 +6,13 @@ variable "region" {
   default = "us-east-1"
 }
 
+terraform {
+  required_version = ">= 0.12"
+}
+
 provider "aws" {
   region  = var.region
-  version = "~> 2.13.0"
+  version = "~> 2.19.0"
 }
 
 locals {
@@ -16,7 +20,7 @@ locals {
   domain_name = "example.com"
 }
 
-module "base" {
+module "dev" {
   source = "../"
 
   env         = local.env
@@ -26,61 +30,73 @@ module "base" {
 module "utilities" {
   source = "../utilities"
 
-  env         = local.env
-  domain_name = local.domain_name
-}
-
-module "ingress" {
-  source = "../ingress"
-
-  env         = local.env
-  domain_name = local.domain_name
+  base = module.dev
 }
 
 module "static" {
-  source = "../static_site"
+  source = "../cdn_site"
 
-  env         = local.env
-  domain_name = local.domain_name
-  subdomain   = "pizza"
+  base      = module.dev
+  subdomain = "pizza"
 }
 
 module "demo" {
-  source = "../plain_instance"
+  source = "../instance"
 
-  env              = local.env
-  domain_name      = local.domain_name
+  base             = module.dev
   application_name = "demo"
-}
-
-module "fargate" {
-  source = "../fargate_cluster"
-
-  env              = local.env
-  domain_name      = local.domain_name
-  application_name = "web"
-  docker_image     = "nginx:latest"
-}
-
-variable "db_password" {
-  description = "Normally this would be left blank"
-  default     = "neverdothis"
 }
 
 module "postgres" {
   source = "../database"
 
-  env              = local.env
-  application_name = "demo"
-  app_sg           = module.demo.app_sg_id
-  password         = "{$var.db_password}"
+  base        = module.dev
+  application = module.demo
+  password    = "neverdothis"
 }
 
+module "fargate" {
+  source = "../fargate_cluster"
+
+  base             = module.dev
+  application_name = "web"
+  docker_image     = "nginx:latest"
+  environment_variables = [
+    {
+      "name"  = "DB_USER"
+      "value" = "something"
+    },
+    {
+      "name"  = "ENVIRONMENT"
+      "value" = "development"
+    },
+  ]
+  secrets = [
+    {
+      "name"      = "DB_PASSWORD"
+      "valueFrom" = "arn:aws:secretsmanager:region:${var.region}::secret:dev/db_password-v4GYs6"
+    },
+    {
+      "name"      = "API_KEY"
+      "valueFrom" = "arn:aws:secretsmanager:region:${var.region}::secret:dev/api_key-v4GYs7"
+    },
+  ]
+}
+
+module "console" {
+  source = "../command_console"
+
+  base            = module.dev
+  fargate_cluster = module.fargate
+  database        = module.postgres
+}
+
+
 module "lambda_cron" {
+
   source = "../lambda_cron"
 
-  env             = local.env
-  domain_name     = local.domain_name
+  base            = module.dev
   job_name        = "crontab"
   cron_expression = "* * ? * * *"
 
@@ -98,15 +114,30 @@ module "lambda_cron" {
 module "production" {
   source = "../"
 
-  env         = "prod"
-  domain_name = local.domain_name
+  env            = "prod"
+  domain_name    = local.domain_name
+  public_ingress = false
+  primary        = false
 }
+
+module "ingress_nginx" {
+  source = "../ingress_nginx"
+
+  base = module.production
+}
+
+module "demo_asg" {
+  source = "../autoscaling"
+
+  base             = module.production
+  application_name = "asg"
+}
+
 
 module "teleport_subcluster" {
   source = "../utilities/teleport_subcluster"
 
-  env          = "prod"
-  domain_name  = local.domain_name
+  base         = module.production
   main_cluster = local.env
 }
 

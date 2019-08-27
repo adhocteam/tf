@@ -1,20 +1,25 @@
-variable "env" {
-  description = "the name of the environment, e.g. \"testing\". it must be unique in the account."
+variable "base" {
+  description = "object with the outputs of the base module"
 }
 
-variable "application_name" {
-  description = "the name of the application that will access this database"
-  default     = "demo"
-}
-
-variable "app_sg" {
-  description = "the security group of the application that needs access to the database, probably from the module outputs"
+variable "application" {
+  description = "an object describing the application to allow access to this database"
 }
 
 variable "user" {
-  default = "dbuser"
+  type        = string
+  description = "OPTIONAL: the username for the Postgres user"
+  default     = "dbuser"
 }
 
 variable "password" {
+  type        = string
+  description = "the password for the Postgres user. NOTE: will be stored in Terraform state"
+}
+
+variable "instance_class" {
+  type        = string
+  description = "OPTIONAL: the instance class for the db."
+  default     = "db.t2.small"
 }
 
