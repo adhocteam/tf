@@ -81,6 +81,7 @@ resource "aws_instance" "jenkins_worker" {
   vpc_security_group_ids = [
     var.base.security_groups["teleport_nodes"].id,
     var.base.security_groups["jumpbox_nodes"].id,
+    var.base.security_groups["node_exporter"].id,
     aws_security_group.worker.id
   ]
 

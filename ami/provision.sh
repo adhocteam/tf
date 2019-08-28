@@ -54,10 +54,15 @@ sudo chmod 0644 /etc/teleport.yaml.tmpl
 sudo cp /tmp/files/teleport/*.service /etc/systemd/system
 sudo chmod 0644 /etc/systemd/system/teleport*
 
+echo "--- Install node_exporter"
+sudo curl -Lo /etc/yum.repos.d/_copr_ibotty-prometheus-exporters.repo https://copr.fedorainfracloud.org/coprs/ibotty/prometheus-exporters/repo/epel-7/ibotty-prometheus-exporters-epel-7.repo
+sudo yum install -y -q node_exporter
+
 echo "--- Turn on systemd services"
 sudo systemctl enable docker
 sudo systemctl enable yum-cron
 sudo systemctl enable teleport
+sudo systemctl enable node_exporter
 
 echo "--- Turn off systemd services"
 sudo systemctl disable --now amazon-ssm-agent

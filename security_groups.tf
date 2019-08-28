@@ -142,3 +142,51 @@ resource "aws_security_group_rule" "jumpbox_to_nodes" {
 
   security_group_id = aws_security_group.jumpbox_nodes.id
 }
+
+#######
+# Security group for Prometheus scraping
+#######
+
+resource "aws_security_group" "prometheus" {
+  name_prefix = "prometheus-"
+  vpc_id      = module.vpc.id
+
+  tags = {
+    env       = var.env
+    terraform = "true"
+    app       = "utilities"
+    Name      = "prometheus"
+  }
+}
+
+resource "aws_security_group_rule" "prometheus_web" {
+  type        = "ingress"
+  from_port   = 9090
+  to_port     = 9090
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = aws_security_group.jumpbox.id
+}
+
+resource "aws_security_group" "node_exporter" {
+  name_prefix = "node_exporter-"
+  vpc_id      = module.vpc.id
+
+  tags = {
+    env       = var.env
+    terraform = "true"
+    app       = "utilities"
+    Name      = "prometheus-node_exporter"
+  }
+}
+
+resource "aws_security_group_rule" "node_exporter_scraping" {
+  type                     = "ingress"
+  from_port                = 9100
+  to_port                  = 9100
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.prometheus.id
+
+  security_group_id = aws_security_group.node_exporter.id
+}

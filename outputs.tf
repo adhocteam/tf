@@ -58,6 +58,8 @@ output "security_groups" {
     "teleport_nodes"   = aws_security_group.teleport_nodes
     "jumpbox"          = aws_security_group.jumpbox
     "jumpbox_nodes"    = aws_security_group.jumpbox_nodes
+    "prometheus"       = aws_security_group.prometheus
+    "node_exporter"    = aws_security_group.node_exporter
   }
 }
 

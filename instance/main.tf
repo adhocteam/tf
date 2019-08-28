@@ -18,6 +18,7 @@ resource "aws_instance" "box" {
   vpc_security_group_ids = [
     var.base.security_groups["teleport_nodes"].id,
     var.base.security_groups["jumpbox_nodes"].id,
+    var.base.security_groups["node_exporter"].id,
     aws_security_group.app.id
   ]
 

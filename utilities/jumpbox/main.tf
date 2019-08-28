@@ -29,7 +29,10 @@ resource "aws_instance" "jumpbox" {
 
   associate_public_ip_address = true
   subnet_id                   = var.base.vpc.public[count.index].id
-  vpc_security_group_ids      = [var.base.security_groups["jumpbox"].id]
+  vpc_security_group_ids = [
+    var.base.security_groups["jumpbox"].id,
+    var.base.security_groups["node_exporter"].id
+  ]
 
   lifecycle {
     ignore_changes = [ami]
