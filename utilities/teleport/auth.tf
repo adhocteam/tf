@@ -144,6 +144,16 @@ resource "aws_security_group_rule" "auth_webui" {
   security_group_id = aws_security_group.auths.id
 }
 
+resource "aws_security_group_rule" "prom_to_auth" {
+  type                     = "ingress"
+  from_port                = 3434
+  to_port                  = 3434
+  protocol                 = "tcp"
+  source_security_group_id = var.base.security_groups["prometheus"].id
+
+  security_group_id = aws_security_group.auths.id
+}
+
 # Allow it to talk to any address to be able to hit AWS APIs for Dynamo, S3
 resource "aws_security_group_rule" "auth_egress" {
   type        = "egress"

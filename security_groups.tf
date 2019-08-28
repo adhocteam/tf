@@ -44,6 +44,17 @@ resource "aws_security_group_rule" "proxy_cluster" {
 
   security_group_id = aws_security_group.teleport_proxies.id
 }
+
+resource "aws_security_group_rule" "prometheus_to_tp_proxies" {
+  type                     = "ingress"
+  from_port                = 3434
+  to_port                  = 3434
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.prometheus.id
+
+  security_group_id = aws_security_group.teleport_proxies.id
+}
+
 # Must allow talking to the world to call out to AWS APIs
 resource "aws_security_group_rule" "proxy_egress" {
   type        = "egress"
@@ -71,13 +82,22 @@ resource "aws_security_group" "teleport_nodes" {
   }
 }
 
-# Must allow talking to the world to call out to AWS APIs
 resource "aws_security_group_rule" "proxy_to_nodes" {
   type                     = "ingress"
   from_port                = 3022
   to_port                  = 3022
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.teleport_proxies.id
+
+  security_group_id = aws_security_group.teleport_nodes.id
+}
+
+resource "aws_security_group_rule" "prometheus_to_teleport" {
+  type                     = "ingress"
+  from_port                = 3434
+  to_port                  = 3434
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.prometheus.id
 
   security_group_id = aws_security_group.teleport_nodes.id
 }
