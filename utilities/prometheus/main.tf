@@ -17,7 +17,6 @@ resource "aws_autoscaling_group" "prometheus" {
   desired_capacity = 1
   force_delete     = false
 
-  target_group_arns         = aws_alb_target_group.application[*].arn
   health_check_grace_period = 300
   health_check_type         = "ELB"
   wait_for_elb_capacity     = 1
@@ -74,7 +73,7 @@ resource "aws_launch_template" "prometheus" {
   disable_api_termination              = false
   image_id                             = var.base.ami.id
   instance_initiated_shutdown_behavior = "terminate"
-  instance_type                        = var.instance_size
+  instance_type                        = "t3.medium"
   ebs_optimized                        = true
 
   key_name = var.base.ssh_key
@@ -89,7 +88,7 @@ resource "aws_launch_template" "prometheus" {
     name = aws_iam_instance_profile.iam.name
   }
 
-  user_data = var.user_data != "" ? base64encode(var.user_data) : null
+  user_data = local.user_data
 
   credit_specification {
     cpu_credits = "unlimited"
@@ -111,13 +110,13 @@ resource "aws_launch_template" "prometheus" {
 # Base IAM instance profile
 #####
 resource "aws_iam_instance_profile" "iam" {
-  name = "${var.base.env}-asg-${var.application_name}"
+  name = "${var.base.env}-asg-prometheus"
   role = aws_iam_role.iam.name
 }
 
 # Auth instance profile and roles
 resource "aws_iam_role" "iam" {
-  name = "${var.base.env}-asg-${var.application_name}"
+  name = "${var.base.env}-asg-prometheus"
 
   assume_role_policy = <<EOF
   {

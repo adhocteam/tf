@@ -26,3 +26,8 @@ module "jenkins" {
   github_user = var.jenkins_github_user
 }
 
+module "prometheus" {
+  source = "./prometheus"
+
+  base = var.base
+}
