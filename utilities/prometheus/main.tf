@@ -50,15 +50,29 @@ resource "aws_autoscaling_group" "prometheus" {
   }
   tag {
     key                 = "app"
-    value               = var.application_name
+    value               = "prometheus"
     propagate_at_launch = true
   }
 }
 
-resource "aws_launch_template" "application" {
-  name_prefix                          = "${var.base.env}-${var.application_name}-"
+locals {
+  default = templatefile("${path.module}/prometheus.tmpl", {
+    env = var.base.env
+  })
+  custom    = <<-EOF
+  #!/usr/bin/env bash
+  docker run -d --restart always \
+      -p 9090:9090 \
+      --name prometheus \
+      ${var.prometheus_image}
+  EOF
+  user_data = var.prometheus_image != "" ? local.custom : local.default
+}
+
+resource "aws_launch_template" "prometheus" {
+  name_prefix                          = "${var.base.env}-prometheus-"
   disable_api_termination              = false
-  image_id                             = local.ami_id
+  image_id                             = var.base.ami.id
   instance_initiated_shutdown_behavior = "terminate"
   instance_type                        = var.instance_size
   ebs_optimized                        = true
@@ -68,7 +82,7 @@ resource "aws_launch_template" "application" {
     var.base.security_groups["teleport_nodes"].id,
     var.base.security_groups["jumpbox_nodes"].id,
     var.base.security_groups["node_exporter"].id,
-    aws_security_group.app.id
+    var.base.security_groups["prometheus"].id,
   ]
 
   iam_instance_profile {
@@ -86,39 +100,12 @@ resource "aws_launch_template" "application" {
   }
 
   tags = {
-    Name      = "${var.base.env}-${var.application_name}-launch-template"
+    Name      = "${var.base.env}-prometheus-launch-template"
     terraform = "true"
     env       = var.base.env
-    app       = var.application_name
+    app       = "prometheus"
   }
 }
-
-#######
-# Security group for application
-#######
-
-resource "aws_security_group" "app" {
-  name_prefix = "${var.application_name}-app-"
-  vpc_id      = var.base.vpc.id
-
-  tags = {
-    app       = var.application_name
-    terraform = "true"
-    env       = var.base.env
-  }
-}
-
-# Allow all outbound, e.g. third-pary API endpoints, by default
-resource "aws_security_group_rule" "egress" {
-  type        = "egress"
-  from_port   = 0
-  to_port     = 0
-  protocol    = "-1"
-  cidr_blocks = ["0.0.0.0/0"]
-
-  security_group_id = aws_security_group.app.id
-}
-
 
 #####
 # Base IAM instance profile
@@ -152,24 +139,9 @@ resource "aws_iam_role_policy_attachment" "iam_teleport" {
   role       = aws_iam_role.iam.name
   policy_arn = "arn:aws:iam::${var.base.account.account_id}:policy/${var.base.env}/teleport/${var.base.env}-instance-teleport-secrets"
 }
-module "prometheus" {
-  source = "../../autoscaling"
 
-  base              = var.base
-  application_name  = "prometheus"
-  application_ports = [9090]
-  public            = false
-  max_count         = 1
-  desired_count     = 1
-  user_data         = <<-EOF
-              #!/bin/bash
-              yum update -y
-              yum install -y docker
-              systemctl enable --now docker
-              docker run -d -p 9090:9090 jskeets/custom-prom
-              curl -L -O https://grafanarel.s3.amazonaws.com/builds/grafana-2.5.0.linux-x64.tar.gz
-              tar zxf grafana-2.5.0.linux-x64.tar.gz
-              cd grafana-2.5.0/
-              ./bin/grafana-server web
-              EOF
+# Give it the ability to query EC2 nodes for sevice discovery
+resource "aws_iam_role_policy_attachment" "ec2_readonly" {
+  role       = aws_iam_role.iam.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
 }

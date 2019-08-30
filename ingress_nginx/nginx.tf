@@ -44,3 +44,13 @@ resource "aws_security_group_rule" "nginx" {
 
   security_group_id = module.nginx.security_group.id
 }
+
+resource "aws_security_group_rule" "prometheus" {
+  type                     = "ingress"
+  from_port                = 9113
+  to_port                  = 9113
+  protocol                 = "tcp"
+  source_security_group_id = var.base.security_groups["prometheus"].id
+
+  security_group_id = module.nginx.security_group.id
+}

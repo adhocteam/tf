@@ -189,6 +189,17 @@ resource "aws_security_group_rule" "prometheus_web" {
   security_group_id = aws_security_group.jumpbox.id
 }
 
+# Must allow talking to the world to call out to AWS APIs
+resource "aws_security_group_rule" "proxy_egress" {
+  type        = "egress"
+  from_port   = 0
+  to_port     = 0
+  protocol    = "-1"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = aws_security_group.prometheus.id
+}
+
 resource "aws_security_group" "node_exporter" {
   name_prefix = "node_exporter-"
   vpc_id      = module.vpc.id
