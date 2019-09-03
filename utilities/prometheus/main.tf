@@ -23,7 +23,7 @@ resource "aws_autoscaling_group" "prometheus" {
   wait_for_capacity_timeout = "600s"
 
   lifecycle {
-    ignore_changes        = [desired_capacity, ami]
+    ignore_changes        = [desired_capacity]
     create_before_destroy = true
   }
 
@@ -96,6 +96,11 @@ resource "aws_launch_template" "prometheus" {
 
   monitoring {
     enabled = true
+  }
+
+  # Ignore base AMI changes. Trigger deploys my manually tainting this
+  lifecycle {
+    ignore_changes = [image_id]
   }
 
   tags = {
