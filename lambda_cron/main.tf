@@ -164,7 +164,7 @@ resource "aws_iam_policy" "secrets" {
 resource "aws_iam_role_policy_attachment" "secrets" {
   count      = length(var.secrets) > 0 ? 1 : 0
   role       = aws_iam_role.job.name
-  policy_arn = aws_iam_policy.secrets.arn
+  policy_arn = aws_iam_policy[0].secrets.arn
 }
 
 # Use of the shared KMS key for secrets decryption
