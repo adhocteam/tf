@@ -22,8 +22,11 @@ resource "aws_lambda_function" "job" {
 
   role = aws_iam_role.job.arn
 
-  environment {
-    variables = var.env_vars
+  dynamic "environment" {
+    for_each = length(var.env_vars) ? [var.env_vars] : []
+    content {
+      variables = environment.value
+    }
   }
 
   // Encrypts any environment variables
