@@ -155,6 +155,7 @@ data "aws_iam_policy_document" "secrets" {
 }
 
 resource "aws_iam_policy" "secrets" {
+  count  = length(var.secrets) > 0 ? 1 : 0
   name   = "${var.base.env}-${var.job_name}-secrets"
   path   = "/${var.base.env}/${var.job_name}/"
   policy = data.aws_iam_policy_document.secrets.json
