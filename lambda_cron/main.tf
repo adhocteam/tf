@@ -23,7 +23,7 @@ resource "aws_lambda_function" "job" {
   role = aws_iam_role.job.arn
 
   dynamic "environment" {
-    for_each = length(var.env_vars) ? [var.env_vars] : []
+    for_each = length(var.env_vars) > 0 ? [var.env_vars] : []
     content {
       variables = environment.value
     }
@@ -161,6 +161,7 @@ resource "aws_iam_policy" "secrets" {
 }
 
 resource "aws_iam_role_policy_attachment" "secrets" {
+  count      = length(var.secrets) > 0 ? 1 : 0
   role       = aws_iam_role.job.name
   policy_arn = aws_iam_policy.secrets.arn
 }
