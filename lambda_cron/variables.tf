@@ -12,6 +12,12 @@ variable "cron_expression" {
   description = "cron schedule expression. For example, \"0 12 * * ? *\" for daily at noon UTC. https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html#CronExpressions"
 }
 
+variable "cron_enabled" {
+  type        = bool
+  description = "OPTIONAL: whether or not they cron expression should be firing"
+  default     = true
+}
+
 variable "runtime" {
   type        = string
   description = "OPTIONAL: which lambda runtime to use to invoke the function. Defaults to Go 1.x"

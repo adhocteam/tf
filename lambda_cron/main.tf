@@ -89,6 +89,7 @@ resource "aws_cloudwatch_event_rule" "crontab" {
   name                = "crontab-${var.base.env}-${var.job_name}"
   description         = "Terraform-managed crontab for firing ${var.job_name}"
   schedule_expression = "cron(${var.cron_expression})"
+  is_enabled          = var.cron_enabled
 }
 
 resource "aws_cloudwatch_event_target" "crontab" {
