@@ -1,4 +1,5 @@
 resource "aws_s3_bucket" "logs" {
+  acl    = "log-delivery-write"
   bucket = "${var.bucket}"
 }
 
