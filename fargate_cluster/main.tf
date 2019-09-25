@@ -125,11 +125,6 @@ resource "aws_iam_role_policy" "ecs_execution" {
   policy = data.aws_iam_policy_document.ecs_execution.json
 }
 
-
-locals {
-  secret_arns = [for s in var.secrets : s["valueFrom"]]
-}
-
 data "aws_iam_policy_document" "ecs_execution" {
   statement {
     actions = [
@@ -150,7 +145,25 @@ data "aws_iam_policy_document" "ecs_execution" {
     actions   = ["kms:Decrypt"]
     resources = [var.base.key.arn]
   }
+}
 
+locals {
+  secret_arns = [for s in var.secrets : s["valueFrom"]]
+}
+resource "aws_iam_policy" "secrets" {
+  count  = length(local.secret_arns) > 0 ? 1 : 0
+  name   = "${var.base.env}-${var.application_name}-secrets"
+  path   = "/${var.base.env}/${var.application_name}/"
+  policy = data.aws_iam_policy_document.secrets.json
+}
+
+resource "aws_iam_role_policy_attachment" "secrets" {
+  count      = length(local.secret_arns) > 0 ? 1 : 0
+  role       = aws_iam_role.ecs_execution.id
+  policy_arn = aws_iam_policy.secrets[0].arn
+}
+
+data "aws_iam_policy_document" "secrets" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
     resources = local.secret_arns
