@@ -76,6 +76,7 @@ resource "aws_instance" "auths" {
     client_id                = data.aws_secretsmanager_secret_version.github_client_id.secret_string
     client_secret            = data.aws_secretsmanager_secret_version.github_secret.secret_string
     proxy_domain             = aws_route53_record.public.fqdn
+    gh_org                   = var.gh_org
     gh_team                  = var.gh_team
   })
 
@@ -339,13 +340,13 @@ resource "aws_iam_role_policy" "auth_dynamo" {
             "Effect": "Allow",
             "Action": "dynamodb:*",
             "Resource": "${aws_dynamodb_table.teleport_state.arn}"
-        },  
+        },
         {
             "Sid": "AllActionsOnTeleportDBStreams",
             "Effect": "Allow",
             "Action": "dynamodb:*",
             "Resource": "${aws_dynamodb_table.teleport_state.arn}/*"
-        },  
+        },
         {
             "Sid": "AllActionsOnTeleportEventsDB",
             "Effect": "Allow",
@@ -397,7 +398,7 @@ resource "aws_iam_role_policy" "auth_s3" {
      }
    ]
  }
- 
+
 EOF
 
 }

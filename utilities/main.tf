@@ -14,6 +14,7 @@ module "teleport" {
   source = "./teleport"
 
   base    = var.base
+  gh_org  = var.teleport_github_org
   gh_team = var.teleport_github_team
 }
 

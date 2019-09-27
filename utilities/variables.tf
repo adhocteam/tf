@@ -32,9 +32,15 @@ variable "jenkins_github_user" {
   default     = "jenkins-adhoc-team"
 }
 
+variable "teleport_github_org" {
+  type        = string
+  description = "optional: github org who can ssh via teleport proxy"
+  default     = "adhocteam"
+}
+
 variable "teleport_github_team" {
   type        = string
-  description = "OPTIONAL: GitHub team who can SSH via Teleport proxy"
+  description = "optional: github team who can ssh via teleport proxy"
   default     = "infrastructure-team"
 }
 

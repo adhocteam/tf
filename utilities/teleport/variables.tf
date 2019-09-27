@@ -14,6 +14,12 @@ variable "auth_count" {
   default     = 1
 }
 
+variable "gh_org" {
+  type        = string
+  description = "OPTIONAL: the Github organization to provide access to via Teleport"
+  default     = "adhocteam"
+}
+
 variable "gh_team" {
   type        = string
   description = "OPTIONAL: the Github team to provide access to via Teleport"
