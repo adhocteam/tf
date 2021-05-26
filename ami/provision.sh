@@ -26,20 +26,23 @@ echo "--- Install teleport"
 sudo useradd -d "/var/lib/teleport/" -g "adm" -k "/dev/null" -m -r -s "/sbin/nologin" teleport
 sudo passwd -l teleport
 
-# Download info on the teleport release we are targeting
-TELEPORT_VERSION="v4.0.6"
-TELEPORT_INFO=$(curl -sSf https://dashboard.gravitational.com/webapi/releases-oss?product=teleport | jq ".items | map(select(.version == \"${TELEPORT_VERSION}\")) | .[].downloads | map(select(.name == \"teleport-${TELEPORT_VERSION}-linux-amd64-bin.tar.gz\")) | .[]")
+# # Download info on the teleport release we are targeting
+TELEPORT_VERSION="4.4.6"
+# TELEPORT_INFO=$(curl -sSf https://dashboard.gravitational.com/webapi/releases-oss?product=teleport | jq ".items | map(select(.version == \"${TELEPORT_VERSION}\")) | .[].downloads | map(select(.name == \"teleport-${TELEPORT_VERSION}-linux-amd64-bin.tar.gz\")) | .[]")
 
-# Install teleport binaries
-cd $(mktemp -d)
-curl -sSfo teleport.tar.gz "$(echo ${TELEPORT_INFO} | jq -r .url)"
-echo "$(echo ${TELEPORT_INFO} | jq -r .sha256) teleport.tar.gz" > teleport.tar.gz.sum
-sha256sum -c --status teleport.tar.gz.sum
-tar xzf teleport.tar.gz
-sudo cp teleport/{tctl,teleport} /usr/local/bin/
-sudo chown teleport:adm /usr/local/bin/{tctl,teleport}
-cd -
+# # Install teleport binaries
+# cd $(mktemp -d)
+# curl -sSfo teleport.tar.gz "$(echo ${TELEPORT_INFO} | jq -r .url)"
+# echo "$(echo ${TELEPORT_INFO} | jq -r .sha256) teleport.tar.gz" > teleport.tar.gz.sum
+# sha256sum -c --status teleport.tar.gz.sum
+# tar xzf teleport.tar.gz
+# sudo cp teleport/{tctl,teleport} /usr/local/bin/
+# sudo chown teleport:adm /usr/local/bin/{tctl,teleport}
+# cd - 
+cd /tmp
+sudo yum -y install https://get.gravitational.com/teleport-${TELEPORT_VERSION}-1.x86_64.rpm
 
+which teleport
 # Install teleports secrets script
 sudo cp /tmp/files/teleport/teleport-secrets /usr/local/bin
 sudo chown teleport:adm /usr/local/bin/teleport-secrets
