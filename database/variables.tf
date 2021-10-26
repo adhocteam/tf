@@ -6,16 +6,16 @@ variable "application" {
   description = "an object describing the application to allow access to this database"
 }
 
-variable "user" {
+variable "db_user" {
   type        = string
   description = "OPTIONAL: the username for the Postgres user"
   default     = "dbuser"
 }
 
-variable "password" {
-  type        = string
-  description = "the password for the Postgres user. NOTE: will be stored in Terraform state"
-}
+# variable "password" {
+#   type        = string
+#   description = "the password for the Postgres user. NOTE: will be stored in Terraform state"
+# }
 
 variable "instance_class" {
   type        = string

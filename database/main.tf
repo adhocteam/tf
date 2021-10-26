@@ -2,6 +2,11 @@ terraform {
   required_version = ">= 0.12"
 }
 
+locals {
+  db_creds = jsondecode(
+    data.aws_secretsmanager_secret_version.creds.secret_string
+  )
+}
 ####
 # Setup database specific networking
 ####
@@ -44,8 +49,8 @@ resource "aws_security_group_rule" "egress" {
 resource "aws_db_instance" "primary" {
   identifier_prefix = "${var.base.env}-${var.application.name}-"
 
-  username = var.user
-  password = var.password
+  username = var.db_user
+  password = local.db_creds.password
 
   db_subnet_group_name   = aws_db_subnet_group.db_subnet_group.id
   vpc_security_group_ids = [aws_security_group.database.id]
@@ -54,7 +59,7 @@ resource "aws_db_instance" "primary" {
 
   instance_class = var.instance_class
   engine         = "postgres"
-  engine_version = "10.5"
+  engine_version = "13.4"
   port           = 5432
 
   storage_type        = "gp2"
@@ -89,7 +94,7 @@ resource "aws_db_instance" "primary" {
 # Enable query logging
 resource "aws_db_parameter_group" "postgres" {
   name_prefix = "${var.base.env}-${var.application.name}-"
-  family      = "postgres10"
+  family      = "postgres13"
 
   parameter {
     name  = "log_connections"
@@ -171,5 +176,40 @@ resource "aws_iam_role_policy_attachment" "monitoring" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
 }
 
+##################################################
+# Create and Store Username/Password in secrets manager with rotation
+##################################################
+
+resource "random_password" "db_password" {
+  length           = 20
+  special          = true
+  min_special      = 5
+  override_special = "_!"
+  keepers = {
+    pass_version = 1
+  }
+}
+resource "aws_secretsmanager_secret" "psqlprimaryDB" {
+  name                    = "psqlprimaryDB-${var.base}"
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "db-pass-val" {
+  secret_id     = aws_secretsmanager_secret.psqlprimaryDB.id
+  secret_string = <<EOF
+   {
+    "username": "${var.db_user}",
+    "password": "${random_password.db_password.result}"
+   }
+EOF
+}
+
+data "aws_secretsmanager_secret" "psqlprimaryDB" {
+  arn = aws_secretsmanager_secret.psqlprimaryDB.arn
+}
+
+data "aws_secretsmanager_secret_version" "creds" {
+  secret_id = data.aws_secretsmanager_secret.psqlprimaryDB.arn
+}
 ## TODO(bob) Add read replicas?
 ## TODO(bob) Store username/password in secrets manager with rotation
