@@ -180,9 +180,6 @@ resource "aws_iam_role_policy_attachment" "monitoring" {
 # Create and Store Username/Password in secrets manager with rotation
 ##################################################
 
-provider "random" {
-  version = ">= 3.0"
-}
 resource "random_password" "db_password" {
   length           = 20
   special          = true
