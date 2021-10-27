@@ -27,7 +27,7 @@ resource "aws_acm_certificate" "domain" {
 resource "aws_acm_certificate_validation" "domain" {
   count                   = var.primary ? 1 : 0
   certificate_arn         = aws_acm_certificate.domain[0].arn
-  validation_record_fqdns = [for record in aws_route53_record.validation[*] : record.fqdn]
+  validation_record_fqdns = [for record in aws_route53_record.validation : record.fqdn]
 }
 
 # Only need to validate the first record because the wildcard entry will use the same DNS record
