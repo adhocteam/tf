@@ -79,7 +79,7 @@ resource "aws_alb_listener" "applications" {
     redirect {
       port        = "443"
       protocol    = "HTTPS"
-      host        = "${var.domain_name}"
+      host        = var.domain_name
       status_code = "HTTP_302"
     }
   }
