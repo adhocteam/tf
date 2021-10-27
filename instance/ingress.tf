@@ -57,8 +57,9 @@ resource "aws_alb_listener_rule" "applications" {
   }
 
   condition {
-    field  = "host-header"
-    values = ["${var.application_name}.${var.base.domain_name}"]
+    host_header {
+      values = ["${var.application_name}.${var.base.domain_name}"]
+    }
   }
 }
 
