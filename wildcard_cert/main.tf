@@ -38,6 +38,8 @@ resource "aws_route53_record" "validation" {
       record = dvo.resource_record_value
       type   = dvo.resource_record_type
     }
+    # Skips the domain if it doesn't contain a wildcard
+    if length(regexall("\\*\\..+", dvo.domain_name)) > 0
   } : {}
   name    = each.value.name
   type    = each.value.type
