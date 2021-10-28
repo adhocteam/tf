@@ -27,16 +27,24 @@ resource "aws_acm_certificate" "domain" {
 resource "aws_acm_certificate_validation" "domain" {
   count                   = var.primary ? 1 : 0
   certificate_arn         = aws_acm_certificate.domain[0].arn
-  validation_record_fqdns = aws_route53_record.validation[*].fqdn
+  validation_record_fqdns = [for record in aws_route53_record.validation : record.fqdn]
 }
 
 # Only need to validate the first record because the wildcard entry will use the same DNS record
 resource "aws_route53_record" "validation" {
-  count   = var.primary ? 1 : 0
-  name    = aws_acm_certificate.domain[0].domain_validation_options[0]["resource_record_name"]
-  type    = aws_acm_certificate.domain[0].domain_validation_options[0]["resource_record_type"]
+  for_each = var.primary ? {
+    for dvo in aws_acm_certificate.domain[0].domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+    # Skips the domain if it doesn't contain a wildcard
+    if length(regexall("\\*\\..+", dvo.domain_name)) > 0
+  } : {}
+  name    = each.value.name
+  type    = each.value.type
   zone_id = data.aws_route53_zone.external.id
-  records = [aws_acm_certificate.domain[0].domain_validation_options[0]["resource_record_value"]]
+  records = [each.value.record]
   ttl     = 60
 }
 

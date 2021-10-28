@@ -79,7 +79,7 @@ resource "aws_alb_listener" "applications" {
     redirect {
       port        = "443"
       protocol    = "HTTPS"
-      host        = "${var.domain_name}"
+      host        = var.domain_name
       status_code = "HTTP_302"
     }
   }
@@ -112,7 +112,7 @@ resource "aws_security_group_rule" "lb_ingress" {
   protocol  = "tcp"
 
   # If fronted by nginx, only accept traffic from inside the VPC
-  cidr_blocks = var.public ? ["0.0.0.0/0"] : ["${var.cidr_block}"]
+  cidr_blocks = var.public ? ["0.0.0.0/0"] : [var.cidr_block]
 
   security_group_id = aws_security_group.alb.id
 }
